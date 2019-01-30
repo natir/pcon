@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2018 Pierre Marijon <pierre.marijon@inria.fr>
+Copyright (c) 2019 Pierre Marijon <pierre.marijon@inria.fr>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,153 +20,126 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/* crate declaration */
 extern crate bio;
 extern crate clap;
 
+/* std use */
+use std::io::Write;
+
+/* crate use */
 use clap::{App, Arg};
+
+/* project mod declaration */
+mod convert;
 
 fn main() {
     let matches = App::new("ssik")
         .version("0.1")
         .author("Pierre Marijon <pierre.marijon@inria.fr>")
         .about("Scorer for Stupidly Insufficiently long Kmer")
-        .arg(Arg::with_name("input")
-             .short("i")
-             .long("input")
-             .takes_value(true)
-             .help("sequence input in fasta format")
+        .arg(
+            Arg::with_name("input")
+                .short("i")
+                .long("input")
+                .takes_value(true)
+                .help("sequence input in fasta format"),
         )
-        .arg(Arg::with_name("output")
-             .short("o")
-             .long("output")
-             .takes_value(true)
-             .help("path where kmer count was write")
+        .arg(
+            Arg::with_name("output")
+                .short("o")
+                .long("output")
+                .takes_value(true)
+                .help("path where kmer count was write"),
         )
-        .arg(Arg::with_name("kmer-size")
-             .short("k")
-             .long("kmer-size")
-             .takes_value(true)
-             .default_value("13")
-             .help("kmer size, if kmer size is even, k -= 1")
+        .arg(
+            Arg::with_name("kmer-size")
+                .short("k")
+                .long("kmer-size")
+                .takes_value(true)
+                .default_value("13")
+                .help(
+                    "kmer size, if kmer size is even real value is equal to k -= 1, max value 63",
+                ),
         )
         .get_matches();
 
-    let reader = bio::io::fasta::Reader::new(
-        std::io::BufReader::new(
-            std::fs::File::open(matches.value_of("input").unwrap()
-            ).unwrap()
-        )
-    );
-
-    let mut k = matches.value_of("kmer-size").unwrap().parse::<u8>().unwrap();
+    // parse argument
+    let mut k = matches
+        .value_of("kmer-size")
+        .unwrap()
+        .parse::<u8>()
+        .unwrap();
     k -= !k & 1;
+    if k > 63 {
+        k = 63;
+    }
 
+    let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
+        std::fs::File::open(matches.value_of("input").unwrap()).unwrap(),
+    ));
+
+    // init counter
     let mut kmer2count: Vec<u8> = vec![0; 1 << (k * 2 - 1)];
-    
+
+    // count
     for result in reader.records() {
         let record = result.unwrap();
-        
+
         for subseq in record.seq().windows(k as usize) {
-            let hash = hash(subseq, k) as usize; 
+            let hash = hash(subseq, k) as usize;
             if kmer2count[hash] != 255 {
                 kmer2count[hash] += 1;
             }
         }
     }
 
-    let out = std::io::BufWriter::new(
-        std::fs::File::create(
-            matches.value_of("output").unwrap()
-        ).unwrap()
+    // write result
+    let mut out = std::io::BufWriter::new(
+        std::fs::File::create(matches.value_of("output").unwrap()).unwrap(),
     );
     let mut writer = csv::WriterBuilder::new().from_writer(out);
-    
+
     for i in 0..(1 << (k * 2 - 1)) {
         if kmer2count[i as usize] == 0 {
             continue;
         }
-        writer.write_record(&[hash2str(i, k), kmer2count[i as usize].to_string()]).unwrap();
+        writer
+            .write_record(&[reverse_hash(i, k), kmer2count[i as usize].to_string()])
+            .unwrap();
     }
 }
 
-fn hash2str(mut kmer: u32, k: u8) -> String {
+fn reverse_hash(mut kmer: u128, k: u8) -> String {
     kmer <<= 1;
-    if !parity_even(kmer) {
-        kmer = kmer + 1; 
+
+    if !convert::parity_even(kmer) {
+        kmer = kmer + 1;
     }
 
-    let mut result = vec![0; k as usize];
-    for i in 1..=k {
-        let val = kmer & 0b11;
+    return convert::bit2seq(kmer, k);
+}
 
-        if val == 0 {
-            result[(k - i) as usize] = b'A';
-        } else if val == 1 {
-            result[(k - i) as usize] = b'C';
-        } else if val == 2 {
-            result[(k - i) as usize] = b'G';
-        } else {
-            result[(k - i) as usize] = b'T';
-        }
+fn hash(kmer: &[u8], k: u8) -> u128 {
+    return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
+}
 
-        kmer >>= 2;
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn reverse_hash_() {
+        // 100011110 -> TAGGC
+        assert_eq!(reverse_hash(0b100011110, 5), "TAGGC");
     }
 
-    return String::from_utf8(result).unwrap();
-}
+    #[test]
+    fn hash_() {
+        // TAGGC -> 100011110
+        assert_eq!(hash(b"TAGGC", 5), 0b100011110);
 
-fn hash(kmer: &[u8], k: u8) -> u32 {
-    return cannonical(seq2bit(kmer), k) >> 1;
-}
-
-fn seq2bit(subseq: &[u8]) -> u32 {
-  let mut kmer: u32 = 0;
-  
-  for n in subseq {
-    kmer <<= 2;
-    kmer |= (*n as u32 >> 1) & 0b11;
-  }
-  
-  return kmer;
-}
-
-fn cannonical(kmer: u32, k: u8) -> u32 {
-    if parity_even(kmer) {
-        return kmer;
-    } else {
-        return revcomp(kmer, k);
+        // GCCTA -> 110101100
+        assert_eq!(hash(b"GCCTA", 5), 0b100011110);
     }
-}
-
-fn parity_even(kmer: u32) -> bool {
-    return kmer.count_ones() % 2 == 0;
-}
-
-fn revcomp(kmer: u32, k: u8) -> u32 {
-    return rev(comp(kmer), k);
-}
-
-fn comp(kmer: u32) -> u32 {
-    return kmer ^ 0b10101010101010101010101010101010;
-}
-
-fn rev(kmer: u32, k: u8) -> u32 {
-    let clean_move = 32 - k * 2;
-
-    let mut reverse = reverse_2(kmer, k);
-    reverse <<= clean_move;
-    reverse >>= clean_move;
-    
-    return reverse;
-}
-
-fn reverse_2(mut kmer: u32, k: u8) -> u32 {
-    let mut reversed: u32 = 0;
-    
-    for _ in 0..(k-1) {
-        reversed = (reversed ^ (kmer & 0b11)) << 2;
-        kmer >>= 2;
-    }
-  
-    return reversed ^ (kmer & 0b11);
 }
