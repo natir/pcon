@@ -1,0 +1,14 @@
+[package]
+name = "ssik"
+description = "Scorer for Stupidly Insufficiently long Kmer"
+version = "0.1.0"
+authors = ["Pierre Marijon <pierre@marijon.fr>"]
+edition = "2018"
+
+[dependencies]
+bio            = "0.21"
+csv            = "1"
+clap           = "2.31.2"
+
+[profile.release]
+debug = true
