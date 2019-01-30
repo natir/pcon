@@ -31,10 +31,10 @@ use crate::convert;
 
 pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
     let reader = std::io::BufReader::new(
-        std::fs::File::create(input_path).unwrap()
+        std::fs::File::open(input_path).unwrap()
     );
 
-    let k = (std::fs::metadata(input_path).unwrap().len() as f64).log2() as u8;
+    let k = ((std::fs::metadata(input_path).unwrap().len() as f64).log2() as u8 + 1) / 2;
     
     let out = std::io::BufWriter::new(
         std::fs::File::create(output_path).unwrap(),
@@ -45,7 +45,7 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
     for (i, v) in reader.bytes().enumerate() {
         let val = v.unwrap();
         
-        if val < abundance {
+        if val >= abundance {
             writer
                 .write_record(&[reverse_hash(i as u128, k), val.to_string()])
                 .unwrap();

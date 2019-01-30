@@ -46,13 +46,17 @@ pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
         }
     }
 
+    write(kmer2count, output_path);
+}
+
+fn write(kmer2count: Vec<u8>, output_path: &str) -> () {
     // write result
     let mut out = std::io::BufWriter::new(
         std::fs::File::create(output_path).unwrap(),
     );
     
-   for i in 0..(1 << (k * 2 - 1)) {
-       out.write(&[kmer2count[i]]).expect("Error durring write count on disk");
+   for i in kmer2count {
+       out.write(&[i]).expect("Error durring write count on disk");
    }
 }
 
