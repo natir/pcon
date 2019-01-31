@@ -9,6 +9,7 @@ edition = "2018"
 bio            = "0.21"
 csv            = "1"
 clap           = "2.31.2"
+itertools      = "0.8"
 
 [profile.release]
 debug = true

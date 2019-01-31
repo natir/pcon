@@ -22,8 +22,10 @@ SOFTWARE.
 
 /* crate declaration */
 extern crate bio;
-extern crate csv;
 extern crate clap;
+extern crate csv;
+#[macro_use]
+extern crate itertools;
 
 /* std use */
 
@@ -34,6 +36,7 @@ use clap::{App, Arg, SubCommand};
 mod convert;
 mod count;
 mod dump;
+mod prepare;
 
 fn main() {
     let matches = App::new("ssik")
@@ -46,25 +49,25 @@ fn main() {
                         Arg::with_name("input")
                             .short("i")
                             .long("input")
+                            .required(true)
                             .takes_value(true)
-                            .help("sequence input in fasta format"),
+                            .help("sequence input in fasta format")
                     )
                     .arg(
                         Arg::with_name("output")
                             .short("o")
                             .long("output")
+                            .required(true)
                             .takes_value(true)
-                            .help("path where kmer count was write"),
+                            .help("path where kmer count was write")
                     )
                     .arg(
                         Arg::with_name("kmer-size")
                             .short("k")
                             .long("kmer-size")
+                            .required(true)
                             .takes_value(true)
-                            .default_value("13")
-                            .help(
-                                "kmer size, if kmer size is even real value is equal to k-1, max value 63",
-                            ),
+                            .help("kmer size, if kmer size is even real value is equal to k-1, max value 63")
                     )
         )
         .subcommand(SubCommand::with_name("dump")
@@ -73,6 +76,7 @@ fn main() {
                         Arg::with_name("input")
                             .short("i")
                             .long("input")
+                            .required(true)
                             .takes_value(true)
                             .help("binary file generate by count step"),
                     )
@@ -80,6 +84,7 @@ fn main() {
                         Arg::with_name("output")
                             .short("o")
                             .long("output")
+                            .required(true)
                             .takes_value(true)
                             .help("path where kmer count was write"),
                     )
@@ -88,7 +93,29 @@ fn main() {
                             .short("a")
                             .long("abudance-min")
                             .takes_value(true)
+                            .default_value("1")
                             .help("write only kmer with abudance is higher than this parametre")
+                    )
+        )
+        .subcommand(SubCommand::with_name("prepare")
+                    .about("indicate for a k the memory usage of count")
+                    .arg(
+                        Arg::with_name("kmer-size")
+                            .short("k")
+                            .long("kmer-size")
+                            .takes_value(true)
+                            .help(
+                                "kmer size you want use",
+                            )
+                    )
+                    .arg(
+                        Arg::with_name("minimizer-size")
+                            .short("m")
+                            .long("minimizer-size")
+                            .takes_value(true)
+                            .help(
+                                "minimizer size you want use",
+                            )
                     )
         )
         .get_matches();
@@ -104,7 +131,12 @@ fn main() {
             k = 63;
         }
 
-        count::count(count_matches.value_of("input").unwrap(), count_matches.value_of("output").unwrap(), k);
+        count::count(
+            count_matches.value_of("input").unwrap(),
+            count_matches.value_of("output").unwrap(),
+            k,
+            1,
+        );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abudance = dump_matches
             .value_of("abundance-min")
@@ -112,8 +144,54 @@ fn main() {
             .parse::<u8>()
             .unwrap();
 
-        dump::dump(dump_matches.value_of("input").unwrap(), dump_matches.value_of("output").unwrap(), abudance);
+        dump::dump(
+            dump_matches.value_of("input").unwrap(),
+            dump_matches.value_of("output").unwrap(),
+            abudance,
+        );
+        
+    } else if let Some(prepare_matches) = matches.subcommand_matches("prepare") {
+        if prepare_matches.is_present("kmer-size") && prepare_matches.is_present("minimizer-size") {
+            eprintln!("You can't use k and m in same time");
+            return ();
+        }
+
+        if !prepare_matches.is_present("kmer-size") && !prepare_matches.is_present("minimizer-size")
+        {
+            eprintln!("You need use k or m");
+            return ();
+        }
+
+        if prepare_matches.is_present("kmer-size") {
+            let mut k = prepare_matches
+                .value_of("kmer-size")
+                .unwrap()
+                .parse::<u8>()
+                .unwrap();
+            k -= !k & 1;
+            if k > 63 {
+                k = 63;
+            }
+
+            prepare::prepare(k, "k");
+
+            return ();
+        }
+
+        if prepare_matches.is_present("minimizer-size") {
+            let mut m = prepare_matches
+                .value_of("minimizer-size")
+                .unwrap()
+                .parse::<u8>()
+                .unwrap();
+            m -= !m & 1;
+            if m > 63 {
+                m = 63;
+            }
+
+            prepare::prepare(m, "m");
+
+            return ();
+        }
     }
 }
-
-

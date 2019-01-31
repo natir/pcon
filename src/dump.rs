@@ -25,26 +25,30 @@ use std::io::Read;
 
 /* crate use */
 use csv;
+use itertools::Itertools;
 
 /* project use */
 use crate::convert;
 
 pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
-    let reader = std::io::BufReader::new(
-        std::fs::File::open(input_path).unwrap()
-    );
+    let mut reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
 
-    let k = ((std::fs::metadata(input_path).unwrap().len() as f64).log2() as u8 + 1) / 2;
-    
-    let out = std::io::BufWriter::new(
-        std::fs::File::create(output_path).unwrap(),
-    );
-    
+    let k_buffer: &mut [u8] = &mut [0];
+    reader
+        .read_exact(k_buffer)
+        .expect("Error durring read count on disk");
+    let k = k_buffer[0];
+
+    let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+
     let mut writer = csv::WriterBuilder::new().from_writer(out);
-    
-    for (i, v) in reader.bytes().enumerate() {
-        let val = v.unwrap();
-        
+
+    let mut i = 0;
+    for mut chunks in reader.bytes().chunks(2).into_iter() {
+        let dist = chunks.next().unwrap().unwrap();
+        let val = chunks.next().unwrap().unwrap();
+
+        i += dist;
         if val >= abundance {
             writer
                 .write_record(&[reverse_hash(i as u128, k), val.to_string()])

@@ -26,7 +26,7 @@ use std::io::Write;
 /* project use */
 use crate::convert;
 
-pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
+pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
@@ -39,25 +39,39 @@ pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
-            let hash = hash(subseq, k) as usize;
-            if kmer2count[hash] != 255 {
-                kmer2count[hash] += 1;
-            }
+            add_in_counter(&mut kmer2count, subseq, k);
         }
     }
 
-    write(kmer2count, output_path);
+    write(kmer2count, output_path, k, abundance_min);
 }
 
-fn write(kmer2count: Vec<u8>, output_path: &str) -> () {
-    // write result
-    let mut out = std::io::BufWriter::new(
-        std::fs::File::create(output_path).unwrap(),
-    );
-    
-   for i in kmer2count {
-       out.write(&[i]).expect("Error durring write count on disk");
-   }
+fn add_in_counter(kmer2count: &mut Vec<u8>, subseq: &[u8], k: u8) -> () {
+    let hash = hash(subseq, k) as usize;
+    if kmer2count[hash] != 255 {
+        kmer2count[hash] += 1;
+    }
+}
+
+fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {
+    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+
+    // write k in first bytes
+    out.write(&[k])
+        .expect("Error during write of count on disk");
+
+    let mut last_write = 0;
+    for (i, val) in kmer2count.iter().enumerate() {
+        if val < &abundance_min {
+            continue;
+        }
+        let dist = i - last_write;
+        last_write = i;
+
+        // write dist to last value and count of k
+        out.write(&[dist as u8, *val])
+            .expect("Error durring write count on disk");
+    }
 }
 
 fn hash(kmer: &[u8], k: u8) -> u128 {
@@ -67,7 +81,7 @@ fn hash(kmer: &[u8], k: u8) -> u128 {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn hash_() {
         // TAGGC -> 100011110
