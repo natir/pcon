@@ -51,13 +51,13 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
         i += dist;
         if val >= abundance {
             writer
-                .write_record(&[reverse_hash(i as u128, k), val.to_string()])
+                .write_record(&[reverse_hash(i as u64, k), val.to_string()])
                 .unwrap();
         }
     }
 }
 
-fn reverse_hash(mut kmer: u128, k: u8) -> String {
+fn reverse_hash(mut kmer: u64, k: u8) -> String {
     kmer <<= 1;
 
     if !convert::parity_even(kmer) {

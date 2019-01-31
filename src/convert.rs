@@ -20,18 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-pub fn seq2bit(subseq: &[u8]) -> u128 {
-    let mut kmer: u128 = 0;
+pub fn seq2bit(subseq: &[u8]) -> u64 {
+    let mut kmer: u64 = 0;
 
     for n in subseq {
         kmer <<= 2;
-        kmer |= (*n as u128 >> 1) & 0b11;
+        kmer |= (*n as u64 >> 1) & 0b11;
     }
 
     return kmer;
 }
 
-pub fn bit2seq(mut kmer: u128, k: u8) -> String {
+pub fn bit2seq(mut kmer: u64, k: u8) -> String {
     let mut result = vec![0; k as usize];
 
     for i in (0..k).rev() {
@@ -53,7 +53,7 @@ pub fn bit2seq(mut kmer: u128, k: u8) -> String {
     return String::from_utf8(result).unwrap();
 }
 
-pub fn cannonical(kmer: u128, k: u8) -> u128 {
+pub fn cannonical(kmer: u64, k: u8) -> u64 {
     if parity_even(kmer) {
         return kmer;
     } else {
@@ -61,20 +61,20 @@ pub fn cannonical(kmer: u128, k: u8) -> u128 {
     }
 }
 
-pub fn parity_even(kmer: u128) -> bool {
+pub fn parity_even(kmer: u64) -> bool {
     return kmer.count_ones() % 2 == 0;
 }
 
-pub fn revcomp(kmer: u128, k: u8) -> u128 {
+pub fn revcomp(kmer: u64, k: u8) -> u64 {
     return rev(comp(kmer), k);
 }
 
-pub fn comp(kmer: u128) -> u128 {
-    return kmer ^ 0b10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010;
+pub fn comp(kmer: u64) -> u64 {
+    return kmer ^ 0b1010101010101010101010101010101010101010101010101010101010101010;
 }
 
-pub fn rev(kmer: u128, k: u8) -> u128 {
-    let clean_move = 128 - k * 2;
+pub fn rev(kmer: u64, k: u8) -> u64 {
+    let clean_move = 64 - k * 2;
 
     let mut reverse = reverse_2(kmer, k);
     reverse <<= clean_move;
@@ -83,8 +83,8 @@ pub fn rev(kmer: u128, k: u8) -> u128 {
     return reverse;
 }
 
-pub fn reverse_2(mut kmer: u128, k: u8) -> u128 {
-    let mut reversed: u128 = 0;
+pub fn reverse_2(mut kmer: u64, k: u8) -> u64 {
+    let mut reversed: u64 = 0;
 
     for _ in 0..(k - 1) {
         reversed = (reversed ^ (kmer & 0b11)) << 2;
@@ -140,13 +140,16 @@ mod test {
     #[test]
     fn comp_() {
         // TAGGC -> 1000111101 comp 0001001011
-        assert_eq!(comp(0b1000111101), 0b10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010100010010111);
+        assert_eq!(
+            comp(0b1000111101),
+            0b1010101010101010101010101010101010101010101010101010100010010111
+        );
     }
 
     #[test]
     fn rev_() {
         // TAGGC -> 1000111101 rev CGGAT -> 0111110010
-        let var = 0b10101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101000111101;
+        let var = 0b1010101010101010101010101010101010101010101010101010101000111101;
 
         assert_eq!(498, rev(var, 5));
     }

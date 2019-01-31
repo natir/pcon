@@ -74,7 +74,7 @@ fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> ()
     }
 }
 
-fn hash(kmer: &[u8], k: u8) -> u128 {
+fn hash(kmer: &[u8], k: u8) -> u64 {
     return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
 }
 
