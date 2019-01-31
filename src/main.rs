@@ -36,6 +36,7 @@ use clap::{App, Arg, SubCommand};
 mod convert;
 mod count;
 mod dump;
+mod minimizer;
 mod prepare;
 
 fn main() {
@@ -44,7 +45,7 @@ fn main() {
         .author("Pierre Marijon <pierre.marijon@inria.fr>")
         .about("Scorer for Stupidly Insufficiently long Kmer")
         .subcommand(SubCommand::with_name("count")
-                    .about("count kmer in fasta file and generate a binary file with size 2^k-1 bytes")
+                    .about("count kmer in fasta file")
                     .arg(
                         Arg::with_name("input")
                             .short("i")
@@ -68,6 +69,41 @@ fn main() {
                             .required(true)
                             .takes_value(true)
                             .help("kmer size, if kmer size is even real value is equal to k-1, max value 63")
+                    )
+        )
+        .subcommand(SubCommand::with_name("minimizer")
+                    .about("count minimizer in fasta file")
+                    .arg(
+                        Arg::with_name("input")
+                            .short("i")
+                            .long("input")
+                            .required(true)
+                            .takes_value(true)
+                            .help("sequence input in fasta format")
+                    )
+                    .arg(
+                        Arg::with_name("output")
+                            .short("o")
+                            .long("output")
+                            .required(true)
+                            .takes_value(true)
+                            .help("path where kmer count was write")
+                    )
+                    .arg(
+                        Arg::with_name("kmer-size")
+                            .short("k")
+                            .long("kmer-size")
+                            .required(true)
+                            .takes_value(true)
+                            .help("kmer size")
+                    )
+                    .arg(
+                        Arg::with_name("minimizer-size")
+                            .short("m")
+                            .long("minimizer-size")
+                            .required(true)
+                            .takes_value(true)
+                            .help("minimizer size, if kmer size is even real value is equal to k-1, max value 63")
                     )
         )
         .subcommand(SubCommand::with_name("dump")
@@ -121,20 +157,40 @@ fn main() {
         .get_matches();
 
     if let Some(count_matches) = matches.subcommand_matches("count") {
-        let mut k = count_matches
-            .value_of("kmer-size")
-            .unwrap()
-            .parse::<u8>()
-            .unwrap();
-        k -= !k & 1;
-        if k > 63 {
-            k = 63;
-        }
+        let k = normalize_size_of_count(
+            count_matches
+                .value_of("kmer-size")
+                .unwrap()
+                .parse::<u8>()
+                .unwrap(),
+        );
 
         count::count(
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
+            1,
+        );
+    } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
+        let k = minimizer_matches
+            .value_of("kmer-size")
+            .unwrap()
+            .parse::<u8>()
+            .unwrap();
+
+        let m = normalize_size_of_count(
+            minimizer_matches
+                .value_of("minimizer-size")
+                .unwrap()
+                .parse::<u8>()
+                .unwrap(),
+        );
+
+        minimizer::minimizer(
+            minimizer_matches.value_of("input").unwrap(),
+            minimizer_matches.value_of("output").unwrap(),
+            k,
+            m,
             1,
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
@@ -149,7 +205,6 @@ fn main() {
             dump_matches.value_of("output").unwrap(),
             abudance,
         );
-        
     } else if let Some(prepare_matches) = matches.subcommand_matches("prepare") {
         if prepare_matches.is_present("kmer-size") && prepare_matches.is_present("minimizer-size") {
             eprintln!("You can't use k and m in same time");
@@ -163,15 +218,13 @@ fn main() {
         }
 
         if prepare_matches.is_present("kmer-size") {
-            let mut k = prepare_matches
-                .value_of("kmer-size")
-                .unwrap()
-                .parse::<u8>()
-                .unwrap();
-            k -= !k & 1;
-            if k > 63 {
-                k = 63;
-            }
+            let k = normalize_size_of_count(
+                prepare_matches
+                    .value_of("kmer-size")
+                    .unwrap()
+                    .parse::<u8>()
+                    .unwrap(),
+            );
 
             prepare::prepare(k, "k");
 
@@ -179,19 +232,25 @@ fn main() {
         }
 
         if prepare_matches.is_present("minimizer-size") {
-            let mut m = prepare_matches
-                .value_of("minimizer-size")
-                .unwrap()
-                .parse::<u8>()
-                .unwrap();
-            m -= !m & 1;
-            if m > 63 {
-                m = 63;
-            }
+            let m = normalize_size_of_count(
+                prepare_matches
+                    .value_of("minimizer-size")
+                    .unwrap()
+                    .parse::<u8>()
+                    .unwrap(),
+            );
 
             prepare::prepare(m, "m");
 
             return ();
         }
     }
+}
+
+fn normalize_size_of_count(k: u8) -> u8 {
+    if k > 63 {
+        return 63;
+    }
+
+    return k - (!k & 1);
 }
