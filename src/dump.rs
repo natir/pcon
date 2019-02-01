@@ -43,12 +43,12 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
 
     let mut writer = csv::WriterBuilder::new().from_writer(out);
 
-    let mut i = 0;
+    let mut i: u64 = 0;
     for mut chunks in reader.bytes().chunks(2).into_iter() {
         let dist = chunks.next().unwrap().unwrap();
         let val = chunks.next().unwrap().unwrap();
 
-        i += dist;
+        i += dist as u64;
         if val >= abundance {
             writer
                 .write_record(&[reverse_hash(i as u64, k), val.to_string()])

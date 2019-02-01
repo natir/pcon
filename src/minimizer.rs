@@ -43,20 +43,20 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
         }
     }
 
-    write(minimizer2count, output_path, k, abundance_min);
+    write(minimizer2count, output_path, m, abundance_min);
 }
 
 fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
     let mut mini = u64::max_value();
-    
+
     for subk in subseq.windows(m as usize) {
         let hash = hash(subk, m);
-        
+
         if hash < mini {
             mini = hash;
         }
     }
-    
+
     add_in_counter(&mut minimizer2count, unrevhash(mini));
 }
 
@@ -64,15 +64,15 @@ fn add_in_counter(minimizer2count: &mut Vec<u8>, mini: u64) -> () {
     minimizer2count[mini as usize] = minimizer2count[mini as usize].saturating_add(1);
 }
 
-fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {
+fn write(minimizer2count: Vec<u8>, output_path: &str, m: u8, abundance_min: u8) -> () {
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
 
     // write k in first bytes
-    out.write(&[k])
+    out.write(&[m])
         .expect("Error during write of count on disk");
 
     let mut last_write = 0;
-    for (i, val) in kmer2count.iter().enumerate() {
+    for (i, val) in minimizer2count.iter().enumerate() {
         if val < &abundance_min {
             continue;
         }
