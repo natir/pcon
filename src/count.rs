@@ -20,11 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-/* std use*/
-use std::io::Write;
-
 /* project use */
 use crate::convert;
+use crate::write;
 
 pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
@@ -43,33 +41,12 @@ pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> (
         }
     }
 
-    write(kmer2count, output_path, k, abundance_min);
+    write::write(kmer2count, output_path, k, abundance_min);
 }
 
 fn add_in_counter(kmer2count: &mut Vec<u8>, subseq: &[u8], k: u8) -> () {
     let hash = hash(subseq, k) as usize;
     kmer2count[hash] = kmer2count[hash].saturating_add(1);
-}
-
-fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {
-    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-
-    // write k in first bytes
-    out.write(&[k])
-        .expect("Error during write of count on disk");
-
-    let mut last_write = 0;
-    for (i, val) in kmer2count.iter().enumerate() {
-        if val < &abundance_min {
-            continue;
-        }
-        let dist = i - last_write;
-        last_write = i;
-
-        // write dist to last value and count of k
-        out.write(&[dist as u8, *val])
-            .expect("Error durring write count on disk");
-    }
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {

@@ -38,6 +38,7 @@ mod count;
 mod dump;
 mod minimizer;
 mod prepare;
+mod write;
 
 fn main() {
     let matches = App::new("ssik")

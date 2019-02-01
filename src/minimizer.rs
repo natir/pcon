@@ -20,11 +20,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-/* std use*/
-use std::io::Write;
-
 /* project use */
 use crate::convert;
+use crate::write;
 
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_min: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
@@ -43,7 +41,7 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
         }
     }
 
-    write(minimizer2count, output_path, m, abundance_min);
+    write::write(minimizer2count, output_path, m, abundance_min);
 }
 
 fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
@@ -65,27 +63,6 @@ fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> (
 
 fn add_in_counter(minimizer2count: &mut Vec<u8>, mini: u64) -> () {
     minimizer2count[mini as usize] = minimizer2count[mini as usize].saturating_add(1);
-}
-
-fn write(minimizer2count: Vec<u8>, output_path: &str, m: u8, abundance_min: u8) -> () {
-    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-
-    // write k in first bytes
-    out.write(&[m])
-        .expect("Error during write of count on disk");
-
-    let mut last_write = 0;
-    for (i, val) in minimizer2count.iter().enumerate() {
-        if val < &abundance_min {
-            continue;
-        }
-        let dist = i - last_write;
-        last_write = i;
-
-        // write dist to last value and count of k
-        out.write(&[dist as u8, *val])
-            .expect("Error durring write count on disk");
-    }
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {
