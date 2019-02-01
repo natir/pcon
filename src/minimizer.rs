@@ -47,17 +47,20 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
 }
 
 fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
-    let mut mini = u64::max_value();
+    let mut mini: u64;
+    let mut mini_hash = u64::max_value();
 
     for subk in subseq.windows(m as usize) {
-        let hash = hash(subk, m);
-
-        if hash < mini {
-            mini = hash;
+        let kmer = hash(subk, m);
+        let hash = revhash(kmer);
+        
+        if hash < mini_hash {
+            mini = kmer;
+            mini_hash = hash;
         }
     }
 
-    add_in_counter(&mut minimizer2count, unrevhash(mini));
+    add_in_counter(&mut minimizer2count, mini);
 }
 
 fn add_in_counter(minimizer2count: &mut Vec<u8>, mini: u64) -> () {
@@ -86,20 +89,12 @@ fn write(minimizer2count: Vec<u8>, output_path: &str, m: u8, abundance_min: u8) 
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {
-    return revhash(convert::cannonical(convert::seq2bit(kmer), k) >> 1);
+    return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
 }
 
 fn revhash(mut x: u64) -> u64 {
     x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
     x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
-    x = (x >> 32) ^ x;
-
-    return x;
-}
-
-fn unrevhash(mut x: u64) -> u64 {
-    x = ((x >> 32) ^ x).wrapping_mul(0xCFEE444D8B59A89B);
-    x = ((x >> 32) ^ x).wrapping_mul(0xCFEE444D8B59A89B);
     x = (x >> 32) ^ x;
 
     return x;
