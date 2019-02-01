@@ -39,21 +39,25 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
-            let mut mini = u64::max_value();
-
-            for subk in subseq.windows(m as usize) {
-                let hash = hash(subk, m);
-
-                if hash < mini {
-                    mini = hash;
-                }
-            }
-            
-            add_in_counter(&mut minimizer2count, unrevhash(mini));
+            found_minimizer(subseq, &mut minimizer2count, m);
         }
     }
 
     write(minimizer2count, output_path, k, abundance_min);
+}
+
+fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
+    let mut mini = u64::max_value();
+    
+    for subk in subseq.windows(m as usize) {
+        let hash = hash(subk, m);
+        
+        if hash < mini {
+            mini = hash;
+        }
+    }
+    
+    add_in_counter(&mut minimizer2count, unrevhash(mini));
 }
 
 fn add_in_counter(kmer2count: &mut Vec<u8>, mini: u64) -> () {
