@@ -48,9 +48,7 @@ pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> (
 
 fn add_in_counter(kmer2count: &mut Vec<u8>, subseq: &[u8], k: u8) -> () {
     let hash = hash(subseq, k) as usize;
-    if kmer2count[hash] != 255 {
-        kmer2count[hash] += 1;
-    }
+    kmer2count[hash] = kmer2count[hash].saturating_add(1);
 }
 
 fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {

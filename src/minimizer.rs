@@ -60,10 +60,8 @@ fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> (
     add_in_counter(&mut minimizer2count, unrevhash(mini));
 }
 
-fn add_in_counter(kmer2count: &mut Vec<u8>, mini: u64) -> () {
-    if kmer2count[mini as usize] != 255 {
-        kmer2count[mini as usize] += 1;
-    }
+fn add_in_counter(minimizer2count: &mut Vec<u8>, mini: u64) -> () {
+    minimizer2count[mini as usize] = minimizer2count[mini as usize].saturating_add(1);
 }
 
 fn write(kmer2count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {
