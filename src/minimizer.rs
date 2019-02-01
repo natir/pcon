@@ -45,7 +45,7 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
 }
 
 fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
-    let mut mini: u64;
+    let mut mini: u64 = 0;;
     let mut mini_hash = u64::max_value();
 
     for subk in subseq.windows(m as usize) {
@@ -84,9 +84,9 @@ mod test {
     #[test]
     fn hash_() {
         // TAGGC -> 100011110
-        assert_eq!(unrevhash(hash(b"TAGGC", 5)), 0b100011110);
+        assert_eq!(hash(b"TAGGC", 5), 0b100011110);
 
         // GCCTA -> 110101100
-        assert_eq!(unrevhash(hash(b"GCCTA", 5)), 0b100011110);
+        assert_eq!(hash(b"GCCTA", 5), 0b100011110);
     }
 }
