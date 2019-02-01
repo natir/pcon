@@ -68,7 +68,7 @@ fn main() {
                             .long("kmer-size")
                             .required(true)
                             .takes_value(true)
-                            .help("kmer size, if kmer size is even real value is equal to k-1, max value 63")
+                            .help("kmer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
         )
         .subcommand(SubCommand::with_name("minimizer")
@@ -103,7 +103,7 @@ fn main() {
                             .long("minimizer-size")
                             .required(true)
                             .takes_value(true)
-                            .help("minimizer size, if kmer size is even real value is equal to k-1, max value 63")
+                            .help("minimizer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
         )
         .subcommand(SubCommand::with_name("dump")
@@ -248,8 +248,8 @@ fn main() {
 }
 
 fn normalize_size_of_count(k: u8) -> u8 {
-    if k > 63 {
-        return 63;
+    if k > 31 {
+        return 31;
     }
 
     return k - (!k & 1);
