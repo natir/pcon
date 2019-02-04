@@ -35,10 +35,10 @@ use clap::{App, Arg, SubCommand};
 /* project mod declaration */
 mod convert;
 mod count;
+mod counter;
 mod dump;
 mod minimizer;
 mod prepare;
-mod counter;
 mod write;
 
 fn main() {

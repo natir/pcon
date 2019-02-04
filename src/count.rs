@@ -22,40 +22,28 @@ SOFTWARE.
 
 /* project use */
 use crate::convert;
-use crate::write;
 use crate::counter;
+use crate::write;
 
 pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
 
-    // init counter
-    // let mut kmer2count: Vec<u8> = vec![0; 1 << (k * 2 - 1)];
-
     let mut counter = counter::Counter::new(k);
-    
-    // count
+
     for result in reader.records() {
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
             let hash = hash(subseq, k);
-            counter.add_bit(hash, k);
-            //add_in_counter(&mut kmer2count, hash);
+            counter.add_bit(hash);
         }
     }
 
-    for i in 0..4096 {
-        counter.clean_buckets(i);
-    }
-    
-    
-    write::write(counter.counts, output_path, k, abundance_min);
-}
+    counter.clean_all_buckets();
 
-fn add_in_counter(kmer2count: &mut Vec<u8>, hash: usize) -> () {
-    kmer2count[hash] = kmer2count[hash].saturating_add(1);
+    write::write(counter.counts, output_path, k, abundance_min);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {

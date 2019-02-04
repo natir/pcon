@@ -38,17 +38,17 @@ pub fn write(count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () 
 
         let mut dist = i - last_write;
         last_write = i;
-        
-        if dist > 255 { // dist overflow u8 we need write a some kmer with 0 count
+
+        if dist > 255 {
+            // dist overflow u8 we need write a some kmer with 0 count
             let n = dist / 255;
             for _ in 0..n {
-                out.write(&[255, 0]).expect("Error durring write count on disk");
+                out.write(&[255, 0])
+                    .expect("Error durring write count on disk");
             }
-            
-            dist %= 255; 
-        }
-        
 
+            dist %= 255;
+        }
 
         // write dist to last value and count of k
         out.write(&[dist as u8, *val])

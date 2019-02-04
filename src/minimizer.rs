@@ -22,6 +22,7 @@ SOFTWARE.
 
 /* project use */
 use crate::convert;
+use crate::counter;
 use crate::write;
 
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_min: u8) -> () {
@@ -30,39 +31,37 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
     ));
 
     // init counter
-    let mut minimizer2count: Vec<u8> = vec![0; 1 << (m * 2 - 1)];
+    let mut counter = counter::Counter::new(m);
 
     // count
     for result in reader.records() {
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
-            found_minimizer(subseq, &mut minimizer2count, m);
+            found_minimizer(subseq, &mut counter, m);
         }
     }
 
-    write::write(minimizer2count, output_path, m, abundance_min);
+    counter.clean_all_buckets();
+    
+    write::write(counter.counts, output_path, m, abundance_min);
 }
 
-fn found_minimizer(subseq: &[u8], mut minimizer2count: &mut Vec<u8>, m: u8) -> () {
+fn found_minimizer(subseq: &[u8], counter: &mut counter::Counter, m: u8) -> () {
     let mut mini: u64 = 0;;
     let mut mini_hash = u64::max_value();
 
     for subk in subseq.windows(m as usize) {
         let kmer = hash(subk, m);
         let hash = revhash(kmer);
-        
+
         if hash < mini_hash {
             mini = kmer;
             mini_hash = hash;
         }
     }
 
-    add_in_counter(&mut minimizer2count, mini);
-}
-
-fn add_in_counter(minimizer2count: &mut Vec<u8>, mini: u64) -> () {
-    minimizer2count[mini as usize] = minimizer2count[mini as usize].saturating_add(1);
+    counter.add_bit(mini);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {
