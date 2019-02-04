@@ -38,6 +38,7 @@ mod count;
 mod dump;
 mod minimizer;
 mod prepare;
+mod counter;
 mod write;
 
 fn main() {

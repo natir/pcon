@@ -25,10 +25,14 @@ pub fn seq2bit(subseq: &[u8]) -> u64 {
 
     for n in subseq {
         kmer <<= 2;
-        kmer |= (*n as u64 >> 1) & 0b11;
+        kmer |= nuc2bit(*n);
     }
 
     return kmer;
+}
+
+fn nuc2bit(nuc: u8) -> u64 {
+    return (nuc as u64 >> 1) & 0b11;
 }
 
 pub fn bit2seq(mut kmer: u64, k: u8) -> String {
