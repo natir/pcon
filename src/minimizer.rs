@@ -31,23 +31,24 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
     ));
 
     // init counter
-    let mut counter = counter::Counter::new(m);
+    let mut counter = counter::VecCounter::new(m);
+    let mut bucketizer = counter::Bucketizer::new(&mut counter, m);
 
     // count
     for result in reader.records() {
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
-            found_minimizer(subseq, &mut counter, m);
+            found_minimizer(subseq, &mut bucketizer, m);
         }
     }
 
-    counter.clean_all_buckets();
+    bucketizer.clean_all_buckets();
     
-    write::write(counter.counts, output_path, m, abundance_min);
+    write::write(counter, output_path, m, abundance_min);
 }
 
-fn found_minimizer(subseq: &[u8], counter: &mut counter::Counter, m: u8) -> () {
+fn found_minimizer<'a>(subseq: &[u8], counter: &'a mut counter::Bucketizer<counter::VecCounter>, m: u8) -> () {
     let mut mini: u64 = 0;;
     let mut mini_hash = u64::max_value();
 

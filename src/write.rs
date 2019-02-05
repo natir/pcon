@@ -20,10 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+/* project use */
+use crate::counter;
+
 /* std use*/
 use std::io::Write;
 
-pub fn write(count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () {
+pub fn write<C: counter::Counter>(count: C, output_path: &str, k: u8, abundance_min: u8) -> () {
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
 
     // write k in first bytes
@@ -31,8 +34,10 @@ pub fn write(count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () 
         .expect("Error during write of count on disk");
 
     let mut last_write = 0;
-    for (i, val) in count.iter().enumerate() {
-        if val < &abundance_min {
+    for i in 0..(1 << (k * 2 - 1)) {
+        let val = count.get(i);
+        
+        if val < abundance_min {
             continue;
         }
 
@@ -51,7 +56,7 @@ pub fn write(count: Vec<u8>, output_path: &str, k: u8, abundance_min: u8) -> () 
         }
 
         // write dist to last value and count of k
-        out.write(&[dist as u8, *val])
+        out.write(&[dist as u8, val])
             .expect("Error durring write count on disk");
     }
 }

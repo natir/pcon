@@ -30,20 +30,21 @@ pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> (
         std::fs::File::open(input_path).unwrap(),
     ));
 
-    let mut counter = counter::Counter::new(k);
+    let mut counter = counter::VecCounter::new(k);
+    let mut bucketizer: counter::Bucketizer<counter::VecCounter> = counter::Bucketizer::new(&mut counter, k);
 
     for result in reader.records() {
         let record = result.unwrap();
 
         for subseq in record.seq().windows(k as usize) {
             let hash = hash(subseq, k);
-            counter.add_bit(hash);
+            bucketizer.add_bit(hash);
         }
     }
 
-    counter.clean_all_buckets();
+    bucketizer.clean_all_buckets();
 
-    write::write(counter.counts, output_path, k, abundance_min);
+    write::write(counter, output_path, k, abundance_min);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {

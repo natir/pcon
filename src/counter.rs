@@ -20,52 +20,130 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-// use std::thread;
-// use std::sync::{Arc, Mutex};
 
-pub struct Counter {
-    pub counts: Vec<u8>,
-    buckets: Vec<Vec<u64>>,
-    mask_size: u8,
-    bucket_size: usize,
-    nb_bit: u8,
+pub trait Counter {
+    fn inc(&mut self, pos: usize) -> ();
+    fn get(&self, pos: usize) -> u8;
 }
 
-impl Counter {
-    pub fn new(k: u8) -> Self {
-        let nb_bit = k * 2 - 1;
-        let mask_size = nb_bit / 2;
-        let nb_bucket = 1 << mask_size;
-        let bucket_size: usize = 4096;
+pub struct VecCounter {
+    inner: Vec<u8>,
+}
 
-        Counter {
-            counts: vec![0; 1 << nb_bit],
-            buckets: vec![Vec::with_capacity(bucket_size); nb_bucket],
-            mask_size: mask_size,
+impl VecCounter {
+    pub fn new(k: u8) -> Self {
+        VecCounter {
+            inner: vec![0; 1 << (k * 2 - 1)]
+        }
+    }
+}
+
+impl Counter for VecCounter {
+    fn inc(&mut self, pos: usize) -> () {
+        self.inner[pos] = self.inner[pos].saturating_add(1);
+    }
+
+    fn get(&self, pos: usize) -> u8 {
+        self.inner[pos]
+    }
+}
+
+pub struct Bucketizer<'a, C: Counter> {
+    pub counter: &'a mut C,
+    buckets: Vec<Vec<u64>>,
+    k: u8,
+    bucket_size: usize,
+}
+
+impl<'a, C: Counter> Bucketizer<'a, C> {
+    pub fn new(counter: &'a mut C, k: u8) -> Self {
+        let bucket_size: usize = 1024;
+
+        Bucketizer {
+            counter: counter,
+            buckets: vec![Vec::with_capacity(bucket_size); nb_bucket(k)],
+            k: k,
             bucket_size: bucket_size,
-            nb_bit: nb_bit,
         }
     }
 
     pub fn add_bit(&mut self, hash: u64) -> () {
-        let mask_prefix = ((1 << (self.mask_size + 1)) - 1) << (self.nb_bit - self.mask_size);
-        let prefix: usize = (mask_prefix & hash as usize) >> (self.nb_bit - self.mask_size);
+        let prefix: usize = (self.mask_prefix() & hash as usize) >> (self.nb_bit() - self.mask_size());
+        
+        self.buckets[prefix].push(hash);
 
-        let bucket: &mut Vec<u64> = &mut self.buckets[prefix];
-        bucket.push(hash);
-
-        if bucket.len() == self.bucket_size {
-            for hash in bucket.drain(..).map(|x| x as usize) {
-                self.counts[hash] = self.counts[hash].saturating_add(1);
-            }
+        if self.buckets[prefix].len() == self.bucket_size {
+            self.clean_bucket(prefix, self.bucket_size);
         }
     }
 
     pub fn clean_all_buckets(&mut self) -> () {
-        for mut bucket in self.buckets.drain(..) {
-            for hash in bucket.drain(..).map(|x| x as usize) {
-                self.counts[hash] = self.counts[hash].saturating_add(1);
-            }
+        for prefix in 0..self.nb_bucket() {
+            self.clean_bucket(prefix, 0);
         }
     }
+
+    fn clean_bucket(&mut self, prefix: usize, new_size: usize) -> () {
+        for hash in std::mem::replace(&mut self.buckets[prefix], Vec::with_capacity(new_size)) {
+            self.counter.inc(hash as usize);
+        }
+    }
+
+    fn nb_bit(&self) -> usize {
+        nb_bit(self.k)
+    }
+
+    fn mask_size(&self) -> usize {
+        match mask_size(self.k) > 12 { true => 12, false => mask_size(self.k)}
+    }
+
+    fn nb_bucket(&self) -> usize {
+        nb_bucket(self.k)
+    }
+
+    fn mask_prefix(&self) -> usize {
+        mask_prefix(self.k)
+    }
+}
+
+fn nb_bit(k: u8) -> usize {
+    (k * 2 - 1) as usize
+}
+
+fn mask_size(k: u8) -> usize {
+    nb_bit(k) / 2
+}
+
+fn nb_bucket(k: u8) -> usize {
+    1 << mask_size(k)
+}
+
+fn mask_prefix(k: u8) -> usize {
+    ((1 << mask_size(k)) - 1) << (nb_bit(k) - mask_size(k))    
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    
+    #[test]
+    fn nb_bit_() -> () {
+        assert_eq!(nb_bit(5), 9);
+    }
+
+    #[test]
+    fn mask_size_() -> () {
+        assert_eq!(mask_size(5), 4);
+    }
+    
+    #[test]
+    fn nb_bucket_() -> () {
+        assert_eq!(nb_bucket(5), 16);
+    }
+
+    #[test]
+    fn mask_prefix_() -> () {
+        assert_eq!(mask_prefix(5), 0b111100000);
+    }
+
 }
