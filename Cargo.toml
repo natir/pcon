@@ -6,10 +6,11 @@ authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
 
 [dependencies]
-bio            = "0.21"
-csv            = "1"
-clap           = "2.31.2"
-itertools      = "0.8"
+bio             = "0.21"
+csv             = "1"
+clap            = "2.31.2"
+crossbeam-deque = "0.7"
+itertools       = "0.8"
 
 [profile.release]
 debug = true

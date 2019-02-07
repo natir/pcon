@@ -20,10 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+use crossbeam_deque::{Injector, Steal, Stealer, Worker};
 
 pub trait Counter {
-    fn inc(&mut self, pos: usize) -> ();
+    fn inc(&mut self, pos: u64) -> ();
+    fn incs(&mut self, vals: Vec<u64>) -> ();
     fn get(&self, pos: usize) -> u8;
+
 }
 
 pub struct VecCounter {
@@ -33,20 +36,83 @@ pub struct VecCounter {
 impl VecCounter {
     pub fn new(k: u8) -> Self {
         VecCounter {
-            inner: vec![0; 1 << (k * 2 - 1)]
+            inner: vec![0; 1 << nb_bit(k)]
         }
     }
 }
 
 impl Counter for VecCounter {
-    fn inc(&mut self, pos: usize) -> () {
-        self.inner[pos] = self.inner[pos].saturating_add(1);
+    fn inc(&mut self, pos: u64) -> () {
+        self.inner[pos as usize] = self.inner[pos as usize].saturating_add(1);
     }
 
+    fn incs(&mut self, vals: Vec<u64>) -> () {
+        for val in vals {
+            self.inner[val as usize] = self.inner[val as usize].saturating_add(1);
+        }
+    }
+    
     fn get(&self, pos: usize) -> u8 {
         self.inner[pos]
     }
 }
+
+/*
+pub struct MultiCounter<'a> {
+    pub inner: Vec<std::sync::Arc<std::sync::Mutex<u8>>>,
+    worker: &'a Worker<u64>,
+    injector: &'a Injector<u64>,
+    stealers: &'a [std::thread::JoinHandle<()>; 4]
+}
+
+impl<'a> MultiCounter<'a> {
+    pub fn new(k: u8) -> Self {
+        let mut counter: Vec<std::sync::Arc<std::sync::Mutex<u8>>> = Vec::with_capacity(1 << (k * 2 -1));
+        for _ in 0..(1 << nb_bit(k)) {
+            counter.push(std::sync::Arc::new(std::sync::Mutex::new(0)));
+        }
+
+        let local = MultiCounter {
+            inner: counter,
+            worker: &Worker::new_fifo(),
+            injector: &Injector::new(),
+            stealers: &[std::thread::spawn(||{}), std::thread::spawn(||{}), std::thread::spawn(||{}), std::thread::spawn(||{})],
+        };
+
+        local.stealers = &[std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work())];
+        
+        local
+    }
+
+
+    fn work(&self) -> () {
+        let s = self.worker.stealer();
+
+        loop {
+            let pos = s.steal().sucess().unwrap();
+
+            let mut val = self.inner[pos as usize].lock().unwrap();
+            *val = val.saturating_add(1);
+        }
+    }
+}
+
+impl<'a> Counter for MultiCounter<'a> {
+    fn inc(&mut self, pos: u64) -> () {
+        self.injector.push(pos);
+    }
+
+    fn incs(&mut self, vals: Vec<u64>) -> () {
+        for val in vals {
+            self.inc(val);
+        }
+    }
+    
+    fn get(&self, pos: usize) -> u8 {
+        *self.inner[pos].lock().unwrap()
+    }
+}
+*/
 
 pub struct Bucketizer<'a, C: Counter> {
     pub counter: &'a mut C,
@@ -84,9 +150,9 @@ impl<'a, C: Counter> Bucketizer<'a, C> {
     }
 
     fn clean_bucket(&mut self, prefix: usize, new_size: usize) -> () {
-        for hash in std::mem::replace(&mut self.buckets[prefix], Vec::with_capacity(new_size)) {
-            self.counter.inc(hash as usize);
-        }
+        self.counter.incs(
+            std::mem::replace(&mut self.buckets[prefix], Vec::with_capacity(new_size))
+        );
     }
 
     fn nb_bit(&self) -> usize {
