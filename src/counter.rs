@@ -114,7 +114,7 @@ impl<'a> Counter for MultiCounter<'a> {
 }
 */
 
-pub struct Bucketizer<'a, C: Counter> {
+pub struct Bucketizer<'a, C: 'a + Counter> {
     pub counter: &'a mut C,
     buckets: Vec<Vec<u64>>,
     k: u8,

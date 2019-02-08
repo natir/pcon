@@ -72,6 +72,14 @@ fn main() {
                             .takes_value(true)
                             .help("kmer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
+                    .arg(
+                        Arg::with_name("write-mode")
+                            .short("w")
+                            .long("write-mode")
+                            .possible_values(&["all_counts", "counts", "kmer_counts", "numpy"])
+                            .default_value("all_counts")
+                            .help("mode of output")
+                    )
         )
         .subcommand(SubCommand::with_name("minimizer")
                     .about("count minimizer in fasta file")
@@ -106,6 +114,14 @@ fn main() {
                             .required(true)
                             .takes_value(true)
                             .help("minimizer size, if kmer size is even real value is equal to k-1, max value 31")
+                    )
+                    .arg(
+                        Arg::with_name("write-mode")
+                            .short("w")
+                            .long("write-mode")
+                            .possible_values(&["all_counts", "counts", "kmer_counts", "numpy"])
+                            .default_value("all_counts")
+                            .help("mode of output")
                     )
         )
         .subcommand(SubCommand::with_name("dump")
@@ -171,7 +187,7 @@ fn main() {
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
-            1,
+            write::Mode::from(count_matches.value_of("write-mode").unwrap())
         );
     } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
@@ -193,7 +209,7 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-            1,
+            write::Mode::from(minimizer_matches.value_of("write_mode").unwrap())
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abudance = dump_matches

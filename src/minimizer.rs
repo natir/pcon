@@ -25,7 +25,7 @@ use crate::convert;
 use crate::counter;
 use crate::write;
 
-pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_min: u8) -> () {
+pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: write::Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
@@ -45,7 +45,7 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, abundance_mi
 
     bucketizer.clean_all_buckets();
     
-    write::write(counter, output_path, m, abundance_min);
+    write::write(counter, output_path, m, write_mode);
 }
 
 fn found_minimizer<'a>(subseq: &[u8], counter: &'a mut counter::Bucketizer<counter::VecCounter>, m: u8) -> () {

@@ -25,7 +25,7 @@ use crate::convert;
 use crate::counter;
 use crate::write;
 
-pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> () {
+pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: write::Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
@@ -44,7 +44,7 @@ pub fn count(input_path: &str, output_path: &str, k: u8, abundance_min: u8) -> (
 
     bucketizer.clean_all_buckets();
 
-    write::write(counter, output_path, k, abundance_min);
+    write::write(counter, output_path, k, write_mode);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {
