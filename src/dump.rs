@@ -53,7 +53,6 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
         .expect("Error durring read count on disk");
     let k = header_buff[0];
     let mode = header_buff[1];
-    println!("mode {:?}", mode);
     
     match mode {
         0 => dump_all_counts(writer, reader, k, abundance),

@@ -32,55 +32,90 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: 
 
     // init counter
     let mut counter = counter::VecCounter::new(m);
-    let mut bucketizer = counter::Bucketizer::new(&mut counter, m);
+    let bucketizer = counter::Bucketizer::new(&mut counter, m);
 
-    // count
-    for result in reader.records() {
-        let record = result.unwrap();
-
-        for subseq in record.seq().windows(k as usize) {
-            found_minimizer(subseq, &mut bucketizer, m);
-        }
-    }
-
-    bucketizer.clean_all_buckets();
+    minimizer_work(reader, bucketizer, k, m);
     
     write::write(counter, output_path, m, write_mode);
 }
 
-fn found_minimizer<'a>(subseq: &[u8], counter: &'a mut counter::Bucketizer<counter::VecCounter>, m: u8) -> () {
-    let mut mini: u64 = 0;;
-    let mut mini_hash = u64::max_value();
+fn minimizer_work<C: counter::Counter, R: std::io::Read>(reader: bio::io::fasta::Reader<std::io::BufReader<R>>, mut bucketizer: counter::Bucketizer<C>, k: u8, m: u8) -> () {
+    let pos_begin_last_minimizer: usize = ((k as i16) - (m as i16)) as usize;
+    
+    // count
+    for result in reader.records() {
+        let record = result.unwrap();
+        let mut last_minimizer: u64 = 0;
+        let mut last_mini_pos: i64 = 0;
+        let mut last_mini_hash: i64 = 0;
+        
+        for (i, subseq) in record.seq().windows(k as usize).enumerate() {
+            
+            last_mini_pos -= 1;
+            if last_mini_pos < 0 {
+                // minimizer isn't in kmer
+                let tmp = found_minimizer(subseq, m);
+                last_minimizer = tmp.0;
+                last_mini_pos = tmp.1;
+                last_mini_hash = tmp.2;
+            } else {
+                // test if new subkmer is minimizer
+                let subk = &subseq[pos_begin_last_minimizer..];
+                let kmer = hash(subk, m);
+                let kash = revhash(kmer);
 
-    for subk in subseq.windows(m as usize) {
-        let kmer = hash(subk, m);
-        let hash = revhash(kmer);
-
-        if hash < mini_hash {
-            mini = kmer;
-            mini_hash = hash;
+                if kash < last_mini_hash {
+                    last_minimizer = kmer;
+                    last_mini_pos = i as i64;
+                    last_mini_hash = kash;
+                }                
+            }
+            
+            bucketizer.add_bit(last_minimizer);
         }
     }
 
-    counter.add_bit(mini);
+    bucketizer.clean_all_buckets();
+}
+
+fn found_minimizer(subseq: &[u8], m: u8) -> (u64, i64, i64) {
+    let mut mini: u64 = 0;
+    let mut mash: i64 = std::i64::MAX;
+    let mut pos: i64 = 0;
+    
+    for (i, subk) in subseq.windows(m as usize).enumerate() {
+
+        let kmer = hash(subk, m);
+        let kash = revhash(kmer);
+
+        if kash < mash {
+            mini = kmer;
+            mash = kash;
+            pos = i as i64;
+        }
+    }
+
+    return (mini, pos, mash);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {
     return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
 }
 
-fn revhash(mut x: u64) -> u64 {
+fn revhash(mut x: u64) -> i64 {
     x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
     x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
     x = (x >> 32) ^ x;
 
-    return x;
+    return x as i64;
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
+    
+    use std::io::Read;
+    
     #[test]
     fn hash_() {
         // TAGGC -> 100011110
@@ -88,5 +123,21 @@ mod test {
 
         // GCCTA -> 110101100
         assert_eq!(hash(b"GCCTA", 5), 0b100011110);
+    }
+
+    #[test]
+    fn minimizer_() {
+        let file: &[u8] = b">1\nAAACCCTTTGGG";
+        
+        let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
+            file
+        ));
+        
+        let mut counter = counter::VecCounter::new(3);
+        let bucketizer = counter::Bucketizer::new(&mut counter, 3);
+
+        minimizer_work(reader, bucketizer, 5, 3);
+
+        assert_eq!(counter.inner, [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]);
     }
 }

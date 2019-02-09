@@ -209,7 +209,7 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-            write::Mode::from(minimizer_matches.value_of("write_mode").unwrap())
+            write::Mode::from(minimizer_matches.value_of("write-mode").unwrap())
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abudance = dump_matches
