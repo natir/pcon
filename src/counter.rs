@@ -29,8 +29,9 @@ pub trait Counter {
 
 }
 
+#[derive(Debug)]
 pub struct VecCounter {
-    inner: Vec<u8>,
+    pub inner: Vec<u8>,
 }
 
 impl VecCounter {
