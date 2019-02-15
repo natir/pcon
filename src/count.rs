@@ -30,8 +30,8 @@ pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: write::Mode
         std::fs::File::open(input_path).unwrap(),
     ));
 
-    let mut counter = counter::VecCounter::new(k);
-    let mut bucketizer: counter::Bucketizer<counter::VecCounter> = counter::Bucketizer::new(&mut counter, k);
+    let mut counter = counter::BasicCounter::new(k);
+    let mut bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, k);
 
     for result in reader.records() {
         let record = result.unwrap();

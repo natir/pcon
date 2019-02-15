@@ -20,110 +20,66 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use crossbeam_deque::{Injector, Steal, Stealer, Worker};
 
-pub trait Counter {
-    fn inc(&mut self, pos: u64) -> ();
-    fn incs(&mut self, vals: Vec<u64>) -> ();
-    fn get(&self, pos: usize) -> u8;
-
+trait Inc<T> {
+    fn inc(&mut self, val :&mut T);
 }
 
-#[derive(Debug)]
-pub struct VecCounter {
-    pub inner: Vec<u8>,
+struct IncUnsigned;
+
+impl Inc<u8> for IncUnsigned {
+    fn inc(&mut self, val: &mut u8) {
+        *val = val.saturating_add(1);
+    }
 }
 
-impl VecCounter {
+impl Inc<u16> for IncUnsigned {
+    fn inc(&mut self, val: &mut u16) {
+        *val = val.saturating_add(1);
+    }
+}
+
+pub trait Counter<CounterType, BucketId, KmerType> {
+    fn incs(&mut self, bucket_id: BucketId, bucket: Vec<KmerType>);
+    fn get(&self, kmer: KmerType) -> CounterType;
+}
+
+pub struct BasicCounter<T> {
+    incrementor: IncUnsigned,
+    pub data: Vec<T>,
+}
+
+impl BasicCounter<u8> where u8: std::clone::Clone {
     pub fn new(k: u8) -> Self {
-        VecCounter {
-            inner: vec![0; 1 << nb_bit(k)]
+        BasicCounter  {
+            incrementor: IncUnsigned {},
+            data: vec![0u8; 1 << nb_bit(k)],
         }
     }
 }
 
-impl Counter for VecCounter {
-    fn inc(&mut self, pos: u64) -> () {
-        self.inner[pos as usize] = self.inner[pos as usize].saturating_add(1);
-    }
-
-    fn incs(&mut self, vals: Vec<u64>) -> () {
-        for val in vals {
-            self.inner[val as usize] = self.inner[val as usize].saturating_add(1);
+impl Counter<u8, u64, u64> for BasicCounter<u8> {
+    fn incs(&mut self, _bucket_id: u64, bucket: Vec<u64>) {
+        for i in bucket {
+            self.incrementor.inc(&mut self.data[i as usize]);
         }
     }
     
-    fn get(&self, pos: usize) -> u8 {
-        self.inner[pos]
+    fn get(&self, kmer: u64) -> u8 {
+        self.data[kmer as usize]
     }
 }
 
-/*
-pub struct MultiCounter<'a> {
-    pub inner: Vec<std::sync::Arc<std::sync::Mutex<u8>>>,
-    worker: &'a Worker<u64>,
-    injector: &'a Injector<u64>,
-    stealers: &'a [std::thread::JoinHandle<()>; 4]
-}
 
-impl<'a> MultiCounter<'a> {
-    pub fn new(k: u8) -> Self {
-        let mut counter: Vec<std::sync::Arc<std::sync::Mutex<u8>>> = Vec::with_capacity(1 << (k * 2 -1));
-        for _ in 0..(1 << nb_bit(k)) {
-            counter.push(std::sync::Arc::new(std::sync::Mutex::new(0)));
-        }
-
-        let local = MultiCounter {
-            inner: counter,
-            worker: &Worker::new_fifo(),
-            injector: &Injector::new(),
-            stealers: &[std::thread::spawn(||{}), std::thread::spawn(||{}), std::thread::spawn(||{}), std::thread::spawn(||{})],
-        };
-
-        local.stealers = &[std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work()), std::thread::spawn(|| local.work())];
-        
-        local
-    }
-
-
-    fn work(&self) -> () {
-        let s = self.worker.stealer();
-
-        loop {
-            let pos = s.steal().sucess().unwrap();
-
-            let mut val = self.inner[pos as usize].lock().unwrap();
-            *val = val.saturating_add(1);
-        }
-    }
-}
-
-impl<'a> Counter for MultiCounter<'a> {
-    fn inc(&mut self, pos: u64) -> () {
-        self.injector.push(pos);
-    }
-
-    fn incs(&mut self, vals: Vec<u64>) -> () {
-        for val in vals {
-            self.inc(val);
-        }
-    }
-    
-    fn get(&self, pos: usize) -> u8 {
-        *self.inner[pos].lock().unwrap()
-    }
-}
-*/
-
-pub struct Bucketizer<'a, C: 'a + Counter> {
-    pub counter: &'a mut C,
+pub struct Bucketizer<'a, T> {
+    pub counter: &'a mut Counter<T, u64, u64>,
     buckets: Vec<Vec<u64>>,
     k: u8,
     bucket_size: usize,
 }
 
-impl<'a, C: Counter> Bucketizer<'a, C> {
-    pub fn new(counter: &'a mut C, k: u8) -> Self {
+impl<'a, T> Bucketizer<'a, T> {
+    pub fn new(counter: &'a mut Counter<T, u64, u64>, k: u8) -> Self {
         let bucket_size: usize = 1024;
 
         Bucketizer {
@@ -151,7 +107,7 @@ impl<'a, C: Counter> Bucketizer<'a, C> {
     }
 
     fn clean_bucket(&mut self, prefix: usize, new_size: usize) -> () {
-        self.counter.incs(
+        self.counter.incs(prefix as u64,
             std::mem::replace(&mut self.buckets[prefix], Vec::with_capacity(new_size))
         );
     }

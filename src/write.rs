@@ -45,7 +45,7 @@ impl From<&str> for Mode {
     }
 }
 
-pub fn write<C: counter::Counter>(count: C, output_path: &str, k: u8, mode: Mode) -> () {
+pub fn write<C: counter::Counter<u8, u64, u64>>(count: C, output_path: &str, k: u8, mode: Mode) -> () {
     let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
 
     match mode {
@@ -56,7 +56,7 @@ pub fn write<C: counter::Counter>(count: C, output_path: &str, k: u8, mode: Mode
     }
 }
 
-fn write_all_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
+fn write_all_counts<C: counter::Counter<u8, u64, u64>>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
 
     // write k in first bytes
     out.write(&[k, 0])
@@ -68,7 +68,7 @@ fn write_all_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<s
     }
 }
     
-fn write_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
+fn write_counts<C: counter::Counter<u8, u64, u64>>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
     
     // write k in first bytes
     out.write(&[k, 1])
@@ -103,7 +103,7 @@ fn write_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<std::
 }
 
 
-fn write_kmer_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
+fn write_kmer_counts<C: counter::Counter<u8, u64, u64>>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
     // write k in first bytes
     out.write(&[k, 2])
         .expect("Error during write of count on disk");
@@ -124,7 +124,7 @@ fn write_kmer_counts<C: counter::Counter>(count: C, mut out: std::io::BufWriter<
     }
 }
 
-fn write_numpy<C: counter::Counter>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
+fn write_numpy<C: counter::Counter<u8, u64, u64>>(count: C, mut out: std::io::BufWriter<std::fs::File>, k: u8) -> () {
     out.write(&[147, b'N', b'U', b'M', b'P', b'Y', 1, 0]).expect("Error durring numpy magic number write");
 
     let nb_value = 1 << (k * 2 - 1);
