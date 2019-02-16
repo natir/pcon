@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-
 trait Inc<T> {
     fn inc(&mut self, val :&mut T);
 }
@@ -49,27 +48,39 @@ pub struct BasicCounter<T> {
     pub data: Vec<T>,
 }
 
-impl BasicCounter<u8> where u8: std::clone::Clone {
-    pub fn new(k: u8) -> Self {
-        BasicCounter  {
-            incrementor: IncUnsigned {},
-            data: vec![0u8; 1 << nb_bit(k)],
+macro_rules! impl_basiccounter {
+    ($type:ty) => (        
+        impl BasicCounter<$type> where $type: std::clone::Clone {
+            pub fn new(k: u8) -> Self {
+                BasicCounter  {
+                    incrementor: IncUnsigned {},
+                    data: vec![0; 1 << nb_bit(k)],
+                }
+            }
         }
-    }
+    )
 }
 
-impl Counter<u8, u64, u64> for BasicCounter<u8> {
-    fn incs(&mut self, _bucket_id: u64, bucket: Vec<u64>) {
-        for i in bucket {
-            self.incrementor.inc(&mut self.data[i as usize]);
+macro_rules! impl_counter_for_basiccounter {
+    ($type:ty) => (
+        impl Counter<$type, u64, u64> for BasicCounter<$type> {
+            fn incs(&mut self, _bucket_id: u64, bucket: Vec<u64>) {
+                for i in bucket {
+                    self.incrementor.inc(&mut self.data[i as usize]);
+                }
+            }
+            
+            fn get(&self, kmer: u64) -> $type {
+                self.data[kmer as usize]
+            }
         }
-    }
-    
-    fn get(&self, kmer: u64) -> u8 {
-        self.data[kmer as usize]
-    }
+    )
 }
 
+impl_basiccounter!(u8);
+impl_basiccounter!(u16);
+impl_counter_for_basiccounter!(u8);
+impl_counter_for_basiccounter!(u16);
 
 pub struct Bucketizer<'a, T> {
     pub counter: &'a mut Counter<T, u64, u64>,
@@ -168,5 +179,4 @@ mod test {
     fn mask_prefix_() -> () {
         assert_eq!(mask_prefix(5), 0b111100000);
     }
-
 }

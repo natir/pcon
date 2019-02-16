@@ -40,6 +40,7 @@ mod dump;
 mod minimizer;
 mod prepare;
 mod write;
+mod io;
 
 fn main() {
     let matches = App::new("ssik")
@@ -187,7 +188,7 @@ fn main() {
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
-            write::Mode::from(count_matches.value_of("write-mode").unwrap())
+            io::Mode::from(count_matches.value_of("write-mode").unwrap())
         );
     } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
@@ -209,19 +210,19 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-            write::Mode::from(minimizer_matches.value_of("write-mode").unwrap())
+            io::Mode::from(minimizer_matches.value_of("write-mode").unwrap())
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
-        let abudance = dump_matches
+        let abundance = dump_matches
             .value_of("abundance-min")
             .unwrap()
-            .parse::<u8>()
+            .parse::<u16>()
             .unwrap();
 
         dump::dump(
             dump_matches.value_of("input").unwrap(),
             dump_matches.value_of("output").unwrap(),
-            abudance,
+            abundance,
         );
     } else if let Some(prepare_matches) = matches.subcommand_matches("prepare") {
         if prepare_matches.is_present("kmer-size") && prepare_matches.is_present("minimizer-size") {

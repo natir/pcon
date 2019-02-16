@@ -24,14 +24,16 @@ SOFTWARE.
 use crate::convert;
 use crate::counter;
 use crate::write;
+use crate::io::Mode;
+use crate::write::AbstractWriter;
 
-pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: write::Mode) -> () {
+pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
 
-    let mut counter = counter::BasicCounter::new(k);
-    let mut bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, k);
+    let mut counter = counter::BasicCounter::<u16>::new(k);
+    let mut bucketizer: counter::Bucketizer<u16> = counter::Bucketizer::new(&mut counter, k);
 
     for result in reader.records() {
         let record = result.unwrap();
@@ -44,7 +46,7 @@ pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: write::Mode
 
     bucketizer.clean_all_buckets();
 
-    write::write(counter, output_path, k, write_mode);
+    write::Writer::new().write(&counter, output_path, k, write_mode);
 }
 
 fn hash(kmer: &[u8], k: u8) -> u64 {

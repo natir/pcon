@@ -24,22 +24,24 @@ SOFTWARE.
 use crate::convert;
 use crate::counter;
 use crate::write;
+use crate::io::Mode;
+use crate::write::AbstractWriter;
 
-pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: write::Mode) -> () {
+pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
 
     // init counter
-    let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::new(m);
-    let bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, m);
+    let mut counter: counter::BasicCounter<u16> = counter::BasicCounter::<u16>::new(m);
+    let bucketizer: counter::Bucketizer<u16> = counter::Bucketizer::new(&mut counter, m);
 
-    minimizer_work::<counter::BasicCounter<u8>, std::fs::File>(reader, bucketizer, k, m);
-    
-    write::write(counter, output_path, m, write_mode);
+    minimizer_work::<u16, counter::BasicCounter<u16>, std::fs::File>(reader, bucketizer, k, m);
+
+    write::Writer::new().write(&counter, output_path, k, write_mode);
 }
 
-fn minimizer_work<C: counter::Counter<u8, u64, u64>, R: std::io::Read>(reader: bio::io::fasta::Reader<std::io::BufReader<R>>, mut bucketizer: counter::Bucketizer<u8>, k: u8, m: u8) -> () {
+fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(reader: bio::io::fasta::Reader<std::io::BufReader<R>>, mut bucketizer: counter::Bucketizer<T>, k: u8, m: u8) -> () {
     let pos_begin_last_minimizer: usize = ((k as i16) - (m as i16)) as usize;
     
     // count
@@ -133,10 +135,10 @@ mod test {
             file
         ));
 
-        let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::new(3);
+        let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::<u8>::new(3);
         let bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, 3);
 
-        minimizer_work::<counter::BasicCounter<u8>, &[u8]>(reader, bucketizer, 5, 3);
+        minimizer_work::<u8, counter::BasicCounter<u8>, &[u8]>(reader, bucketizer, 5, 3);
 
         assert_eq!(counter.data, [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]);
     }
