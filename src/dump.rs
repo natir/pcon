@@ -33,8 +33,8 @@ use crate::io::Mode;
 
 pub fn dump<T>(input_path: &str, output_path: &str, abundance: T) -> ()
 where T: Into<u64> + Copy + std::string::ToString,
-      Dumper<T>: AbstractDump<T>{
-    AbstractDump::<T>::run(&Dumper::<T> { phantom: std::marker::PhantomData, }, input_path, output_path, abundance);
+      Dumper: AbstractDump<T>{
+    AbstractDump::<T>::run(&Dumper {}, input_path, output_path, abundance);
 }
 
 pub trait AbstractDump<T> where T: Into<u64> + Copy + std::string::ToString {
@@ -122,12 +122,9 @@ pub trait AbstractDump<T> where T: Into<u64> + Copy + std::string::ToString {
     fn kmer_counts_read_buffer(&self, buffer: &[u8]) -> (u64, T);
 }
 
-pub struct Dumper<T> {
-    phantom: std::marker::PhantomData<T>,
+pub struct Dumper {}
 
-}
-
-impl AbstractDump<u8> for Dumper<u8> {
+impl AbstractDump<u8> for Dumper {
     fn counts_bufsize(&self) -> usize {
         2
     }
@@ -153,7 +150,7 @@ impl AbstractDump<u8> for Dumper<u8> {
     }
 }
 
-impl AbstractDump<u16> for Dumper<u16> {
+impl AbstractDump<u16> for Dumper {
     fn counts_bufsize(&self) -> usize {
         4
     }

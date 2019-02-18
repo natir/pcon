@@ -31,9 +31,9 @@ use std::io::Write;
 pub fn write<T>(count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode) 
 where T: std::marker::Copy,
       u64: std::convert::From<T>,
-Writer<T>: AbstractWriter<T>  {
+Writer: AbstractWriter<T>  {
     
-    AbstractWriter::<T>::run(&Writer::<T> { phantom: std::marker::PhantomData,},
+    AbstractWriter::<T>::run(&Writer {},
                              count,
                              output_path,
                              k,
@@ -140,13 +140,11 @@ pub trait AbstractWriter<T> where T: Into<u64> + Copy {
     fn zero(&self) -> T;
 }
 
-pub struct Writer<T> {
-    phantom: std::marker::PhantomData<T>,
-}
+pub struct Writer {}
 
-impl AbstractWriter<u8> for Writer<u8> {
+impl AbstractWriter<u8> for Writer {
     fn write_value<W: std::io::Write>(&self, out: &mut W, val: u8) -> () {
-        self.write_values(out, &[val]);
+        AbstractWriter::<u8>::write_values(self, out, &[val]);
     }
     
     fn get_numpy_header(&self, nb_value: u64) -> String {
@@ -167,10 +165,10 @@ impl AbstractWriter<u8> for Writer<u8> {
 }
 
 
-impl AbstractWriter<u16> for Writer<u16> {
+impl AbstractWriter<u16> for Writer {
     fn write_value<W: std::io::Write>(&self, out: &mut W, v: u16) -> () {
         let val: [u8; 2] = unsafe{ std::mem::transmute(v.to_be()) };
-        self.write_values(out, &val);
+        AbstractWriter::<u16>::write_values(self, out, &val);
     }
 
     fn get_numpy_header(&self, nb_value: u64) -> String {
