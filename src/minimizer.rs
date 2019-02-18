@@ -25,7 +25,6 @@ use crate::convert;
 use crate::counter;
 use crate::write;
 use crate::io::Mode;
-use crate::write::AbstractWriter;
 
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
@@ -38,7 +37,7 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: 
 
     minimizer_work::<u16, counter::BasicCounter<u16>, std::fs::File>(reader, bucketizer, k, m);
 
-    write::Writer::new().write(&counter, output_path, k, write_mode);
+    write::write(&counter, output_path, k, write_mode);
 }
 
 fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(reader: bio::io::fasta::Reader<std::io::BufReader<R>>, mut bucketizer: counter::Bucketizer<T>, k: u8, m: u8) -> () {
@@ -115,8 +114,6 @@ fn revhash(mut x: u64) -> i64 {
 #[cfg(test)]
 mod test {
     use super::*;
-    
-    use std::io::Read;
     
     #[test]
     fn hash_() {

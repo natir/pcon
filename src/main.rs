@@ -24,8 +24,6 @@ SOFTWARE.
 extern crate bio;
 extern crate clap;
 extern crate csv;
-#[macro_use]
-extern crate itertools;
 
 /* std use */
 

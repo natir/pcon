@@ -27,6 +27,20 @@ use crate::io::Mode;
 /* std use*/
 use std::io::Write;
 
+
+pub fn write<T>(count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode) 
+where T: std::marker::Copy,
+      u64: std::convert::From<T>,
+Writer<T>: AbstractWriter<T>  {
+    
+    AbstractWriter::<T>::run(&Writer::<T> { phantom: std::marker::PhantomData,},
+                             count,
+                             output_path,
+                             k,
+                             mode)
+}
+
+
 fn write_header(out: &mut std::io::BufWriter<std::fs::File>, k: u8, mode: &Mode, count_nb_bit: u8) {
     if mode != &Mode::Numpy {
         out.write(&[k, mode.into(), count_nb_bit]).expect("Error when try to write header.");
@@ -34,7 +48,7 @@ fn write_header(out: &mut std::io::BufWriter<std::fs::File>, k: u8, mode: &Mode,
 }
 
 pub trait AbstractWriter<T> where T: Into<u64> + Copy {
-    fn write(&self, count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode) -> () {
+    fn run(&self, count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode) -> () {
 
         let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
         
@@ -99,7 +113,7 @@ pub trait AbstractWriter<T> where T: Into<u64> + Copy {
             }
             
             // write dist to last value and count of k
-            self.write_value(out, self.u64_to_T(dist));
+            self.write_value(out, self.u64_to_type(dist));
             self.write_value(out, val);
         }
     }
@@ -128,14 +142,6 @@ pub trait AbstractWriter<T> where T: Into<u64> + Copy {
 
 pub struct Writer<T> {
     phantom: std::marker::PhantomData<T>,
-}
-
-impl<T> Writer<T> {
-    pub fn new() -> Self {
-        Writer {
-            phantom: std::marker::PhantomData,
-        }
-    }
 }
 
 impl AbstractWriter<u8> for Writer<u8> {
