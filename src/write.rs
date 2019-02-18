@@ -33,8 +33,7 @@ fn write_header(out: &mut std::io::BufWriter<std::fs::File>, k: u8, mode: &Mode,
     }
 }
 
-
-pub trait AbstractWriter<T> {
+pub trait AbstractWriter<T> where T: Into<u64> + Copy {
     fn write(&self, count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode) -> () {
 
         let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
@@ -53,11 +52,78 @@ pub trait AbstractWriter<T> {
         out.write(val).expect("Error durring write count on disk");
     }
     
+    fn write_all_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
+        for i in 0..(1 << (k * 2 - 1)) {
+            self.write_value(out, count.get(i));
+        }
+    }
+
+    fn write_kmer_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
+        for i in 0..((1 << (k * 2 - 1)) as u64 ) {
+            let v = count.get(i);
+            
+            if v.into() == 0 {
+                continue;
+            }
+
+            let kmer: [u8; 8] = unsafe{ std::mem::transmute(i.to_be()) };
+
+            self.write_values(out, &kmer);
+            self.write_value(out, v);
+        }
+    }
+
+    fn write_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
+        
+        let mut last_write = 0;
+
+        for i in 0..(1 << (k * 2 - 1)) {
+            let val = count.get(i);
+            
+            if val.into() == 0 {
+                continue;
+            }
+
+            let mut dist = i - last_write;
+            last_write = i;
+
+            if dist > self.max_value_count().into() {
+                // dist overflow u8 we need write a some kmer with 0 count
+                let n = dist / self.max_value_count().into();
+                for _ in 0..n {
+                    self.write_value(out, self.max_value_count());
+                    self.write_value(out, self.zero());
+                }
+
+                dist %= self.max_value_count().into();
+            }
+            
+            // write dist to last value and count of k
+            self.write_value(out, self.u64_to_T(dist));
+            self.write_value(out, val);
+        }
+    }
+
+    fn write_numpy(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
+        out.write(&[147, b'N', b'U', b'M', b'P', b'Y', 1, 0]).expect("Error durring numpy magic number write");
+
+        let nb_value = 1 << (k * 2 - 1);
+        let header = self.get_numpy_header(nb_value);
+
+        out.write(&[b'v', 0]).expect("Error durring numpy magic number write");
+        out.write(header.as_bytes()).expect("Error durring numpy magic number write");
+        out.write(&vec![b' '; 128 - 9 - header.len() - 1]).expect("Error durring numpy magic number write");
+
+        for i in 0..(1 << (k * 2 - 1)) {
+            self.write_value(out, count.get(i));
+        }
+    }
+    
     fn write_value<W: std::io::Write>(&self, out: &mut W, val: T) -> ();
-    fn write_all_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> ();
-    fn write_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> ();
-    fn write_kmer_counts(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> ();
-    fn write_numpy(&self, count: &counter::Counter<T, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> ();
+    fn get_numpy_header(&self, nb_value: u64) -> String;
+    fn max_value_count(&self) -> T;
+    fn u64_to_type(&self, val: u64) -> T;
+    fn zero(&self) -> T;
 }
 
 pub struct Writer<T> {
@@ -76,68 +142,21 @@ impl AbstractWriter<u8> for Writer<u8> {
     fn write_value<W: std::io::Write>(&self, out: &mut W, val: u8) -> () {
         self.write_values(out, &[val]);
     }
+    
+    fn get_numpy_header(&self, nb_value: u64) -> String {
+        format!("{{'descr': '|u1', 'fortran_order': False, 'shape': (1, {}), }}", nb_value)
+    }
 
-    fn write_all_counts(&self, count: &counter::Counter<u8, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        for i in 0..(1 << (k * 2 - 1)) {
-            self.write_value(out, count.get(i));
-        }
+    fn max_value_count(&self) -> u8 {
+        u8::max_value()
+    }
+
+    fn u64_to_type(&self, val: u64) -> u8 {
+        val as u8
     }
     
-    fn write_counts(&self, count: &counter::Counter<u8, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        let mut last_write = 0;
-        for i in 0..(1 << (k * 2 - 1)) {
-            let val = count.get(i);
-            
-            if val == 0 {
-                continue;
-            }
-
-            let mut dist = i - last_write;
-            last_write = i;
-
-            if dist > u8::max_value() as u64 {
-                // dist overflow u8 we need write a some kmer with 0 count
-                let n = dist / u8::max_value() as u64;
-                for _ in 0..n {
-                    self.write_values(out, &[u8::max_value(), count.get(i)]);
-                }
-
-                dist %= 255;
-            }
-
-            // write dist to last value and count of k
-            self.write_values(out, &[dist as u8, val]);
-        }
-    }
-        
-    fn write_kmer_counts(&self, count: &counter::Counter<u8, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        for i in 0..(1 << (k * 2 - 1)) {
-            let val = count.get(i);
-            
-            if val == 0 {
-                continue;
-            }
-
-            let k: [u8; 8] = unsafe{ std::mem::transmute(i.to_be()) };
-
-            self.write_values(out, &k);
-            self.write_value(out, val);
-        }
-    }
-
-    fn write_numpy(&self, count: &counter::Counter<u8, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        out.write(&[147, b'N', b'U', b'M', b'P', b'Y', 1, 0]).expect("Error durring numpy magic number write");
-
-        let nb_value = 1 << (k * 2 - 1);
-        let header = format!("{{'descr': '|u1', 'fortran_order': False, 'shape': (1, {}), }}", nb_value);
-
-        out.write(&[b'v', 0]).expect("Error durring numpy magic number write");
-        out.write(header.as_bytes()).expect("Error durring numpy magic number write");
-        out.write(&vec![b' '; 128 - 9 - header.len() - 1]).expect("Error durring numpy magic number write");
-
-        for i in 0..(1 << (k * 2 - 1)) {
-            out.write(&[count.get(i)]).expect("Error durring numpy value write");
-        }
+    fn zero(&self) -> u8 {
+        0
     }
 }
 
@@ -148,68 +167,19 @@ impl AbstractWriter<u16> for Writer<u16> {
         self.write_values(out, &val);
     }
 
-    fn write_all_counts(&self, count: &counter::Counter<u16, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        for i in 0..(1 << (k * 2 - 1)) {
-            self.write_value(out, count.get(i));
-        }
+    fn get_numpy_header(&self, nb_value: u64) -> String {
+        format!("{{'descr': '>u2', 'fortran_order': False, 'shape': (1, {}), }}", nb_value)
     }
     
-    fn write_counts(&self, count: &counter::Counter<u16, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        let mut last_write = 0;
-        for i in 0..(1 << (k * 2 - 1)) {
-            let val = count.get(i);
-            
-            if val == 0 {
-                continue;
-            }
-
-            let mut dist = i - last_write;
-            last_write = i;
-
-            if dist > u16::max_value() as u64 {
-                // dist overflow u8 we need write a some kmer with 0 count
-                let n = dist / u16::max_value() as u64;
-                for _ in 0..n {
-                    self.write_value(out, u16::max_value());
-                    self.write_value(out, 0u16);
-                }
-
-                dist %= u16::max_value() as u64;
-            }
-            
-            // write dist to last value and count of k
-            self.write_value(out, dist as u16);
-            self.write_value(out, val);
-        }
+    fn max_value_count(&self) -> u16 {
+        u16::max_value()
     }
-        
-    fn write_kmer_counts(&self, count: &counter::Counter<u16, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        for i in 0..((1 << (k * 2 - 1)) as u64 ) {
-            let v = count.get(i);
-            
-            if v == 0 {
-                continue;
-            }
 
-            let kmer: [u8; 8] = unsafe{ std::mem::transmute(i.to_be()) };
-
-            self.write_values(out, &kmer);
-            self.write_value(out, v);
-        }
-    }    
-
-    fn write_numpy(&self, count: &counter::Counter<u16, u64, u64>, out: &mut std::io::BufWriter<std::fs::File>, k: u8) -> () {
-        out.write(&[147, b'N', b'U', b'M', b'P', b'Y', 1, 0]).expect("Error durring numpy magic number write");
-
-        let nb_value = 1 << (k * 2 - 1);
-        let header = format!("{{'descr': '>u2', 'fortran_order': False, 'shape': (1, {}), }}", nb_value);
-
-        out.write(&[b'v', 0]).expect("Error durring numpy magic number write");
-        out.write(header.as_bytes()).expect("Error durring numpy magic number write");
-        out.write(&vec![b' '; 128 - 9 - header.len() - 1]).expect("Error durring numpy magic number write");
-
-        for i in 0..(1 << (k * 2 - 1)) {
-            self.write_value(out, count.get(i));
-        }
+    fn u64_to_type(&self, val: u64) -> u16 {
+        val as u16
+    }
+    
+    fn zero(&self) -> u16 {
+        0
     }
 }
