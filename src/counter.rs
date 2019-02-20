@@ -85,7 +85,7 @@ impl_basiccounter!(u16);
 impl_counter_for_basiccounter!(u8);
 impl_counter_for_basiccounter!(u16);
 
-const BUCKET_SIZE: usize = (2 << 20) / 8;
+const BUCKET_SIZE: usize = 1 << 12;
 
 //#[derive(Copy, Clone)]
 pub struct NoTemporalArray {
@@ -190,7 +190,7 @@ fn nb_bit(k: u8) -> usize {
 }
 
 fn mask_size(k: u8) -> usize {
-    nb_bit(k) - 16
+    nb_bit(k) / 2
 }
 
 fn nb_bucket(k: u8) -> usize {
