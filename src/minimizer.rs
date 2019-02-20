@@ -23,8 +23,8 @@ SOFTWARE.
 /* project use */
 use crate::convert;
 use crate::counter;
-use crate::write;
 use crate::io::Mode;
+use crate::write;
 
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
@@ -40,18 +40,22 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: 
     write::write(&counter, output_path, k, write_mode);
 }
 
-fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(reader: bio::io::fasta::Reader<std::io::BufReader<R>>, mut bucketizer: counter::Bucketizer<T>, k: u8, m: u8) -> () {
+fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(
+    reader: bio::io::fasta::Reader<std::io::BufReader<R>>,
+    mut bucketizer: counter::Bucketizer<T>,
+    k: u8,
+    m: u8,
+) -> () {
     let pos_begin_last_minimizer: usize = ((k as i16) - (m as i16)) as usize;
-    
+
     // count
     for result in reader.records() {
         let record = result.unwrap();
         let mut last_minimizer: u64 = 0;
         let mut last_mini_pos: i64 = 0;
         let mut last_mini_hash: i64 = 0;
-        
+
         for (i, subseq) in record.seq().windows(k as usize).enumerate() {
-            
             last_mini_pos -= 1;
             if last_mini_pos < 0 {
                 // minimizer isn't in kmer
@@ -69,9 +73,9 @@ fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(reader:
                     last_minimizer = kmer;
                     last_mini_pos = i as i64;
                     last_mini_hash = kash;
-                }                
+                }
             }
-            
+
             bucketizer.add_bit(last_minimizer);
         }
     }
@@ -83,9 +87,8 @@ fn found_minimizer(subseq: &[u8], m: u8) -> (u64, i64, i64) {
     let mut mini: u64 = 0;
     let mut mash: i64 = std::i64::MAX;
     let mut pos: i64 = 0;
-    
-    for (i, subk) in subseq.windows(m as usize).enumerate() {
 
+    for (i, subk) in subseq.windows(m as usize).enumerate() {
         let kmer = hash(subk, m);
         let kash = revhash(kmer);
 
@@ -114,7 +117,7 @@ fn revhash(mut x: u64) -> i64 {
 #[cfg(test)]
 mod test {
     use super::*;
-    
+
     #[test]
     fn hash_() {
         // TAGGC -> 100011110
@@ -127,16 +130,20 @@ mod test {
     #[test]
     fn minimizer_() {
         let file: &[u8] = b">1\nAAACCCTTTGGG";
-        
-        let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
-            file
-        ));
+
+        let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(file));
 
         let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::<u8>::new(3);
         let bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, 3);
 
         minimizer_work::<u8, counter::BasicCounter<u8>, &[u8]>(reader, bucketizer, 5, 3);
 
-        assert_eq!(counter.data, [2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4]);
+        assert_eq!(
+            counter.data,
+            [
+                2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0,
+                0, 0, 0, 4
+            ]
+        );
     }
 }

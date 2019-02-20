@@ -23,8 +23,8 @@ SOFTWARE.
 /* project use */
 use crate::convert;
 use crate::counter;
-use crate::write;
 use crate::io::Mode;
+use crate::write;
 
 pub fn count(input_path: &str, output_path: &str, k: u8, write_mode: Mode) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(

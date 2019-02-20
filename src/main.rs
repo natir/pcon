@@ -21,7 +21,6 @@ SOFTWARE.
  */
 #![feature(stdsimd)]
 
-
 /* crate declaration */
 extern crate bio;
 extern crate clap;
@@ -37,10 +36,10 @@ mod convert;
 mod count;
 mod counter;
 mod dump;
+mod io;
 mod minimizer;
 mod prepare;
 mod write;
-mod io;
 
 fn main() {
     let matches = App::new("ssik")
@@ -188,7 +187,7 @@ fn main() {
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
-            io::Mode::from(count_matches.value_of("write-mode").unwrap())
+            io::Mode::from(count_matches.value_of("write-mode").unwrap()),
         );
     } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
@@ -210,7 +209,7 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-            io::Mode::from(minimizer_matches.value_of("write-mode").unwrap())
+            io::Mode::from(minimizer_matches.value_of("write-mode").unwrap()),
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abundance = dump_matches

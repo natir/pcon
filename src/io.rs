@@ -47,7 +47,7 @@ impl From<u8> for Mode {
             1 => Mode::Counts,
             2 => Mode::KmerCounts,
             3 => Mode::Numpy,
-            _ => Mode::AllCounts
+            _ => Mode::AllCounts,
         }
     }
 }

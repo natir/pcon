@@ -22,7 +22,7 @@ SOFTWARE.
 
 pub fn seq2bit(subseq: &[u8]) -> u64 {
     let mut kmer: u64 = 0;
-
+    
     for n in subseq {
         kmer <<= 2;
         kmer |= nuc2bit(*n);

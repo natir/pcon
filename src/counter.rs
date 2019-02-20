@@ -136,7 +136,7 @@ impl<'a, T> Bucketizer<'a, T> {
     pub fn new(counter: &'a mut Counter<T, u64, u64>, k: u8) -> Self {
         Bucketizer {
             counter: counter,
-            buckets: (0..nb_bucket(k)).map(|x| NoTemporalArray::new()).collect(),
+            buckets: (0..nb_bucket(k)).map(|_| NoTemporalArray::new()).collect(),
             k: k,
             bucket_size: BUCKET_SIZE,
         }
@@ -150,23 +150,17 @@ impl<'a, T> Bucketizer<'a, T> {
         self.buckets[prefix].push(hash);
 
         if self.buckets[prefix].len() == self.bucket_size {
-            self.clean_bucket(prefix, self.bucket_size);
+            self.clean_bucket(prefix);
         }
     }
 
     pub fn clean_all_buckets(&mut self) -> () {
-        //         println!("cleanall");
         for prefix in 0..self.nb_bucket() {
-            self.clean_bucket(prefix, 0);
+            self.clean_bucket(prefix);
         }
     }
 
-    //#[inline(never)]
-    fn clean_bucket(&mut self, prefix: usize, new_size: usize) -> () {
-        //         println!("clean: {} {}", prefix, self.buckets[prefix].pos);
-        //         self.counter.incs(prefix as u64,
-        //                           std::mem::replace(&mut self.buckets[prefix], NoTemporalArray::new())
-        //         );
+    fn clean_bucket(&mut self, prefix: usize) -> () {
         self.counter.incs(prefix as u64, &self.buckets[prefix]);
         self.buckets[prefix].pos = 0;
     }
@@ -196,13 +190,11 @@ fn nb_bit(k: u8) -> usize {
 }
 
 fn mask_size(k: u8) -> usize {
-    //nb_bit(k) / 2
     nb_bit(k) - 16
 }
 
 fn nb_bucket(k: u8) -> usize {
     let n = 1 << mask_size(k);
-    println!("nbucket: {} {}", n, 2 * (1 << nb_bit(k)) / n);
     n
 }
 
