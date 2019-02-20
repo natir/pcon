@@ -27,76 +27,99 @@ trait Inc<T> {
 struct IncUnsigned;
 
 macro_rules! impl_incunsigned {
-    ($type:ty) => (
+    ($type:ty) => {
         impl Inc<$type> for IncUnsigned {
             fn inc(&mut self, val: &mut $type) {
                 *val = val.saturating_add(1);
             }
         }
-    )
+    };
 }
 
 impl_incunsigned!(u8);
 impl_incunsigned!(u16);
+
+struct IncAtomic;
+
+macro_rules! impl_incatomic {
+    ($type:ty) => {
+        impl Inc<$type> for IncAtomic {
+            fn inc(&mut self, val: &mut $type) {
+                (*val.get_mut()).saturating_add(1);
+            }
+        }
+    };
+}
+
+impl_incatomic!(std::sync::atomic::AtomicU8);
+impl_incatomic!(std::sync::atomic::AtomicU16);
+
 
 pub trait Counter<CounterType, BucketId, KmerType> {
     fn incs(&mut self, bucket_id: BucketId, bucket: &NoTemporalArray);
     fn get(&self, kmer: KmerType) -> CounterType;
 }
 
+
 pub struct MultiThreadCounter<T> {
-    incrementor: IncUnsigned,
-    data: Vec<std::sync::Arc<std::sync::Mutex<Vec<T>>>>,
     k: u8,
+    incrementor: IncAtomic,
+    data: Vec<T>,
 }
 
 macro_rules! impl_multithreadcounter {
-    ($type:ty) => (        
-        impl MultiThreadCounter<$type> where $type: std::clone::Clone {
+    ($type:ty, $expr:expr) => {
+        impl MultiThreadCounter<$type> {
             pub fn new(k: u8) -> Self {
                 let mut data = Vec::with_capacity(nb_bucket(k));
 
                 for _ in 0..nb_bucket(k) {
-                    data.push(std::sync::Arc::new(std::sync::Mutex::new(vec![0; (1 << suffix_size(k))])));
+                    data.push($expr);
                 }
-                
-                MultiThreadCounter  {
-                    incrementor: IncUnsigned {},
+
+                MultiThreadCounter {
+                    incrementor: IncAtomic {},
                     data: data,
                     k: k,
                 }
             }
         }
-    )
+    };
 }
 
 macro_rules! impl_counter_for_multithreadcounter {
-    ($type:ty) => (
+    ($type:ty, $expr:path) => {
         impl Counter<$type, u64, u64> for MultiThreadCounter<$type> {
-            fn incs(&mut self, bucket_id: u64, bucket: &NoTemporalArray) {
-                let ptr = self.data[bucket_id as usize].clone();
-                let mut data = ptr.lock().unwrap();
-
-                for hash in bucket {
-                    let suffix = get_suffix(self.k, *hash);
-                    self.incrementor.inc(&mut data[suffix as usize]);
+            fn incs(&mut self, _bucket_id: u64, bucket: &NoTemporalArray) {
+                for i in bucket {
+                    self.incrementor.inc(&mut self.data[*i as usize]);
                 }
             }
-            
+
             fn get(&self, kmer: u64) -> $type {
-                let prefix = get_prefix(self.k, kmer);
-                let suffix = get_suffix(self.k, kmer);
-                self.data[prefix as usize].lock().unwrap()[suffix as usize]
+                $expr(self.data[kmer as usize].load(std::sync::atomic::Ordering::SeqCst))
             }
         }
-    )
+    };
 }
 
-impl_multithreadcounter!(u8);
-impl_multithreadcounter!(u16);
+impl_multithreadcounter!(
+    std::sync::atomic::AtomicU8,
+    std::sync::atomic::AtomicU8::new(0)
+);
+impl_multithreadcounter!(
+    std::sync::atomic::AtomicU16,
+    std::sync::atomic::AtomicU16::new(0)
+);
 
-impl_counter_for_multithreadcounter!(u8);
-impl_counter_for_multithreadcounter!(u16);
+impl_counter_for_multithreadcounter!(
+    std::sync::atomic::AtomicU8,
+    std::sync::atomic::AtomicU8::new
+);
+impl_counter_for_multithreadcounter!(
+    std::sync::atomic::AtomicU16,
+    std::sync::atomic::AtomicU16::new
+);
 
 pub struct BasicCounter<T> {
     incrementor: IncUnsigned,
@@ -142,7 +165,6 @@ impl_counter_for_basiccounter!(u16);
 
 const BUCKET_SIZE: usize = 1 << 12;
 
-//#[derive(Copy, Clone)]
 pub struct NoTemporalArray {
     pos: usize,
     data: Box<[u64; BUCKET_SIZE]>,
@@ -197,16 +219,17 @@ impl<'a, T> Bucketizer<'a, T> {
         }
     }
 
+    #[inline(always)]
     pub fn add_bit(&mut self, hash: u64) -> () {
         let prefix: usize = get_prefix(self.k, hash);
-        
+
         self.buckets[prefix].push(hash);
 
         if self.buckets[prefix].len() == self.bucket_size {
             self.clean_bucket(prefix);
         }
     }
-    
+
     pub fn clean_all_buckets(&mut self) -> () {
         for prefix in 0..nb_bucket(self.k) {
             self.clean_bucket(prefix);
@@ -245,7 +268,7 @@ fn nb_bucket(k: u8) -> usize {
 }
 
 fn mask_prefix(k: u8) -> usize {
-    ((1 << prefix_size(k)) - 1) << suffix_size(k)  
+    ((1 << prefix_size(k)) - 1) << suffix_size(k)
 }
 
 #[cfg(test)]
@@ -287,7 +310,7 @@ mod test {
     #[test]
     fn get_suffix_() -> () {
         let kmer: u64 = 0b111111111;
-        
+
         assert_eq!(get_suffix(5, kmer), 0b11111);
     }
 }
