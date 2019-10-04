@@ -27,7 +27,7 @@ use crate::io::Mode;
 /* std use*/
 use std::io::Write;
 
-pub fn write<T>(count: &counter::Counter<T, u64, u64>, output_path: &str, k: u8, mode: Mode)
+pub fn write<T>(count: &counter::Counter<T, u64>, output_path: &str, k: u8, mode: Mode)
 where
     T: std::marker::Copy,
     u64: std::convert::From<T>,
@@ -49,7 +49,7 @@ where
 {
     fn run(
         &self,
-        count: &counter::Counter<T, u64, u64>,
+        count: &counter::Counter<T, u64>,
         output_path: &str,
         k: u8,
         mode: Mode,
@@ -72,7 +72,7 @@ where
 
     fn write_all_counts(
         &self,
-        count: &counter::Counter<T, u64, u64>,
+        count: &counter::Counter<T, u64>,
         out: &mut std::io::BufWriter<std::fs::File>,
         k: u8,
     ) -> () {
@@ -83,7 +83,7 @@ where
 
     fn write_kmer_counts(
         &self,
-        count: &counter::Counter<T, u64, u64>,
+        count: &counter::Counter<T, u64>,
         out: &mut std::io::BufWriter<std::fs::File>,
         k: u8,
     ) -> () {
@@ -103,7 +103,7 @@ where
 
     fn write_counts(
         &self,
-        count: &counter::Counter<T, u64, u64>,
+        count: &counter::Counter<T, u64>,
         out: &mut std::io::BufWriter<std::fs::File>,
         k: u8,
     ) -> () {
@@ -138,7 +138,7 @@ where
 
     fn write_numpy(
         &self,
-        count: &counter::Counter<T, u64, u64>,
+        count: &counter::Counter<T, u64>,
         out: &mut std::io::BufWriter<std::fs::File>,
         k: u8,
     ) -> () {

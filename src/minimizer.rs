@@ -40,7 +40,7 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: 
     write::write(&counter, output_path, k, write_mode);
 }
 
-fn minimizer_work<T, C: counter::Counter<T, u64, u64>, R: std::io::Read>(
+fn minimizer_work<T, C: counter::Counter<T,  u64>, R: std::io::Read>(
     reader: bio::io::fasta::Reader<std::io::BufReader<R>>,
     mut bucketizer: counter::Bucketizer<T>,
     k: u8,

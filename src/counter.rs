@@ -39,87 +39,10 @@ macro_rules! impl_incunsigned {
 impl_incunsigned!(u8);
 impl_incunsigned!(u16);
 
-struct IncAtomic;
-
-macro_rules! impl_incatomic {
-    ($type:ty) => {
-        impl Inc<$type> for IncAtomic {
-            fn inc(&mut self, val: &mut $type) {
-                (*val.get_mut()).saturating_add(1);
-            }
-        }
-    };
-}
-
-impl_incatomic!(std::sync::atomic::AtomicU8);
-impl_incatomic!(std::sync::atomic::AtomicU16);
-
-
-pub trait Counter<CounterType, BucketId, KmerType> {
-    fn incs(&mut self, bucket_id: BucketId, bucket: &NoTemporalArray);
+pub trait Counter<CounterType, KmerType> {
+    fn incs(&mut self, bucket: &NoTemporalArray);
     fn get(&self, kmer: KmerType) -> CounterType;
 }
-
-
-pub struct MultiThreadCounter<T> {
-    k: u8,
-    incrementor: IncAtomic,
-    data: Vec<T>,
-}
-
-macro_rules! impl_multithreadcounter {
-    ($type:ty, $expr:expr) => {
-        impl MultiThreadCounter<$type> {
-            pub fn new(k: u8) -> Self {
-                let mut data = Vec::with_capacity(nb_bucket(k));
-
-                for _ in 0..nb_bucket(k) {
-                    data.push($expr);
-                }
-
-                MultiThreadCounter {
-                    incrementor: IncAtomic {},
-                    data: data,
-                    k: k,
-                }
-            }
-        }
-    };
-}
-
-macro_rules! impl_counter_for_multithreadcounter {
-    ($type:ty, $expr:path) => {
-        impl Counter<$type, u64, u64> for MultiThreadCounter<$type> {
-            fn incs(&mut self, _bucket_id: u64, bucket: &NoTemporalArray) {
-                for i in bucket {
-                    self.incrementor.inc(&mut self.data[*i as usize]);
-                }
-            }
-
-            fn get(&self, kmer: u64) -> $type {
-                $expr(self.data[kmer as usize].load(std::sync::atomic::Ordering::SeqCst))
-            }
-        }
-    };
-}
-
-impl_multithreadcounter!(
-    std::sync::atomic::AtomicU8,
-    std::sync::atomic::AtomicU8::new(0)
-);
-impl_multithreadcounter!(
-    std::sync::atomic::AtomicU16,
-    std::sync::atomic::AtomicU16::new(0)
-);
-
-impl_counter_for_multithreadcounter!(
-    std::sync::atomic::AtomicU8,
-    std::sync::atomic::AtomicU8::new
-);
-impl_counter_for_multithreadcounter!(
-    std::sync::atomic::AtomicU16,
-    std::sync::atomic::AtomicU16::new
-);
 
 pub struct BasicCounter<T> {
     incrementor: IncUnsigned,
@@ -139,13 +62,9 @@ macro_rules! impl_basiccounter {
                 }
             }
         }
-    };
-}
 
-macro_rules! impl_counter_for_basiccounter {
-    ($type:ty) => {
-        impl Counter<$type, u64, u64> for BasicCounter<$type> {
-            fn incs(&mut self, _bucket_id: u64, bucket: &NoTemporalArray) {
+        impl Counter<$type, u64> for BasicCounter<$type> {
+            fn incs(&mut self, bucket: &NoTemporalArray) {
                 for i in bucket {
                     self.incrementor.inc(&mut self.data[*i as usize]);
                 }
@@ -160,8 +79,48 @@ macro_rules! impl_counter_for_basiccounter {
 
 impl_basiccounter!(u8);
 impl_basiccounter!(u16);
-impl_counter_for_basiccounter!(u8);
-impl_counter_for_basiccounter!(u16);
+
+pub struct ShortCounter {
+    pub data: Vec<u8>,
+}
+
+impl ShortCounter {
+    pub fn new(k: u8) -> Self {
+        ShortCounter {
+            data: vec![0; (1 << nb_bit(k)) / 2],
+        }
+    }
+}
+
+impl Counter<u8, u64> for ShortCounter {
+    fn incs(&mut self, bucket: &NoTemporalArray) {
+        for i in bucket {
+            let weight = i & 1 != 0;
+            let key: usize = *i as usize >> 1;
+            
+            match weight {
+                true => match self.data[key] & 0b11110000 == 240 {
+                    true => (),
+                    false => self.data[key] += 16,
+                },
+                false => match self.data[key] & 0b00001111 == 15 {
+                    true => (),
+                    false => self.data[key] += 1,
+                }
+            }
+        }
+    }
+
+    fn get(&self, kmer: u64) -> u8 {
+        let weight = kmer & 1 != 0;
+        let key: usize = kmer as usize >> 1;
+            
+        return match weight {
+            true => self.data[key] >> 4,
+            false => self.data[key] & 0b00001111,
+        };
+    }
+}
 
 const BUCKET_SIZE: usize = 1 << 12;
 
@@ -173,7 +132,7 @@ pub struct NoTemporalArray {
 impl NoTemporalArray {
     fn new() -> Self {
         NoTemporalArray {
-            data: Box::new(unsafe { std::mem::uninitialized() }),
+            data: Box::new(unsafe { std::mem::MaybeUninit::uninit().assume_init() }),
             pos: 0,
         }
     }
@@ -203,14 +162,14 @@ impl<'a> std::iter::IntoIterator for &'a NoTemporalArray {
 }
 
 pub struct Bucketizer<'a, T> {
-    pub counter: &'a mut Counter<T, u64, u64>,
+    pub counter: &'a mut Counter<T, u64>,
     buckets: Vec<NoTemporalArray>,
     k: u8,
     bucket_size: usize,
 }
 
 impl<'a, T> Bucketizer<'a, T> {
-    pub fn new(counter: &'a mut Counter<T, u64, u64>, k: u8) -> Self {
+    pub fn new(counter: &'a mut Counter<T, u64>, k: u8) -> Self {
         Bucketizer {
             counter: counter,
             buckets: (0..nb_bucket(k)).map(|_| NoTemporalArray::new()).collect(),
@@ -237,7 +196,7 @@ impl<'a, T> Bucketizer<'a, T> {
     }
 
     fn clean_bucket(&mut self, prefix: usize) -> () {
-        self.counter.incs(prefix as u64, &self.buckets[prefix]);
+        self.counter.incs(&self.buckets[prefix]);
         self.buckets[prefix].pos = 0;
     }
 }
@@ -312,5 +271,48 @@ mod test {
         let kmer: u64 = 0b111111111;
 
         assert_eq!(get_suffix(5, kmer), 0b11111);
+    }
+
+    use crate::convert;
+    #[test]
+    fn short_counter() -> () {
+        let kmer1 = convert::cannonical(convert::seq2bit("ACTGG".as_bytes()), 5) >> 1;
+        let kmer2 = convert::cannonical(convert::seq2bit("ACTGA".as_bytes()), 5) >> 1;
+
+        let mut count = ShortCounter::new(5);
+
+        let mut bucket = NoTemporalArray::new();
+        for _ in 0..2 {
+            bucket.push(kmer2);
+        }
+        count.incs(&bucket);
+        assert_eq!(count.data[27], 2);
+
+        bucket = NoTemporalArray::new();
+        for _ in 0..2 {
+            bucket.push(kmer1);
+        }
+        count.incs(&bucket);
+        assert_eq!(count.data[27], 34);
+
+        assert_eq!(count.get(kmer1), 2);
+        assert_eq!(count.get(kmer2), 2);
+
+        bucket = NoTemporalArray::new();
+        for _ in 0..15 {
+            bucket.push(kmer1);
+        }
+        count.incs(&bucket);
+        assert_eq!(count.data[27], 242);
+
+        bucket = NoTemporalArray::new();
+        for _ in 0..15 {
+            bucket.push(kmer2);
+        }
+        count.incs(&bucket);
+        assert_eq!(count.data[27], 255);
+
+        assert_eq!(count.get(kmer1), 15);
+        assert_eq!(count.get(kmer2), 15);
     }
 }
