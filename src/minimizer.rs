@@ -23,26 +23,26 @@ SOFTWARE.
 /* project use */
 use crate::convert;
 use crate::counter;
-use crate::io::Mode;
 use crate::write;
+use crate::bucketizer;
 
-pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8, write_mode: Mode) -> () {
+pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
 
     // init counter
     let mut counter: counter::BasicCounter<u16> = counter::BasicCounter::<u16>::new(m);
-    let bucketizer: counter::Bucketizer<u16> = counter::Bucketizer::new(&mut counter, m);
+    let bucketizer: bucketizer::Prefix<u16> = bucketizer::Prefix::new(&mut counter, m);
 
     minimizer_work::<u16, counter::BasicCounter<u16>, std::fs::File>(reader, bucketizer, k, m);
 
-    write::write(&counter, output_path, k, write_mode);
+    write::write(&counter, output_path, k);
 }
 
 fn minimizer_work<T, C: counter::Counter<T,  u64>, R: std::io::Read>(
     reader: bio::io::fasta::Reader<std::io::BufReader<R>>,
-    mut bucketizer: counter::Bucketizer<T>,
+    mut bucketizer: bucketizer::Prefix<T>,
     k: u8,
     m: u8,
 ) -> () {

@@ -6,10 +6,9 @@ authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
 
 [dependencies]
-bio             = "0.21"
-csv             = "1"
-clap            = "2.31.2"
-seq_io          = "0.3"
+bio             = "0.29"
+csv             = "1.1.1"
+clap            = "2.33"
 
 [profile.release]
 debug = true

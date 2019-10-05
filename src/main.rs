@@ -38,8 +38,8 @@ mod counter;
 mod dump;
 mod io;
 mod minimizer;
-mod prepare;
 mod write;
+mod bucketizer;
 
 fn main() {
     let matches = App::new("ssik")
@@ -71,14 +71,6 @@ fn main() {
                             .required(true)
                             .takes_value(true)
                             .help("kmer size, if kmer size is even real value is equal to k-1, max value 31")
-                    )
-                    .arg(
-                        Arg::with_name("write-mode")
-                            .short("w")
-                            .long("write-mode")
-                            .possible_values(&["all_counts", "counts", "kmer_counts", "numpy"])
-                            .default_value("all_counts")
-                            .help("mode of output")
                     )
         )
         .subcommand(SubCommand::with_name("minimizer")
@@ -115,14 +107,6 @@ fn main() {
                             .takes_value(true)
                             .help("minimizer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
-                    .arg(
-                        Arg::with_name("write-mode")
-                            .short("w")
-                            .long("write-mode")
-                            .possible_values(&["all_counts", "counts", "kmer_counts", "numpy"])
-                            .default_value("all_counts")
-                            .help("mode of output")
-                    )
         )
         .subcommand(SubCommand::with_name("dump")
                     .about("take binary file produce by count step and generate a csv with kmer")
@@ -151,31 +135,10 @@ fn main() {
                             .help("write only kmer with abudance is higher than this parametre")
                     )
         )
-        .subcommand(SubCommand::with_name("prepare")
-                    .about("indicate for a k the memory usage of count")
-                    .arg(
-                        Arg::with_name("kmer-size")
-                            .short("k")
-                            .long("kmer-size")
-                            .takes_value(true)
-                            .help(
-                                "kmer size you want use",
-                            )
-                    )
-                    .arg(
-                        Arg::with_name("minimizer-size")
-                            .short("m")
-                            .long("minimizer-size")
-                            .takes_value(true)
-                            .help(
-                                "minimizer size you want use",
-                            )
-                    )
-        )
         .get_matches();
 
     if let Some(count_matches) = matches.subcommand_matches("count") {
-        let k = normalize_size_of_count(
+        let k = normalize_size_of_k(
             count_matches
                 .value_of("kmer-size")
                 .unwrap()
@@ -187,7 +150,6 @@ fn main() {
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
-            io::Mode::from(count_matches.value_of("write-mode").unwrap()),
         );
     } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
@@ -196,7 +158,7 @@ fn main() {
             .parse::<u8>()
             .unwrap();
 
-        let m = normalize_size_of_count(
+        let m = normalize_size_of_k(
             minimizer_matches
                 .value_of("minimizer-size")
                 .unwrap()
@@ -209,7 +171,6 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-            io::Mode::from(minimizer_matches.value_of("write-mode").unwrap()),
         );
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abundance = dump_matches
@@ -223,49 +184,10 @@ fn main() {
             dump_matches.value_of("output").unwrap(),
             abundance,
         );
-    } else if let Some(prepare_matches) = matches.subcommand_matches("prepare") {
-        if prepare_matches.is_present("kmer-size") && prepare_matches.is_present("minimizer-size") {
-            eprintln!("You can't use k and m in same time");
-            return ();
-        }
-
-        if !prepare_matches.is_present("kmer-size") && !prepare_matches.is_present("minimizer-size")
-        {
-            eprintln!("You need use k or m");
-            return ();
-        }
-
-        if prepare_matches.is_present("kmer-size") {
-            let k = normalize_size_of_count(
-                prepare_matches
-                    .value_of("kmer-size")
-                    .unwrap()
-                    .parse::<u8>()
-                    .unwrap(),
-            );
-
-            prepare::prepare(k, "k");
-
-            return ();
-        }
-
-        if prepare_matches.is_present("minimizer-size") {
-            let m = normalize_size_of_count(
-                prepare_matches
-                    .value_of("minimizer-size")
-                    .unwrap()
-                    .parse::<u8>()
-                    .unwrap(),
-            );
-
-            prepare::prepare(m, "m");
-
-            return ();
-        }
     }
 }
 
-fn normalize_size_of_count(k: u8) -> u8 {
+fn normalize_size_of_k(k: u8) -> u8 {
     if k > 31 {
         return 31;
     }
