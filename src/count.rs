@@ -28,6 +28,8 @@ use crate::counter;
 use crate::write;
 use crate::bucketizer;
 
+use crate::bucketizer::Bu
+
 pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
     let reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
 

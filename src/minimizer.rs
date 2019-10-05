@@ -26,6 +26,8 @@ use crate::counter;
 use crate::write;
 use crate::bucketizer;
 
+use crate::bucketizer::Bucket;
+
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
@@ -35,14 +37,14 @@ pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let mut counter: counter::BasicCounter<u16> = counter::BasicCounter::<u16>::new(m);
     let bucketizer: bucketizer::Prefix<u16> = bucketizer::Prefix::new(&mut counter, m);
 
-    minimizer_work::<u16, counter::BasicCounter<u16>, std::fs::File>(reader, bucketizer, k, m);
+    minimizer_work::<u16, counter::BasicCounter<u16>, bucketizer::Prefix<u16> ,std::fs::File>(reader, bucketizer, k, m);
 
     write::write(&counter, output_path, k);
 }
 
-fn minimizer_work<T, C: counter::Counter<T,  u64>, R: std::io::Read>(
+fn minimizer_work<'a, T, C: counter::Counter<T,  u64>, B: bucketizer::Bucket<'a, T>, R: std::io::Read>(
     reader: bio::io::fasta::Reader<std::io::BufReader<R>>,
-    mut bucketizer: bucketizer::Prefix<T>,
+    mut bucketizer: B,
     k: u8,
     m: u8,
 ) -> () {

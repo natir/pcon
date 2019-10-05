@@ -138,14 +138,14 @@ mod test {
 
         let mut count = ShortCounter::new(5);
 
-        let mut bucket = NoTemporalArray::new();
+        let mut bucket = bucketizer::NoTemporalArray::new();
         for _ in 0..2 {
             bucket.push(kmer2);
         }
         count.incs(&bucket);
         assert_eq!(count.data[27], 2);
 
-        bucket = NoTemporalArray::new();
+        bucket = bucketizer::NoTemporalArray::new();
         for _ in 0..2 {
             bucket.push(kmer1);
         }
@@ -155,14 +155,14 @@ mod test {
         assert_eq!(count.get(kmer1), 2);
         assert_eq!(count.get(kmer2), 2);
 
-        bucket = NoTemporalArray::new();
+        bucket = bucketizer::NoTemporalArray::new();
         for _ in 0..15 {
             bucket.push(kmer1);
         }
         count.incs(&bucket);
         assert_eq!(count.data[27], 242);
 
-        bucket = NoTemporalArray::new();
+        bucket = bucketizer::NoTemporalArray::new();
         for _ in 0..15 {
             bucket.push(kmer2);
         }
