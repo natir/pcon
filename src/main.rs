@@ -176,7 +176,7 @@ fn main() {
         let abundance = dump_matches
             .value_of("abundance-min")
             .unwrap()
-            .parse::<u16>()
+            .parse::<u8>()
             .unwrap();
 
         dump::dump(

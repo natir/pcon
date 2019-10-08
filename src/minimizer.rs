@@ -26,18 +26,16 @@ use crate::counter;
 use crate::write;
 use crate::bucketizer;
 
-use crate::bucketizer::Bucket;
-
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
     ));
 
     // init counter
-    let mut counter: counter::BasicCounter<u16> = counter::BasicCounter::<u16>::new(m);
-    let bucketizer: bucketizer::Prefix<u16> = bucketizer::Prefix::new(&mut counter, m);
+    let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::<u8>::new(m);
+    let bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(&mut counter, m);
 
-    minimizer_work::<u16, counter::BasicCounter<u16>, bucketizer::Prefix<u16> ,std::fs::File>(reader, bucketizer, k, m);
+    minimizer_work::<u8, counter::BasicCounter<u8>, bucketizer::Prefix<u8> ,std::fs::File>(reader, bucketizer, k, m);
 
     write::write(&counter, output_path, k);
 }

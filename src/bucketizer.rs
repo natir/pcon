@@ -135,7 +135,7 @@ impl<'a, T> Minimizer<'a, T> {
     }
 
     fn minimizer_mask_(&self) -> u64 {
-        return ((1 << self.minimizer_size()) - 1);
+        return (1 << self.minimizer_size()) - 1;
     }
 
     fn minimizer_mask(&self, offset: usize) -> u64 {
