@@ -26,6 +26,8 @@ use crate::counter;
 use crate::write;
 use crate::bucketizer;
 
+use crate::bucketizer::Bucket;
+
 pub fn minimizer(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(
         std::fs::File::open(input_path).unwrap(),
