@@ -30,14 +30,14 @@ pub struct NoTemporalArray {
 }
 
 impl NoTemporalArray {
-    fn new() -> Self {
+    pub fn new() -> Self {
         NoTemporalArray {
             data: Box::new(unsafe { std::mem::MaybeUninit::uninit().assume_init() }),
             pos: 0,
         }
     }
 
-    fn push(&mut self, val: u64) -> () {
+    pub fn push(&mut self, val: u64) -> () {
         unsafe {
             core::arch::x86_64::_mm_stream_pi(
                 self.data.as_mut_ptr().add(self.pos) as *mut std::arch::x86_64::__m64,

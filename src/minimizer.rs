@@ -136,9 +136,9 @@ mod test {
         let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(file));
 
         let mut counter: counter::BasicCounter<u8> = counter::BasicCounter::<u8>::new(3);
-        let bucketizer: counter::Bucketizer<u8> = counter::Bucketizer::new(&mut counter, 3);
+        let bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(&mut counter, 3);
 
-        minimizer_work::<u8, counter::BasicCounter<u8>, &[u8]>(reader, bucketizer, 5, 3);
+        minimizer_work::<u8, counter::BasicCounter<u8>, bucketizer::Prefix<u8>, &[u8]>(reader, bucketizer, 5, 3);
 
         assert_eq!(
             counter.data,
