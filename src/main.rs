@@ -40,6 +40,7 @@ mod io;
 mod minimizer;
 mod write;
 mod bucketizer;
+mod lookup_table;
 
 fn main() {
     let matches = App::new("ssik")

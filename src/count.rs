@@ -20,8 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use std::io::BufRead;
-
 /* project use */
 use crate::convert;
 use crate::counter;
@@ -31,17 +29,16 @@ use crate::bucketizer;
 use crate::bucketizer::Bucket;
 
 pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
-    let reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
+    let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
 
     let mut counter: counter::ShortCounter = counter::ShortCounter::new(k);
     let mut bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(&mut counter, k);
-
-    for record in reader.lines().filter(|l| !l.as_ref().unwrap().starts_with('>')) {
+    
+    for record in reader.records() {
         let line = record.unwrap();
 
-        for subseq in line.as_bytes().windows(k as usize) {
-            let hash = hash(subseq, k);
-            bucketizer.add_bit(hash);
+        for subseq in line.seq().windows(k as usize) {
+            bucketizer.add_kmer(convert::cannonical(convert::seq2bit(subseq), k));
         }
     }
 
@@ -50,20 +47,7 @@ pub fn count(input_path: &str, output_path: &str, k: u8) -> () {
     write::write(&counter, output_path, k);
 }
 
-fn hash(kmer: &[u8], k: u8) -> u64 {
-    return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn hash_() {
-        // TAGGC -> 100011110
-        assert_eq!(hash(b"TAGGC", 5), 0b100011110);
-
-        // GCCTA -> 110101100
-        assert_eq!(hash(b"GCCTA", 5), 0b100011110);
-    }
 }

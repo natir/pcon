@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+
 pub fn seq2bit(subseq: &[u8]) -> u64 {
     let mut kmer: u64 = 0;
 
@@ -87,15 +88,30 @@ pub fn rev(kmer: u64, k: u8) -> u64 {
     return reverse;
 }
 
+
+pub fn get_first_bit(kmer: u64) -> bool {
+    return kmer & 1 != 0;
+}
+
+pub fn remove_first_bit(kmer: u64) -> u64 {
+    return kmer >> 1;
+}
+
+pub fn hash(subseq: &[u8], k: u8) -> u64 {
+    return remove_first_bit(cannonical(seq2bit(subseq), k));
+}
+
+use crate::lookup_table::REVERSE_2_LOOKUP;
+
+fn _reverse_2(bit: u64) -> u64 {
+    return (REVERSE_2_LOOKUP[bit as u16 as usize] as u64) << 48
+        | (REVERSE_2_LOOKUP[(bit >> 16) as u16 as usize] as u64) << 32
+        | (REVERSE_2_LOOKUP[(bit >> 32) as u16 as usize] as u64) << 16
+        | (REVERSE_2_LOOKUP[(bit >> 48) as u16 as usize] as u64);
+}
+
 pub fn reverse_2(mut kmer: u64, k: u8) -> u64 {
-    let mut reversed: u64 = 0;
-
-    for _ in 0..(k - 1) {
-        reversed = (reversed ^ (kmer & 0b11)) << 2;
-        kmer >>= 2;
-    }
-
-    return reversed ^ (kmer & 0b11);
+    return _reverse_2(kmer) >> (64 - k * 2);
 }
 
 #[cfg(test)]
@@ -163,5 +179,13 @@ mod test {
         // TAGGC -> 1000111101 rev CGGAT -> 0111110010
         assert_eq!(498, reverse_2(573, 5));
     }
+    
+    #[test]
+    fn hash_() {
+        // TAGGC -> 100011110
+        assert_eq!(hash(b"TAGGC", 5), 0b100011110);
 
+        // GCCTA -> 110101100
+        assert_eq!(hash(b"GCCTA", 5), 0b100011110);
+    }
 }

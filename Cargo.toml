@@ -10,6 +10,7 @@ bio             = "0.29"
 csv             = "1.1.1"
 clap            = "2.33"
 
+
 [profile.release]
 debug = true
 lto = 'thin'

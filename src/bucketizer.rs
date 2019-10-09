@@ -21,8 +21,9 @@ SOFTWARE.
  */
 
 use crate::counter;
+use crate::convert;
 
-const BUCKET_SIZE: usize = 1 << 16;
+const BUCKET_SIZE: usize = 1 << 10;
 
 pub struct NoTemporalArray {
     pos: usize,
@@ -38,12 +39,7 @@ impl NoTemporalArray {
     }
 
     pub fn push(&mut self, val: u64) -> () {
-        unsafe {
-            core::arch::x86_64::_mm_stream_pi(
-                self.data.as_mut_ptr().add(self.pos) as *mut std::arch::x86_64::__m64,
-                std::mem::transmute(val),
-            )
-        }
+        self.data[self.pos] = val;
         self.pos += 1
     }
 
@@ -62,7 +58,7 @@ impl<'a> std::iter::IntoIterator for &'a NoTemporalArray {
 }
 
 pub trait Bucket<'a, T> {
-    fn add_bit(&mut self, hash: u64) -> ();
+    fn add_kmer(&mut self, kmer: u64) -> ();
     fn clean_all_buckets(&mut self) -> ();
     fn clean_bucket(&mut self, prefix: usize) -> ();
 }
@@ -87,7 +83,8 @@ impl<'a, T> Prefix<'a, T> {
 
 impl<'a, T> Bucket<'a, T> for Prefix<'a, T> {
     #[inline(always)]
-    fn add_bit(&mut self, hash: u64) -> () {
+    fn add_kmer(&mut self, kmer: u64) -> () {
+        let hash = convert::remove_first_bit(kmer);
         let prefix: usize = get_prefix(self.k, hash);
 
         self.buckets[prefix].push(hash);
@@ -99,86 +96,6 @@ impl<'a, T> Bucket<'a, T> for Prefix<'a, T> {
 
     fn clean_all_buckets(&mut self) -> () {
         for prefix in 0..nb_bucket(self.k) {
-            self.clean_bucket(prefix);
-        }
-    }
-
-    fn clean_bucket(&mut self, prefix: usize) -> () {
-        self.counter.incs(&self.buckets[prefix]);
-        self.buckets[prefix].pos = 0;
-    }
-}
-
-pub struct Minimizer<'a, T> {
-    counter: &'a mut dyn counter::Counter<T, u64>,
-    buckets: Vec<NoTemporalArray>,
-    k: u8,
-    m: u8,
-    bucket_size: usize,
-}
-
-impl<'a, T> Minimizer<'a, T> {
-    pub fn new(counter: &'a mut dyn counter::Counter<T, u64>, k: u8, m: u8) -> Self {
-        let nb_bit_mini = 10;
-        
-        Minimizer {
-            counter: counter,
-            buckets: (0..nb_bucket(nb_bit_mini)).map(|_| NoTemporalArray::new()).collect(),
-            k: k,
-            m: nb_bit_mini,
-            bucket_size: BUCKET_SIZE,
-        }
-    }
-
-    fn minimizer_size(&self) -> usize {
-        return self.m as usize;
-    }
-
-    fn minimizer_mask_(&self) -> u64 {
-        return (1 << self.minimizer_size()) - 1;
-    }
-
-    fn minimizer_mask(&self, offset: usize) -> u64 {
-        return self.minimizer_mask_() << offset;
-    }
-    
-    fn get_minimizer(&self, kmer: u64) -> u64 {
-        let mut minimizer = kmer & self.minimizer_mask(0);
-        let mut minimizer_hash = Self::hash(minimizer);
-
-        for i in 1..(nb_bit(self.k) - self.minimizer_size()) {
-            let value = (kmer & self.minimizer_mask(i)) >> i;
-            if minimizer_hash > Self::hash(value) {
-                minimizer = value;
-                minimizer_hash = Self::hash(value);
-            }
-        }
-
-        return minimizer;
-    }
-    
-    fn hash(mut x: u64) -> i64 {
-        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
-        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
-        x = (x >> 32) ^ x;
-
-        return x as i64;
-    }
-}
-
-impl<'a, T> Bucket<'a, T> for Minimizer<'a, T> {
-    fn add_bit(&mut self, hash: u64) -> () {
-        let mini = self.get_minimizer(hash) as usize;
-
-        self.buckets[mini].push(hash);
-
-        if self.buckets[mini].len() == self.bucket_size {
-            self.clean_bucket(mini);
-        }
-    }
-
-    fn clean_all_buckets(&mut self) -> () {
-        for prefix in 0..nb_bucket(self.m) {
             self.clean_bucket(prefix);
         }
     }
@@ -216,6 +133,86 @@ fn suffix_size(k: u8) -> usize {
 
 fn mask_prefix(k: u8) -> usize {
     ((1 << prefix_size(k)) - 1) << suffix_size(k)
+}
+
+pub struct Minimizer<'a, T> {
+    counter: &'a mut dyn counter::Counter<T, u64>,
+    buckets: Vec<NoTemporalArray>,
+    k: u8,
+    m: u8,
+    bucket_size: usize,
+}
+
+impl<'a, T> Minimizer<'a, T> {
+    pub fn new(counter: &'a mut dyn counter::Counter<T, u64>, k: u8, m: u8) -> Self {
+        Minimizer {
+            counter: counter,
+            buckets: (0..(1 << m * 2)).map(|_| NoTemporalArray::new()).collect(),
+            k: k,
+            m: m,
+            bucket_size: BUCKET_SIZE,
+        }
+    }
+
+    fn minimizer_size(&self) -> usize {
+        return 2 * self.m as usize;
+    }
+
+    fn minimizer_mask_(&self) -> u64 {
+        return (1 << self.minimizer_size()) - 1;
+    }
+
+    fn minimizer_mask(&self, offset: usize) -> u64 {
+        return self.minimizer_mask_() << offset;
+    }
+    
+    fn get_minimizer(&self, kmer: u64) -> u64 {
+        let mut minimizer = kmer & self.minimizer_mask(0);
+        let mut minimizer_hash = Self::hash(minimizer);
+        
+        for i in (2..(self.k as usize * 2 - self.m as usize)).step_by(2) {
+            let subk = (kmer & self.minimizer_mask(i)) >> i;
+            let hash = Self::hash(subk);
+            if minimizer_hash > hash {
+                minimizer = subk;
+                minimizer_hash = hash;
+            }
+        }
+
+        return minimizer;
+    }
+    
+    fn hash(mut x: u64) -> i64 {
+        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
+        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
+        x = (x >> 32) ^ x;
+
+        return x as i64;
+    }
+}
+
+impl<'a, T> Bucket<'a, T> for Minimizer<'a, T> {
+    fn add_kmer(&mut self, kmer: u64) -> () {
+        let hash = convert::remove_first_bit(kmer);
+        let mini = self.get_minimizer(kmer) as usize;
+
+        self.buckets[mini].push(hash);
+
+        if self.buckets[mini].len() == self.bucket_size {
+            self.clean_bucket(mini);
+        }
+    }
+
+    fn clean_all_buckets(&mut self) -> () {
+        for prefix in 0..nb_bucket(self.m) {
+            self.clean_bucket(prefix);
+        }
+    }
+
+    fn clean_bucket(&mut self, prefix: usize) -> () {
+        self.counter.incs(&self.buckets[prefix]);
+        self.buckets[prefix].pos = 0;
+    }
 }
 
 #[cfg(test)]

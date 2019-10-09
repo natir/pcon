@@ -68,7 +68,7 @@ fn minimizer_work<'a, T, C: counter::Counter<T,  u64>, B: bucketizer::Bucket<'a,
             } else {
                 // test if new subkmer is minimizer
                 let subk = &subseq[pos_begin_last_minimizer..];
-                let kmer = hash(subk, m);
+                let kmer = convert::cannonical(convert::seq2bit(subk), m);
                 let kash = revhash(kmer);
 
                 if kash < last_mini_hash {
@@ -78,7 +78,7 @@ fn minimizer_work<'a, T, C: counter::Counter<T,  u64>, B: bucketizer::Bucket<'a,
                 }
             }
 
-            bucketizer.add_bit(last_minimizer);
+            bucketizer.add_kmer(last_minimizer);
         }
     }
 
@@ -91,7 +91,7 @@ fn found_minimizer(subseq: &[u8], m: u8) -> (u64, i64, i64) {
     let mut pos: i64 = 0;
 
     for (i, subk) in subseq.windows(m as usize).enumerate() {
-        let kmer = hash(subk, m);
+        let kmer = convert::cannonical(convert::seq2bit(subk), m);
         let kash = revhash(kmer);
 
         if kash < mash {
@@ -102,10 +102,6 @@ fn found_minimizer(subseq: &[u8], m: u8) -> (u64, i64, i64) {
     }
 
     return (mini, pos, mash);
-}
-
-fn hash(kmer: &[u8], k: u8) -> u64 {
-    return convert::cannonical(convert::seq2bit(kmer), k) >> 1;
 }
 
 fn revhash(mut x: u64) -> i64 {
@@ -119,15 +115,6 @@ fn revhash(mut x: u64) -> i64 {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn hash_() {
-        // TAGGC -> 100011110
-        assert_eq!(hash(b"TAGGC", 5), 0b100011110);
-
-        // GCCTA -> 110101100
-        assert_eq!(hash(b"GCCTA", 5), 0b100011110);
-    }
 
     #[test]
     fn minimizer_() {

@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+use crate::convert;
 use crate::bucketizer;
 
 trait Inc<T> {
@@ -83,13 +84,13 @@ impl_basiccounter!(u8);
 impl_basiccounter!(u16);
 
 pub struct ShortCounter {
-    pub data: Vec<u8>,
+    pub data: Box<[u8]>,
 }
 
 impl ShortCounter {
     pub fn new(k: u8) -> Self {
         ShortCounter {
-            data: vec![0; (1 << bucketizer::nb_bit(k)) / 2],
+            data: vec![0; (1 << bucketizer::nb_bit(k)) / 2].into_boxed_slice(),
         }
     }
 }
@@ -97,10 +98,9 @@ impl ShortCounter {
 impl Counter<u8, u64> for ShortCounter {
     fn incs(&mut self, bucket: &bucketizer::NoTemporalArray) {
         for i in bucket {
-            let weight = i & 1 != 0;
             let key: usize = *i as usize >> 1;
             
-            match weight {
+            match convert::get_first_bit(*i) {
                 true => match self.data[key] & 0b11110000 == 240 {
                     true => (),
                     false => self.data[key] += 16,
@@ -114,10 +114,9 @@ impl Counter<u8, u64> for ShortCounter {
     }
 
     fn get(&self, kmer: u64) -> u8 {
-        let weight = kmer & 1 != 0;
         let key: usize = kmer as usize >> 1;
             
-        return match weight {
+        return match convert::get_first_bit(kmer) {
             true => self.data[key] >> 4,
             false => self.data[key] & 0b00001111,
         };
