@@ -215,6 +215,90 @@ impl<'a, T> Bucket<'a, T> for Minimizer<'a, T> {
     }
 }
 
+pub struct Hash<'a, T> {
+    counter: &'a mut dyn counter::Counter<T, u64>,
+    k: u8,
+    m: u8,
+    minimizer_mask: u64,
+}
+
+impl<'a, T> Hash<'a, T> {
+    pub fn new(counter: &'a mut dyn counter::Counter<T, u64>, k: u8, m: u8) -> Self {
+        Hash {
+            counter: counter,
+            k: k,
+            m: m,
+            minimizer_mask: Self::generate_mask(m * 2),
+        }
+    }
+
+    fn generate_mask(m: u8) -> u64 {
+        return (1 << m) - 1;
+    }
+
+    fn minimizer_mask(&self, offset: usize) -> u64 {
+        return self.minimizer_mask << offset;
+    }
+    
+    fn get_minimizer(&self, kmer: u64) -> (u64, u8) {
+        let mut minimizer = kmer & self.minimizer_mask(0);
+        let mut minimizer_hash = Self::hash(minimizer);
+        let mut index = 0;
+        
+        for i in (2..(self.k as usize * 2 - self.m as usize)).step_by(2) {
+            let subk = (kmer & self.minimizer_mask(i)) >> i;
+            let hash = Self::hash(subk);
+            if minimizer_hash > hash {
+                minimizer = subk;
+                minimizer_hash = hash;
+                index = i;
+            }
+        }
+
+        return (minimizer, index as u8);
+    }
+
+    #[inline(always)]
+    fn len_suffix(&self, mini_index: u8) -> u8 {
+        return self.k * 2 - (mini_index + self.m * 2);
+    }
+
+    #[inline(always)]
+    fn len_prefix(&self, mini_index: u8) -> u8 {
+        return self.k * 2 - self.m * 2 - self.len_suffix(mini_index);
+    }
+    
+    #[inline(always)]
+    fn hash(mut x: u64) -> i64 {
+        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
+        x = ((x >> 32) ^ x).wrapping_mul(0xD6E8FEB86659FD93);
+        x = (x >> 32) ^ x;
+
+        return x as i64;
+    }
+
+
+}
+
+impl<'a, T> Bucket<'a, T> for Hash<'a, T> {
+    fn add_kmer(&mut self, kmer: u64) -> () {
+        let (mini_val, mini_index) = self.get_minimizer(kmer);
+        let mut hash = mini_val << self.k * 2 - self.m * 2;
+        hash |= (kmer >> mini_index + self.m * 2) << self.len_prefix(mini_index);
+        hash |= kmer & Self::generate_mask(self.len_prefix(mini_index));
+
+        self.counter.inc(convert::remove_first_bit(hash));
+    }
+
+    fn clean_all_buckets(&mut self) -> () {
+        return ();
+    }
+
+    fn clean_bucket(&mut self, _prefix: usize) -> () {
+        return ();
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

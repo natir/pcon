@@ -43,7 +43,10 @@ impl_incunsigned!(u8);
 impl_incunsigned!(u16);
 
 pub trait Counter<CounterType, KmerType> {
+    fn inc(&mut self, kmer: KmerType);
+
     fn incs(&mut self, bucket: &bucketizer::NoTemporalArray);
+    
     fn get(&self, kmer: KmerType) -> CounterType;
 }
 
@@ -67,9 +70,14 @@ macro_rules! impl_basiccounter {
         }
 
         impl Counter<$type, u64> for BasicCounter<$type> {
-            fn incs(&mut self, bucket: &bucketizer::NoTemporalArray) {
+            fn inc(&mut self, kmer: u64) {
+                self.incrementor.inc(&mut self.data[kmer as usize]);
+            }
+            
+
+            fn incs(&mut self, bucket: &bucketizer::NoTemporalArray){
                 for i in bucket {
-                    self.incrementor.inc(&mut self.data[*i as usize]);
+                    self.inc(*i);
                 }
             }
 
@@ -96,23 +104,27 @@ impl ShortCounter {
 }
 
 impl Counter<u8, u64> for ShortCounter {
-    fn incs(&mut self, bucket: &bucketizer::NoTemporalArray) {
-        for i in bucket {
-            let key: usize = *i as usize >> 1;
-            
-            match convert::get_first_bit(*i) {
-                true => match self.data[key] & 0b11110000 == 240 {
-                    true => (),
-                    false => self.data[key] += 16,
-                },
-                false => match self.data[key] & 0b00001111 == 15 {
-                    true => (),
-                    false => self.data[key] += 1,
-                }
+    fn inc (&mut self, kmer: u64) {
+        let key: usize = convert::remove_first_bit(kmer) as usize;
+        
+        match convert::get_first_bit(kmer) {
+            true => match self.data[key] & 0b11110000 == 240 {
+                true => (),
+                false => self.data[key] += 16,
+            },
+            false => match self.data[key] & 0b00001111 == 15 {
+                true => (),
+                false => self.data[key] += 1,
             }
         }
     }
 
+    fn incs(&mut self, bucket: &bucketizer::NoTemporalArray){
+        for i in bucket {
+            self.inc(*i);
+        }
+    }
+    
     fn get(&self, kmer: u64) -> u8 {
         let key: usize = kmer as usize >> 1;
             

@@ -73,6 +73,14 @@ fn main() {
                             .takes_value(true)
                             .help("kmer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
+                    .arg(
+                        Arg::with_name("minimizer-size")
+                            .short("m")
+                            .long("minimizer-size")
+                            .required(true)
+                            .takes_value(true)
+                            .help("minimizer size, used to improve cache locality, max value k-1")
+                    )
         )
         .subcommand(SubCommand::with_name("minimizer")
                     .about("count minimizer in fasta file")
@@ -146,11 +154,21 @@ fn main() {
                 .parse::<u8>()
                 .unwrap(),
         );
-
+        
+        let m = normalize_size_of_m(
+            count_matches
+                .value_of("minimizer-size")
+                .unwrap()
+                .parse::<u8>()
+                .unwrap(),
+            k
+        );
+        
         count::count(
             count_matches.value_of("input").unwrap(),
             count_matches.value_of("output").unwrap(),
             k,
+            m,
         );
     } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
@@ -194,4 +212,13 @@ fn normalize_size_of_k(k: u8) -> u8 {
     }
 
     return k - (!k & 1);
+}
+
+
+fn normalize_size_of_m(m: u8, k: u8) -> u8 {
+    if m > k {
+        return k - 1;
+    }
+
+    return m;
 }

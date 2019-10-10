@@ -32,7 +32,8 @@ pub fn seq2bit(subseq: &[u8]) -> u64 {
     return kmer;
 }
 
-fn nuc2bit(nuc: u8) -> u64 {
+#[inline(always)]
+pub fn nuc2bit(nuc: u8) -> u64 {
     return (nuc as u64 >> 1) & 0b11;
 }
 
@@ -58,6 +59,7 @@ pub fn bit2seq(mut kmer: u64, k: u8) -> String {
     return String::from_utf8(result).unwrap();
 }
 
+#[inline(always)]
 pub fn cannonical(kmer: u64, k: u8) -> u64 {
     if parity_even(kmer) {
         return kmer;
@@ -66,6 +68,7 @@ pub fn cannonical(kmer: u64, k: u8) -> u64 {
     }
 }
 
+#[inline(always)]
 pub fn parity_even(kmer: u64) -> bool {
     return kmer.count_ones() % 2 == 0;
 }
@@ -74,6 +77,7 @@ pub fn revcomp(kmer: u64, k: u8) -> u64 {
     return rev(comp(kmer), k);
 }
 
+#[inline(always)]
 pub fn comp(kmer: u64) -> u64 {
     return kmer ^ 0b1010101010101010101010101010101010101010101010101010101010101010;
 }
@@ -88,11 +92,12 @@ pub fn rev(kmer: u64, k: u8) -> u64 {
     return reverse;
 }
 
-
+#[inline(always)]
 pub fn get_first_bit(kmer: u64) -> bool {
     return kmer & 1 != 0;
 }
 
+#[inline(always)]
 pub fn remove_first_bit(kmer: u64) -> u64 {
     return kmer >> 1;
 }
@@ -110,7 +115,7 @@ fn _reverse_2(bit: u64) -> u64 {
         | (REVERSE_2_LOOKUP[(bit >> 48) as u16 as usize] as u64);
 }
 
-pub fn reverse_2(mut kmer: u64, k: u8) -> u64 {
+pub fn reverse_2(kmer: u64, k: u8) -> u64 {
     return _reverse_2(kmer) >> (64 - k * 2);
 }
 
