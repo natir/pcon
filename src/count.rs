@@ -32,21 +32,35 @@ pub fn count(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
 
     let mut counter: counter::ShortCounter = counter::ShortCounter::new(k);
-    let mut bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(&mut counter, k);
 
-    let minimizer_mask = generate_mask(m * 2);
+    perform_count(reader, &mut counter, k, m);
+
+    write::write(&counter, output_path, k);
+}
+
+fn perform_count<R: std::io::Read>(reader: bio::io::fasta::Reader<R>, counter: &mut dyn counter::Counter<u8, u64>, k: u8, m: u8)  {
+
+    let mut bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(counter, k);
+
+    // let minimizer_mask = generate_mask(m * 2); required for minimizer search
     let kmer_mask = generate_mask(k * 2);
 
     for record in reader.records() {
         let result = record.unwrap();
         let line = result.seq();
+
+        if line.len() < k as usize { continue; } // if line is lower than k we have nothing to count
         
         let mut kmer = convert::seq2bit(&line[0..k as usize]);
-
+        bucketizer.add_kmer(convert::cannonical(kmer, k));
+        
+        if line.len() == k as usize { continue; } // if line is equal to k we count just the first kmer
+        
         // found minimizer of first kmer
         //let (mut minimizer, mut mini_hash, mut mini_pos) = found_minimizer(kmer, k, m, minimizer_mask);
 
-        for nuc in &line[1..] {
+        for nuc in &line[1..(line.len() - (k as usize))] {
+
             // create space for new nuc; clean old nuc; add new nuc
             kmer = ((kmer << 2) & kmer_mask) | convert::nuc2bit(*nuc);
 
@@ -64,13 +78,11 @@ pub fn count(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
             */
 
             // add kmer in count structure
-            bucketizer.add_kmer(convert::remove_first_bit(convert::cannonical(kmer, k)));
+            bucketizer.add_kmer(convert::cannonical(kmer, k));
         }
     }
 
     bucketizer.clean_all_buckets();
-
-    write::write(&counter, output_path, k);
 }
 
 fn generate_mask(size: u8) -> u64 {
@@ -121,4 +133,22 @@ fn revhash(mut x: u64) -> i64 {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    use crate::counter::Counter;
+    
+    #[test]
+    fn global() -> () {
+        let mut counter: counter::ShortCounter = counter::ShortCounter::new(5);
+        
+        let mut canonical = bio::io::fasta::Reader::new(std::io::Cursor::new(">1
+ACTAG
+>2
+CTAGT
+"));
+
+        
+        perform_count(canonical, &mut counter, 5, 1);
+        
+        assert_eq!(counter.get(convert::hash(b"ACTAG", 5)), 2);
+    }
 }

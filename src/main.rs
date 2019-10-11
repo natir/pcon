@@ -37,7 +37,7 @@ mod count;
 mod counter;
 mod dump;
 mod io;
-mod minimizer;
+//mod minimizer;
 mod write;
 mod bucketizer;
 mod lookup_table;
@@ -82,7 +82,7 @@ fn main() {
                             .help("minimizer size, used to improve cache locality, max value k-1")
                     )
         )
-        .subcommand(SubCommand::with_name("minimizer")
+/*        .subcommand(SubCommand::with_name("minimizer")
                     .about("count minimizer in fasta file")
                     .arg(
                         Arg::with_name("input")
@@ -116,7 +116,7 @@ fn main() {
                             .takes_value(true)
                             .help("minimizer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
-        )
+        )*/
         .subcommand(SubCommand::with_name("dump")
                     .about("take binary file produce by count step and generate a csv with kmer")
                     .arg(
@@ -170,7 +170,7 @@ fn main() {
             k,
             m,
         );
-    } else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
+    /*} else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
         let k = minimizer_matches
             .value_of("kmer-size")
             .unwrap()
@@ -190,7 +190,7 @@ fn main() {
             minimizer_matches.value_of("output").unwrap(),
             k,
             m,
-        );
+        );*/
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abundance = dump_matches
             .value_of("abundance-min")
