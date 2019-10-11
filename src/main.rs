@@ -143,6 +143,14 @@ fn main() {
                             .default_value("1")
                             .help("write only kmer with abudance is higher than this parametre")
                     )
+                    .arg(
+                        Arg::with_name("mode")
+                            .short("m")
+                            .long("mode")
+                            .takes_value(true)
+                            .possible_values(&["csv", "exist"])
+                            .help("write only kmer with abudance is higher than this parametre")
+                    )
         )
         .get_matches();
 
@@ -198,10 +206,15 @@ fn main() {
             .parse::<u8>()
             .unwrap();
 
+        let mode = dump::Mode::from(dump_matches
+            .value_of("mode")
+            .unwrap());
+        
         dump::dump(
             dump_matches.value_of("input").unwrap(),
             dump_matches.value_of("output").unwrap(),
             abundance,
+            mode,
         );
     }
 }

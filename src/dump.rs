@@ -22,6 +22,7 @@ SOFTWARE.
 
 /* std use */
 use std::io::Read;
+use std::io::Write;
 
 /* crate use */
 use csv;
@@ -29,22 +30,64 @@ use csv;
 /* project use */
 use crate::convert;
 
-pub fn dump(input_path: &str, output_path: &str, abundance: u8) -> () {
-    let reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
-    let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-    let writer = csv::WriterBuilder::new().from_writer(out);
-    
-    let k = ((std::fs::metadata(input_path).unwrap().len() as f64).log2() as u8 + 1) / 2;
-    
-    dump_all_counts(writer, reader, k, abundance);
+#[derive(Clone, PartialEq)]
+pub enum Mode {
+    Csv,
+    Exist,
 }
 
-fn dump_all_counts(
-    mut writer: csv::Writer<std::io::BufWriter<std::fs::File>>,
+impl From<&str> for Mode {
+    fn from(mode: &str) -> Self {
+        return match mode {
+            "csv" => Mode::Csv,
+            "exist" => Mode::Exist,
+            _ => Mode::Csv,
+        };
+    }
+}
+
+impl std::fmt::Display for Mode{
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            Mode::Csv => write!(f, "csv"),
+            Mode::Exist => write!(f, "exist"),
+        }
+    }
+}
+
+pub fn dump(input_path: &str, output_path: &str, abundance: u8, mode: Mode) -> () {
+    let mut reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
+
+    let (k, nb_bit) = read_header(&mut reader);
+
+    
+    match (nb_bit, mode) {
+        (8, Mode::Csv) => dump_count_u8_csv(reader, output_path, k, abundance),
+        (8, Mode::Exist) => dump_count_u8_exist(reader, output_path, abundance),
+        (4, Mode::Csv) => dump_count_u4_csv(reader, output_path, k, abundance),
+        (4, Mode::Exist) => dump_count_u4_exist(reader, output_path, abundance),
+        _ => panic!("This file wasn't a ssik count output"),
+    };
+}
+
+fn read_header(reader: &mut std::io::BufReader<std::fs::File>) -> (u8, u8) {
+    let header_buff: &mut [u8] = &mut [0; 2];
+
+    reader
+        .read_exact(header_buff)
+        .expect("Error when try to read the header.");
+
+    return (header_buff[0], header_buff[1]);
+}
+
+fn dump_count_u8_csv(
     mut reader: std::io::BufReader<std::fs::File>,
+    output_path: &str,
     k: u8,
-    abundance: u8,
+    abundance: u8
 ) -> () {
+    let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+    let mut writer = csv::WriterBuilder::new().from_writer(out);
     let mut read_buf = vec![0; 1];
 
     let mut hash = 0;
@@ -58,6 +101,97 @@ fn dump_all_counts(
         }
 
         hash += 1;
+    }
+}
+
+fn dump_count_u4_csv(
+    mut reader: std::io::BufReader<std::fs::File>,
+    output_path: &str,
+    k: u8,
+    abundance: u8
+) -> () {
+    let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+    let mut writer = csv::WriterBuilder::new().from_writer(out);
+    let mut read_buf = vec![0; 1];
+
+    let mut hash = 0;
+    while reader.read_exact(&mut read_buf).is_ok() {
+        let data = read_buf[0];
+        let mut count = data & 0b1111;
+        
+        if count >= abundance {
+            let kmer = reverse_hash(hash as u64, k);
+
+            writer.write_record(&[kmer, count.to_string()]).unwrap();
+        }
+
+        hash += 1;
+
+        count = (data & 0b11110000) >> 4;
+        
+        if count >= abundance {
+            let kmer = reverse_hash(hash as u64, k);
+
+            writer.write_record(&[kmer, count.to_string()]).unwrap();
+        }
+
+        hash += 1;
+    }
+}
+
+
+fn dump_count_u8_exist(
+    mut reader: std::io::BufReader<std::fs::File>,
+    output_path: &str,
+    abundance: u8
+) -> () {
+    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+    let mut read_buf = vec![0; 1];
+    let mut write_buf: u8 = 0;
+    let mut write_buf_size: u8 = 0;
+    
+    while reader.read_exact(&mut read_buf).is_ok() {
+        write_buf = populate_buf(write_buf, read_buf[0], abundance);        
+        write_buf_size += 1;
+        
+        if write_buf_size == 8 {
+            out.write(&[write_buf]).expect("Error durring write bitfield");
+            write_buf_size = 0;
+        }
+    }
+}
+
+fn dump_count_u4_exist(
+    mut reader: std::io::BufReader<std::fs::File>,
+    output_path: &str,
+    abundance: u8
+) -> () {
+    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+    let mut read_buf = vec![0; 1];
+    let mut write_buf: u8 = 0;
+    let mut write_buf_size: u8 = 0;
+
+    while reader.read_exact(&mut read_buf).is_ok() {
+        let data = read_buf[0];
+        let mut count = data & 0b1111;
+
+        write_buf = populate_buf(write_buf, data & 0b1111, abundance);
+        write_buf = populate_buf(write_buf, data & 0b11110000, abundance);
+        
+        write_buf_size += 2;
+        
+        if write_buf_size == 8 {
+            out.write(&[write_buf]).expect("Error durring write bitfield");
+            write_buf_size = 0;
+        }
+    }
+}
+
+fn populate_buf(buf: u8, count: u8, abundance: u8) -> u8 {
+    if count >= abundance {
+        return (buf ^ 1) << 1;
+    } else {
+        return buf << 1;
     }
 }
 

@@ -69,7 +69,6 @@ pub struct Prefix<'a, T> {
     k: u8,
     bucket_size: usize,
     prefix_mask: u64,
-    prefix_size: u8,
 }
 
 impl<'a, T> Prefix<'a, T> {
@@ -80,7 +79,6 @@ impl<'a, T> Prefix<'a, T> {
             k: k,
             bucket_size: BUCKET_SIZE,
             prefix_mask: mask_prefix(k) as u64,
-            prefix_size: prefix_size(k) as u8,
         }
     }
 

@@ -113,17 +113,6 @@ pub fn rev(mut kmer: u64, k: u8) -> u64 {
     return reverse >> (nb_block * 8 - nb_bit);
 }
 
-fn reverse_2_rest(mut kmer: u64, k: u8) -> u64 {
-    let mut reversed: u64 = 0;
-
-    for _ in 0..(k - 1) {
-        reversed = (reversed ^ (kmer & 0b11)) << 2;
-        kmer >>= 2;
-    }
-    
-    return reversed ^ (kmer & 0b11);
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
