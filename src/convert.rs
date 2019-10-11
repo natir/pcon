@@ -82,16 +82,6 @@ pub fn comp(kmer: u64) -> u64 {
     return kmer ^ 0b1010101010101010101010101010101010101010101010101010101010101010;
 }
 
-pub fn rev(kmer: u64, k: u8) -> u64 {
-    let clean_move = 64 - k * 2;
-
-    let mut reverse = reverse_2(kmer, k);
-    reverse <<= clean_move;
-    reverse >>= clean_move;
-
-    return reverse;
-}
-
 #[inline(always)]
 pub fn get_first_bit(kmer: u64) -> bool {
     return kmer & 1 != 0;
@@ -108,15 +98,30 @@ pub fn hash(subseq: &[u8], k: u8) -> u64 {
 
 use crate::lookup_table::REVERSE_2_LOOKUP;
 
-fn _reverse_2(bit: u64) -> u64 {
-    return (REVERSE_2_LOOKUP[bit as u16 as usize] as u64) << 48
-        | (REVERSE_2_LOOKUP[(bit >> 16) as u16 as usize] as u64) << 32
-        | (REVERSE_2_LOOKUP[(bit >> 32) as u16 as usize] as u64) << 16
-        | (REVERSE_2_LOOKUP[(bit >> 48) as u16 as usize] as u64);
+pub fn rev(mut kmer: u64, k: u8) -> u64 {
+    let nb_bit = k * 2;
+    let mut reverse: u64 = 0;
+
+    let mut nb_block = 1 + nb_bit / 8; //odd kmer never fit in 8 block
+
+    for i in 0..nb_block {
+        reverse ^= (REVERSE_2_LOOKUP[(kmer & 255) as u8 as usize] as u64) << ((nb_block - i - 1) * 8);
+
+        kmer = kmer >> 8;
+    }
+
+    return reverse >> (nb_block * 8 - nb_bit);
 }
 
-pub fn reverse_2(kmer: u64, k: u8) -> u64 {
-    return _reverse_2(kmer) >> (64 - k * 2);
+fn reverse_2_rest(mut kmer: u64, k: u8) -> u64 {
+    let mut reversed: u64 = 0;
+
+    for _ in 0..(k - 1) {
+        reversed = (reversed ^ (kmer & 0b11)) << 2;
+        kmer >>= 2;
+    }
+    
+    return reversed ^ (kmer & 0b11);
 }
 
 #[cfg(test)]
@@ -174,15 +179,9 @@ mod test {
     #[test]
     fn rev_() {
         // TAGGC -> 1000111101 rev CGGAT -> 0111110010
-        let var = 0b1010101010101010101010101010101010101010101010101010101000111101;
+        let var = 0b1000111101;
 
         assert_eq!(498, rev(var, 5));
-    }
-
-    #[test]
-    fn reverse_2_() {
-        // TAGGC -> 1000111101 rev CGGAT -> 0111110010
-        assert_eq!(498, reverse_2(573, 5));
     }
     
     #[test]
