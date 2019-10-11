@@ -22,13 +22,35 @@ SOFTWARE.
 
 /* project use */
 use crate::counter;
-
-/* std use*/
 use std::io::Write;
 
-pub fn write(count: &dyn counter::Counter<u8, u64>, output_path: &str, k: u8) {
-    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+/* std use*/
 
-    for _ in (0..(1 << k * 2 - 1)).map(|x| out.write(&[count.get(x)])) {};
+pub trait AbstractWrite<W: std::io::Write, C: counter::Counter<u8, u64>>  {
+    fn do_it(out: &mut W, count: &C, k: u8) -> ();
 }
 
+pub struct Ssik;
+
+impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::BasicCounter<u8>> for Ssik {
+    fn do_it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::BasicCounter<u8>, k: u8) -> () {
+
+        write_header(out, k, 8);
+
+        out.write(&count.data).expect("Error durring data write");
+    }
+}
+
+impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::ShortCounter> for Ssik {
+    fn do_it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::ShortCounter, k: u8) -> () {
+
+        write_header(out, k, 4);
+
+        out.write(&count.data).expect("Error durring data write");
+    }
+}
+
+fn write_header<W: std::io::Write>(out: &mut W, k: u8, count_nb_bit: u8) {
+    out.write(&[k, count_nb_bit])
+            .expect("Error durring write header");
+}

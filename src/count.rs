@@ -26,7 +26,10 @@ use crate::counter;
 use crate::write;
 use crate::bucketizer;
 
+use write::AbstractWrite;
+
 use crate::bucketizer::Bucket;
+
 
 pub fn count(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
     let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
@@ -35,7 +38,8 @@ pub fn count(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
 
     perform_count(reader, &mut counter, k, m);
 
-    write::write(&counter, output_path, k);
+    let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
+    write::Ssik::do_it(&mut out, &counter, k);
 }
 
 fn perform_count<R: std::io::Read>(reader: bio::io::fasta::Reader<R>, counter: &mut dyn counter::Counter<u8, u64>, k: u8, m: u8)  {
@@ -146,7 +150,6 @@ ACTAG
 CTAGT
 "));
 
-        
         perform_count(canonical, &mut counter, 5, 1);
         
         assert_eq!(counter.get(convert::hash(b"ACTAG", 5)), 2);

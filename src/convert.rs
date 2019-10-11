@@ -102,7 +102,7 @@ pub fn rev(mut kmer: u64, k: u8) -> u64 {
     let nb_bit = k * 2;
     let mut reverse: u64 = 0;
 
-    let mut nb_block = 1 + nb_bit / 8; //odd kmer never fit in 8 block
+    let nb_block = 1 + nb_bit / 8; //odd kmer never fit in 8 block
 
     for i in 0..nb_block {
         reverse ^= (REVERSE_2_LOOKUP[(kmer & 255) as u8 as usize] as u64) << ((nb_block - i - 1) * 8);

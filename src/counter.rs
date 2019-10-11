@@ -52,7 +52,7 @@ pub trait Counter<CounterType, KmerType> {
 
 pub struct BasicCounter<T> {
     incrementor: IncUnsigned,
-    pub data: Vec<T>,
+    pub data: Box<[T]>,
 }
 
 macro_rules! impl_basiccounter {
@@ -64,7 +64,7 @@ macro_rules! impl_basiccounter {
             pub fn new(k: u8) -> Self {
                 BasicCounter {
                     incrementor: IncUnsigned {},
-                    data: vec![0; 1 << bucketizer::nb_bit(k)],
+                    data: vec![0; 1 << bucketizer::nb_bit(k)].into_boxed_slice(),
                 }
             }
         }
@@ -72,8 +72,7 @@ macro_rules! impl_basiccounter {
         impl Counter<$type, u64> for BasicCounter<$type> {
             fn inc(&mut self, kmer: u64) {
                 self.incrementor.inc(&mut self.data[kmer as usize]);
-            }
-            
+            }        
 
             fn incs(&mut self, bucket: &bucketizer::NoTemporalArray){
                 for i in bucket {
