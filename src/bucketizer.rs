@@ -68,6 +68,8 @@ pub struct Prefix<'a, T> {
     buckets: Vec<NoTemporalArray>,
     k: u8,
     bucket_size: usize,
+    prefix_mask: u64,
+    prefix_size: u8,
 }
 
 impl<'a, T> Prefix<'a, T> {
@@ -77,7 +79,14 @@ impl<'a, T> Prefix<'a, T> {
             buckets: (0..nb_bucket(k)).map(|_| NoTemporalArray::new()).collect(),
             k: k,
             bucket_size: BUCKET_SIZE,
+            prefix_mask: mask_prefix(k) as u64,
+            prefix_size: prefix_size(k) as u8,
         }
+    }
+
+    
+    fn get_prefix(&self, hash: u64) -> usize {
+        return ((self.prefix_mask & hash) >> nb_bit(self.k)) as usize;
     }
 }
 
@@ -85,7 +94,7 @@ impl<'a, T> Bucket<'a, T> for Prefix<'a, T> {
     #[inline(always)]
     fn add_kmer(&mut self, kmer: u64) -> () {
         let hash = convert::remove_first_bit(kmer);
-        let prefix: usize = get_prefix(self.k, hash);
+        let prefix: usize = self.get_prefix(hash);
 
         self.buckets[prefix].push(hash);
 
@@ -115,12 +124,9 @@ pub fn nb_bit(k: u8) -> usize {
 }
 
 fn prefix_size(k: u8) -> usize {
-    nb_bit(k) / 2
+    nb_bit(k) / 4
 }
 
-fn get_prefix(k: u8, hash: u64) -> usize {
-    (mask_prefix(k) & hash as usize) >> suffix_size(k)
-}
 
 fn get_suffix(k: u8, hash: u64) -> usize {
     let mov = 64 - suffix_size(k);
@@ -310,35 +316,29 @@ mod test {
 
     #[test]
     fn prefix_size_() -> () {
-        assert_eq!(prefix_size(5), 4);
+        assert_eq!(prefix_size(5), 2);
     }
 
     #[test]
     fn suffix_size_() -> () {
-        assert_eq!(suffix_size(5), 5);
+        assert_eq!(suffix_size(5), 7);
     }
 
     #[test]
     fn nb_bucket_() -> () {
-        assert_eq!(nb_bucket(5), 16);
-        assert_eq!(nb_bucket(7), 64);
+        assert_eq!(nb_bucket(5), 4);
+        assert_eq!(nb_bucket(7), 8);
     }
 
     #[test]
     fn mask_prefix_() -> () {
-        assert_eq!(mask_prefix(5), 0b111100000);
-    }
-
-    #[test]
-    fn get_prefix_() -> () {
-        let kmer = 0b111111111;
-        assert_eq!(get_prefix(5, kmer), 0b1111);
+        assert_eq!(mask_prefix(5), 0b110000000);
     }
 
     #[test]
     fn get_suffix_() -> () {
         let kmer: u64 = 0b111111111;
 
-        assert_eq!(get_suffix(5, kmer), 0b11111);
+        assert_eq!(get_suffix(5, kmer), 0b1111111);
     }
 }
