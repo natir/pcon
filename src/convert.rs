@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-
 pub fn seq2bit(subseq: &[u8]) -> u64 {
     let mut kmer: u64 = 0;
 

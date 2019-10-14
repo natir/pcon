@@ -4,11 +4,20 @@ description = "Scorer for Stupidly Insufficiently long Kmer"
 version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
+build = "build.rs"
+
+[lib]
+name = "ssik"
+crate-type = ["cdylib", "staticlib"]
+
 
 [dependencies]
 bio             = "0.29"
 csv             = "1.1.1"
 clap            = "2.33"
+
+[build-dependencies]
+cbindgen	= "0.9.1"
 
 
 [profile.release]

@@ -41,7 +41,7 @@ mod io;
 mod write;
 mod bucketizer;
 mod lookup_table;
-
+   
 fn main() {
     let matches = App::new("ssik")
         .version("0.1")
