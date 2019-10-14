@@ -31,13 +31,15 @@ use write::AbstractWrite;
 use crate::bucketizer::Bucket;
 
 
-pub fn count(input_path: &str, output_path: &str, k: u8, m: u8) -> () {
-    let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
+pub fn count(multi_input_path: Vec<&str>, output_path: &str, k: u8, m: u8) -> () {
 
     let mut counter: counter::ShortCounter = counter::ShortCounter::new(k);
 
-    perform_count(reader, &mut counter, k, m);
-
+    for input_path in multi_input_path {    
+        let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
+        perform_count(reader, &mut counter, k, m);
+    }
+    
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
     write::Ssik::do_it(&mut out, &counter, k);
 }

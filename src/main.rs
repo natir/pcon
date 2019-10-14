@@ -53,6 +53,7 @@ fn main() {
                         Arg::with_name("input")
                             .short("i")
                             .long("input")
+                            .multiple(true)
                             .required(true)
                             .takes_value(true)
                             .help("sequence input in fasta format")
@@ -173,7 +174,7 @@ fn main() {
         );
         
         count::count(
-            count_matches.value_of("input").unwrap(),
+            count_matches.values_of("input").unwrap().collect(),
             count_matches.value_of("output").unwrap(),
             k,
             m,
