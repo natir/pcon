@@ -134,8 +134,6 @@ impl Counter<u8, u64> for ShortCounter {
     }
 }
 
-
-
 #[cfg(test)]
 mod test {
     use super::*;

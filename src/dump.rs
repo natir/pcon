@@ -30,6 +30,7 @@ use csv;
 /* project use */
 use crate::convert;
 
+#[repr(C)]
 #[derive(Clone, PartialEq)]
 pub enum Mode {
     Csv,
@@ -70,7 +71,7 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8, mode: Mode) -> (
     };
 }
 
-fn read_header(reader: &mut std::io::BufReader<std::fs::File>) -> (u8, u8) {
+pub fn read_header(reader: &mut std::io::BufReader<std::fs::File>) -> (u8, u8) {
     let header_buff: &mut [u8] = &mut [0; 2];
 
     reader
@@ -118,7 +119,7 @@ fn dump_count_u4_csv(
     while reader.read_exact(&mut read_buf).is_ok() {
         let data = read_buf[0];
         let mut count = data & 0b1111;
-        
+        println!("{} {} {}", hash, reverse_hash(hash, k), count);        
         if count >= abundance {
             let kmer = reverse_hash(hash as u64, k);
 
@@ -128,7 +129,7 @@ fn dump_count_u4_csv(
         hash += 1;
 
         count = (data & 0b11110000) >> 4;
-        
+        println!("{} {} {}", hash, reverse_hash(hash, k), count);
         if count >= abundance {
             let kmer = reverse_hash(hash as u64, k);
 
@@ -173,7 +174,6 @@ fn dump_count_u4_exist(
 
     while reader.read_exact(&mut read_buf).is_ok() {
         let data = read_buf[0];
-        let mut count = data & 0b1111;
 
         write_buf = populate_buf(write_buf, data & 0b1111, abundance);
         write_buf = populate_buf(write_buf, data & 0b11110000, abundance);
@@ -195,7 +195,7 @@ fn populate_buf(buf: u8, count: u8, abundance: u8) -> u8 {
     }
 }
 
-fn reverse_hash(mut kmer: u64, k: u8) -> String {
+pub fn reverse_hash(mut kmer: u64, k: u8) -> String {
     kmer <<= 1;
 
     if !convert::parity_even(kmer) {
