@@ -8,7 +8,7 @@ build = "build.rs"
 
 [lib]
 name = "ssik"
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["rlib", "staticlib"]
 
 
 [dependencies]
