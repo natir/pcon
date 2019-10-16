@@ -32,14 +32,14 @@ extern crate csv;
 use clap::{App, Arg, SubCommand};
 
 /* project mod declaration */
-mod convert;
-mod count;
-mod counter;
-mod dump;
-mod io;
+pub mod convert;
+pub mod count;
+pub mod counter;
+pub mod dump;
+pub mod io;
 //mod minimizer;
-mod bucketizer;
-mod lookup_table;
+pub mod bucketizer;
+pub mod lookup_table;
    
 fn main() {
     let matches = App::new("ssik")

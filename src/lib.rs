@@ -21,12 +21,12 @@ SOFTWARE.
  */
 
 /* project mod declaration */
-mod convert;
-mod count;
-mod counter;
-mod dump;
-mod io;
-mod bucketizer;
+pub mod convert;
+pub mod count;
+pub mod counter;
+pub mod dump;
+pub mod io;
+pub mod bucketizer;
 mod lookup_table;
 
 use std::io::Read;
