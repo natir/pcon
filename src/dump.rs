@@ -29,6 +29,7 @@ use csv;
 
 /* project use */
 use crate::convert;
+use crate::io::read;
 
 #[repr(C)]
 #[derive(Clone, PartialEq)]
@@ -59,7 +60,7 @@ impl std::fmt::Display for Mode{
 pub fn dump(input_path: &str, output_path: &str, abundance: u8, mode: Mode) -> () {
     let mut reader = std::io::BufReader::new(std::fs::File::open(input_path).unwrap());
 
-    let (k, nb_bit) = read_header(&mut reader);
+    let (k, nb_bit) = read::read_header(&mut reader);
 
     
     match (nb_bit, mode) {
@@ -71,15 +72,6 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8, mode: Mode) -> (
     };
 }
 
-pub fn read_header(reader: &mut std::io::BufReader<std::fs::File>) -> (u8, u8) {
-    let header_buff: &mut [u8] = &mut [0; 2];
-
-    reader
-        .read_exact(header_buff)
-        .expect("Error when try to read the header.");
-
-    return (header_buff[0], header_buff[1]);
-}
 
 fn dump_count_u8_csv(
     mut reader: std::io::BufReader<std::fs::File>,
@@ -119,7 +111,7 @@ fn dump_count_u4_csv(
     while reader.read_exact(&mut read_buf).is_ok() {
         let data = read_buf[0];
         let mut count = data & 0b1111;
-        println!("{} {} {}", hash, reverse_hash(hash, k), count);        
+        
         if count >= abundance {
             let kmer = reverse_hash(hash as u64, k);
 
@@ -129,7 +121,7 @@ fn dump_count_u4_csv(
         hash += 1;
 
         count = (data & 0b11110000) >> 4;
-        println!("{} {} {}", hash, reverse_hash(hash, k), count);
+
         if count >= abundance {
             let kmer = reverse_hash(hash as u64, k);
 

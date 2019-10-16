@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Pierre Marijon <pierre.marijon@inria.fr>
+Copyright (c) 2019 Pierre Marijon <pmarijon@mmci.uni-saarland.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -27,13 +27,13 @@ use std::io::Write;
 /* std use*/
 
 pub trait AbstractWrite<W: std::io::Write, C: counter::Counter<u8, u64>>  {
-    fn do_it(out: &mut W, count: &C, k: u8) -> ();
+    fn it(out: &mut W, count: &C, k: u8) -> ();
 }
 
-pub struct Ssik;
+pub struct Do;
 
-impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::BasicCounter<u8>> for Ssik {
-    fn do_it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::BasicCounter<u8>, k: u8) -> () {
+impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::BasicCounter<u8>> for Do {
+    fn it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::BasicCounter<u8>, k: u8) -> () {
 
         write_header(out, k, 8);
 
@@ -41,8 +41,8 @@ impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::BasicCounter<u8>>
     }
 }
 
-impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::ShortCounter> for Ssik {
-    fn do_it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::ShortCounter, k: u8) -> () {
+impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::ShortCounter> for Do {
+    fn it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::ShortCounter, k: u8) -> () {
 
         write_header(out, k, 4);
 

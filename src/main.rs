@@ -38,7 +38,6 @@ mod counter;
 mod dump;
 mod io;
 //mod minimizer;
-mod write;
 mod bucketizer;
 mod lookup_table;
    
