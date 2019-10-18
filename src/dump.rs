@@ -68,7 +68,7 @@ pub fn dump(input_path: &str, output_path: &str, abundance: u8, mode: Mode) -> (
         (8, Mode::Exist) => dump_count_u8_exist(reader, output_path, abundance),
         (4, Mode::Csv) => dump_count_u4_csv(reader, output_path, k, abundance),
         (4, Mode::Exist) => dump_count_u4_exist(reader, output_path, abundance),
-        _ => panic!("This file wasn't a ssik count output"),
+        _ => panic!("This file wasn't a pcon count output"),
     };
 }
 

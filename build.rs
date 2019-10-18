@@ -10,13 +10,13 @@ fn main() {
       .with_crate(crate_dir)
       .generate()
       .expect("Unable to generate bindings")
-      .write_to_file("dist/ssik.h");
+      .write_to_file("dist/pcon.h");
 
-    let output = Command::new("g++").args(&["dist/test_ssik.c",
+    let output = Command::new("g++").args(&["dist/test_pcon.c",
                                             "-I", "dist/",
-                                            &("target/".to_string() + &env::var("PROFILE").expect("Env error") + "/libssik.a"),
+                                            &("target/".to_string() + &env::var("PROFILE").expect("Env error") + "/libpcon.a"),
                                             "-lpthread", "-ldl",
-                                            "-o", "dist/test_ssik"])
+                                            "-o", "dist/test_pcon"])
         .output()
         .expect("failled to build");
 
@@ -28,6 +28,6 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed=src/lib.rs");
-    println!("cargo:rerun-if-changed=dist/test_ssik.c");
+    println!("cargo:rerun-if-changed=dist/test_pcon.c");
 }
 

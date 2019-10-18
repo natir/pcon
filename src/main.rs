@@ -42,10 +42,10 @@ pub mod bucketizer;
 pub mod lookup_table;
    
 fn main() {
-    let matches = App::new("ssik")
+    let matches = App::new("pcon")
         .version("0.1")
         .author("Pierre Marijon <pierre.marijon@inria.fr>")
-        .about("Scorer for Stupidly Insufficiently long Kmer")
+        .about("Prompt COuNter is a short kmer counter")
         .subcommand(SubCommand::with_name("count")
                     .about("count kmer in fasta file")
                     .arg(

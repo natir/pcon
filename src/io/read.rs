@@ -50,7 +50,7 @@ pub fn get_count(count: &[u8], hash: u64, nb_bit: u8) -> u8 {
     return match nb_bit {
         8 => get_count_8bit(count, hash),
         4 => get_count_4bit(count, hash),
-        _ => panic!("Number bit isn't valid check your ssik count file."),
+        _ => panic!("Number bit isn't valid check your pcon count file."),
     };
 }
 
@@ -73,6 +73,6 @@ pub fn get_data_size(k: u8, nb_bit: u8) -> u64 {
     return match nb_bit {
         8 => get_kmer_space_size(k),
         4 => get_kmer_space_size(k) / 2,
-        _ => panic!("Number bit isn't valid check your ssik count file."),
+        _ => panic!("Number bit isn't valid check your pcon count file."),
     };
 }

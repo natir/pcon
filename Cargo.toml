@@ -1,13 +1,14 @@
 [package]
-name = "ssik"
-description = "Scorer for Stupidly Insufficiently long Kmer"
+name = "pcon"
+description = "pcon for Prompt COuNter, is a short kmer counter"
 version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
 build = "build.rs"
 
+
 [lib]
-name = "ssik"
+name = "pcon"
 crate-type = ["rlib", "staticlib"]
 
 
@@ -15,6 +16,7 @@ crate-type = ["rlib", "staticlib"]
 bio             = "0.29"
 csv             = "1.1.1"
 clap            = "2.33"
+
 
 [build-dependencies]
 cbindgen	= "0.9.1"
