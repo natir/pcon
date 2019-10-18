@@ -152,6 +152,11 @@ fn dump_count_u8_exist(
             write_buf_size = 0;
         }
     }
+
+    if write_buf_size != 0 {
+        out.write(&[write_buf]).expect("Error durring write bitfield");
+    }
+
 }
 
 fn dump_count_u4_exist(
@@ -171,11 +176,15 @@ fn dump_count_u4_exist(
         write_buf = populate_buf(write_buf, data & 0b11110000, abundance);
         
         write_buf_size += 2;
-        
+
         if write_buf_size == 8 {
             out.write(&[write_buf]).expect("Error durring write bitfield");
             write_buf_size = 0;
         }
+    }
+
+    if write_buf_size != 0 {
+        out.write(&[write_buf]).expect("Error durring write bitfield");
     }
 }
 

@@ -45,8 +45,11 @@ impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::ShortCounter> for
     fn it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::ShortCounter, k: u8) -> () {
 
         write_header(out, k, 4);
-
-        out.write(&count.data).expect("Error durring data write");
+        
+        let mut cumulative_bytes_write = 0;
+        while cumulative_bytes_write < count.data.len() {
+            cumulative_bytes_write += out.write(&count.data[cumulative_bytes_write..]).expect("Error durring data write");    
+        }
     }
 }
 

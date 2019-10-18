@@ -97,7 +97,7 @@ pub struct ShortCounter {
 impl ShortCounter {
     pub fn new(k: u8) -> Self {
         ShortCounter {
-            data: vec![0; (1 << bucketizer::nb_bit(k)) / 2].into_boxed_slice(),
+            data: vec![0; (1usize << (bucketizer::nb_bit(k) - 1))].into_boxed_slice(),
         }
     }
 }
