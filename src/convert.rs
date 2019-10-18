@@ -36,26 +36,29 @@ pub fn nuc2bit(nuc: u8) -> u64 {
     return (nuc as u64 >> 1) & 0b11;
 }
 
-pub fn bit2seq(mut kmer: u64, k: u8) -> String {
+pub fn kmer2seq(mut kmer: u64, k: u8) -> String {
     let mut result = vec![0; k as usize];
 
     for i in (0..k).rev() {
         let val = kmer & 0b11;
 
-        if val == 0b00 {
-            result[i as usize] = b'A';
-        } else if val == 0b01 {
-            result[i as usize] = b'C';
-        } else if val == 0b10 {
-            result[i as usize] = b'T';
-        } else {
-            result[i as usize] = b'G';
-        }
-
+        result[i as usize] = bit2nuc(val);
+        
         kmer >>= 2;
     }
 
     return String::from_utf8(result).unwrap();
+}
+
+#[inline(always)]
+pub fn bit2nuc(bit: u64) -> u8 {
+    return match bit {
+        0 => b'A',
+        1 => b'C',
+        2 => b'T',
+        3 => b'G',
+        _ => b'G',
+    };
 }
 
 #[inline(always)]
@@ -128,10 +131,10 @@ mod test {
     #[test]
     fn bit2seq_() {
         // 1000111101 -> TAGGC
-        assert_eq!(bit2seq(0b1000111101, 5), "TAGGC");
+        assert_eq!(kmer2seq(0b1000111101, 5), "TAGGC");
 
         // 110101100 -> GCCTA
-        assert_eq!(bit2seq(0b1101011000, 5), "GCCTA");
+        assert_eq!(kmer2seq(0b1101011000, 5), "GCCTA");
     }
 
     #[test]

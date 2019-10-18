@@ -21,7 +21,7 @@ cbindgen	= "0.9.1"
 
 
 [profile.release]
-debug = true
+#debug = true
 lto = 'thin'
 opt-level = 3
 overflow-checks = false

@@ -194,7 +194,7 @@ pub fn reverse_hash(mut kmer: u64, k: u8) -> String {
         kmer = kmer + 1;
     }
 
-    return convert::bit2seq(kmer, k);
+    return convert::kmer2seq(kmer, k);
 }
 
 #[cfg(test)]
