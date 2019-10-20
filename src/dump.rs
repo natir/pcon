@@ -111,7 +111,7 @@ fn dump_count_u4_csv(
     while reader.read_exact(&mut read_buf).is_ok() {
         let data = read_buf[0];
         let mut count = data & 0b1111;
-        
+
         if count >= abundance {
             let kmer = reverse_hash(hash as u64, k);
 
@@ -141,19 +141,20 @@ fn dump_count_u8_exist(
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
     let mut read_buf = vec![0; 1];
     let mut write_buf: u8 = 0;
-    let mut write_buf_size: u8 = 0;
+    let mut write_buf_index: u8 = 0;
     
     while reader.read_exact(&mut read_buf).is_ok() {
-        write_buf = populate_buf(write_buf, read_buf[0], abundance);        
-        write_buf_size += 1;
+        write_buf = populate_buf(write_buf, read_buf[0], abundance, write_buf_index);
+        write_buf_index += 1;
         
-        if write_buf_size == 8 {
+        if write_buf_index == 8 {
             out.write(&[write_buf]).expect("Error durring write bitfield");
-            write_buf_size = 0;
+            write_buf_index = 0;
+            write_buf = 0;
         }
     }
 
-    if write_buf_size != 0 {
+    if write_buf_index != 0 {
         out.write(&[write_buf]).expect("Error durring write bitfield");
     }
 
@@ -167,32 +168,36 @@ fn dump_count_u4_exist(
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
     let mut read_buf = vec![0; 1];
     let mut write_buf: u8 = 0;
-    let mut write_buf_size: u8 = 0;
+    let mut write_buf_index: u8 = 0;
 
     while reader.read_exact(&mut read_buf).is_ok() {
         let data = read_buf[0];
 
-        write_buf = populate_buf(write_buf, data & 0b1111, abundance);
-        write_buf = populate_buf(write_buf, data & 0b11110000, abundance);
+        let mut count = data & 0b1111;    
+        write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
+        write_buf_index += 1;
         
-        write_buf_size += 2;
+        count = (data & 0b11110000) >> 4;
+        write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
+        write_buf_index += 1;
 
-        if write_buf_size == 8 {
+        if write_buf_index == 8 {
             out.write(&[write_buf]).expect("Error durring write bitfield");
-            write_buf_size = 0;
+            write_buf_index = 0;
+            write_buf = 0;
         }
     }
 
-    if write_buf_size != 0 {
+    if write_buf_index != 0 {
         out.write(&[write_buf]).expect("Error durring write bitfield");
     }
 }
 
-fn populate_buf(buf: u8, count: u8, abundance: u8) -> u8 {
+fn populate_buf(buf: u8, count: u8, abundance: u8, buf_pos: u8) -> u8 {
     if count >= abundance {
-        return (buf ^ 1) << 1;
+        return buf ^ (1 << buf_pos)
     } else {
-        return buf << 1;
+        return buf;
     }
 }
 
