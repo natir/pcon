@@ -48,6 +48,10 @@ pub trait Counter<CounterType, KmerType> {
     fn incs(&mut self, bucket: &bucketizer::NoTemporalArray);
     
     fn get(&self, kmer: KmerType) -> CounterType;
+
+    fn data(&self) -> &Box<[CounterType]>;
+
+    fn nb_bit(&self) -> u8;
 }
 
 pub struct BasicCounter<T> {
@@ -83,6 +87,14 @@ macro_rules! impl_basiccounter {
             fn get(&self, kmer: u64) -> $type {
                 self.data[kmer as usize]
             }
+
+            fn data(&self) -> &Box<[$type]> {
+                &self.data
+            }
+
+            fn nb_bit(&self) -> u8 {
+                std::mem::size_of::<$type>() as u8 * 8
+           }
         }
     };
 }
@@ -97,7 +109,7 @@ pub struct ShortCounter {
 impl ShortCounter {
     pub fn new(k: u8) -> Self {
         ShortCounter {
-            data: vec![0; (1usize << (bucketizer::nb_bit(k) - 1))].into_boxed_slice(),
+            data: vec![0; 1usize << (bucketizer::nb_bit(k) - 1)].into_boxed_slice(),
         }
     }
 }
@@ -131,6 +143,14 @@ impl Counter<u8, u64> for ShortCounter {
             true => self.data[key] >> 4,
             false => self.data[key] & 0b00001111,
         };
+    }
+
+    fn data(&self) -> &Box<[u8]> {
+        &self.data
+    }
+
+    fn nb_bit(&self) -> u8 {
+        4
     }
 }
 

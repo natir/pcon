@@ -20,30 +20,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+/* standard use */
+
 /* project use */
 use crate::convert;
 use crate::counter;
 use crate::bucketizer;
 use crate::io::write;
 
-use write::AbstractWrite;
-
 use crate::bucketizer::Bucket;
 
-pub fn count(multi_input_path: Vec<&str>, output_path: &str, k: u8, m: u8) -> () {
+pub fn count(multi_input_path: Vec<&str>, output_path: &str, k: u8, m: u8, n: u8) -> () {
 
-    let mut counter: counter::ShortCounter = counter::ShortCounter::new(k);
-
+    let mut counter: Box<dyn counter::Counter<u8, u64>> = match n {
+        4 => Box::new(counter::ShortCounter::new(k)),
+        8 => Box::new(counter::BasicCounter::<u8>::new(k)),
+        _ => Box::new(counter::ShortCounter::new(k)),
+    };
+    
     for input_path in multi_input_path {    
         let reader = bio::io::fasta::Reader::new(std::io::BufReader::new(std::fs::File::open(input_path).unwrap()));
         perform_count(reader, &mut counter, k, m);
     }
         
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-    write::Do::it(&mut out, &counter, k);
+
+    write::do_it(&mut out, counter, k);
 }
 
-fn perform_count<R: std::io::Read>(reader: bio::io::fasta::Reader<R>, counter: &mut dyn counter::Counter<u8, u64>, k: u8, m: u8)  {
+fn perform_count<R: std::io::Read>(reader: bio::io::fasta::Reader<R>, counter: &mut Box<dyn counter::Counter<u8, u64>>, k: u8, m: u8)  {
 
     let mut bucketizer: bucketizer::Prefix<u8> = bucketizer::Prefix::new(counter, k);
 
@@ -143,7 +148,7 @@ mod test {
     
     #[test]
     fn global() -> () {
-        let mut counter: counter::ShortCounter = counter::ShortCounter::new(5);
+        let mut counter: Box<dyn counter::Counter<u8, u64>> = Box::new(counter::ShortCounter::new(5));
         
         let mut canonical = bio::io::fasta::Reader::new(std::io::Cursor::new(">1
 ACTAG

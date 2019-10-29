@@ -22,34 +22,18 @@ SOFTWARE.
 
 /* project use */
 use crate::counter;
-use std::io::Write;
 
 /* std use*/
 
-pub trait AbstractWrite<W: std::io::Write, C: counter::Counter<u8, u64>>  {
-    fn it(out: &mut W, count: &C, k: u8) -> ();
-}
+pub fn do_it<W>(out: &mut W, count: Box<dyn counter::Counter<u8, u64>>, k: u8) -> () where
+    W: std::io::Write,
+{
+    write_header(out, k, count.nb_bit());
+    
+    let mut cumulative_bytes_write = 0;
 
-pub struct Do;
-
-impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::BasicCounter<u8>> for Do {
-    fn it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::BasicCounter<u8>, k: u8) -> () {
-
-        write_header(out, k, 8);
-
-        out.write(&count.data).expect("Error durring data write");
-    }
-}
-
-impl AbstractWrite<std::io::BufWriter<std::fs::File>, counter::ShortCounter> for Do {
-    fn it(out: &mut std::io::BufWriter<std::fs::File>, count: &counter::ShortCounter, k: u8) -> () {
-
-        write_header(out, k, 4);
-        
-        let mut cumulative_bytes_write = 0;
-        while cumulative_bytes_write < count.data.len() {
-            cumulative_bytes_write += out.write(&count.data[cumulative_bytes_write..]).expect("Error durring data write");    
-        }
+    while cumulative_bytes_write < count.data().len() {
+        cumulative_bytes_write += out.write(&count.data()[cumulative_bytes_write..]).expect("Error durring data write");    
     }
 }
 

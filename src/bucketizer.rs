@@ -64,7 +64,7 @@ pub trait Bucket<'a, T> {
 }
 
 pub struct Prefix<'a, T> {
-    counter: &'a mut dyn counter::Counter<T, u64>,
+    counter: &'a mut Box<dyn counter::Counter<T, u64>>,
     buckets: Vec<NoTemporalArray>,
     k: u8,
     bucket_size: usize,
@@ -72,7 +72,7 @@ pub struct Prefix<'a, T> {
 }
 
 impl<'a, T> Prefix<'a, T> {
-    pub fn new(counter: &'a mut dyn counter::Counter<T, u64>, k: u8) -> Self {
+    pub fn new(counter: &'a mut Box<dyn counter::Counter<T, u64>>, k: u8) -> Self {
         Prefix {
             counter: counter,
             buckets: (0..nb_bucket(k)).map(|_| NoTemporalArray::new()).collect(),
