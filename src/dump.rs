@@ -81,19 +81,24 @@ fn dump_count_u8_csv(
 ) -> () {
     let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
     let mut writer = csv::WriterBuilder::new().from_writer(out);
-    let mut read_buf = vec![0; 1];
+    let mut read_buf = vec![0; 128];
 
     let mut hash = 0;
-    while reader.read_exact(&mut read_buf).is_ok() {
-        let count = read_buf[0];
+    while let Result::Ok(n) = reader.read(&mut read_buf) {
+        if n == 0 {break};
+        for i in 0..n {
+            let data = read_buf[i];
 
-        if count >= abundance {
-            let kmer = reverse_hash(hash as u64, k);
+            let count = read_buf[0];
 
-            writer.write_record(&[kmer, count.to_string()]).unwrap();
+            if count >= abundance {
+                let kmer = reverse_hash(hash as u64, k);
+
+                writer.write_record(&[kmer, count.to_string()]).unwrap();
+            }
+
+            hash += 1;
         }
-
-        hash += 1;
     }
 }
 
@@ -105,30 +110,33 @@ fn dump_count_u4_csv(
 ) -> () {
     let out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
     let mut writer = csv::WriterBuilder::new().from_writer(out);
-    let mut read_buf = vec![0; 1];
+    let mut read_buf = vec![0; 128];
 
     let mut hash = 0;
-    while reader.read_exact(&mut read_buf).is_ok() {
-        let data = read_buf[0];
-        let mut count = data & 0b1111;
-
-        if count >= abundance {
-            let kmer = reverse_hash(hash as u64, k);
-
-            writer.write_record(&[kmer, count.to_string()]).unwrap();
+    while let Result::Ok(n) = reader.read(&mut read_buf) {
+        if n == 0 {break};
+        for i in 0..n {
+            let data = read_buf[i];
+            let mut count = data & 0b1111;
+            
+            if count >= abundance {
+                let kmer = reverse_hash(hash as u64, k);
+                
+                writer.write_record(&[kmer, count.to_string()]).unwrap();
+            }
+            
+            hash += 1;
+            
+            count = (data & 0b11110000) >> 4;
+            
+            if count >= abundance {
+                let kmer = reverse_hash(hash as u64, k);
+                
+                writer.write_record(&[kmer, count.to_string()]).unwrap();
+            }
+            
+            hash += 1;
         }
-
-        hash += 1;
-
-        count = (data & 0b11110000) >> 4;
-
-        if count >= abundance {
-            let kmer = reverse_hash(hash as u64, k);
-
-            writer.write_record(&[kmer, count.to_string()]).unwrap();
-        }
-
-        hash += 1;
     }
 }
 
@@ -139,25 +147,29 @@ fn dump_count_u8_exist(
     abundance: u8
 ) -> () {
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-    let mut read_buf = vec![0; 1];
+    let mut read_buf = vec![0; 128];
     let mut write_buf: u8 = 0;
     let mut write_buf_index: u8 = 0;
     
-    while reader.read_exact(&mut read_buf).is_ok() {
-        write_buf = populate_buf(write_buf, read_buf[0], abundance, write_buf_index);
-        write_buf_index += 1;
-        
-        if write_buf_index == 8 {
-            out.write(&[write_buf]).expect("Error durring write bitfield");
-            write_buf_index = 0;
-            write_buf = 0;
+    while let Result::Ok(n) = reader.read(&mut read_buf) {
+        if n == 0 {break};
+        for i in 0..n {
+            let data = read_buf[i];
+            write_buf = populate_buf(write_buf, read_buf[0], abundance, write_buf_index);
+            write_buf_index += 1;
+            
+            if write_buf_index == 8 {
+                out.write(&[write_buf]).expect("Error durring write bitfield");
+                write_buf_index = 0;
+                write_buf = 0;
+            }
         }
-    }
 
-    if write_buf_index != 0 {
-        out.write(&[write_buf]).expect("Error durring write bitfield");
-    }
+        if write_buf_index != 0 {
+            out.write(&[write_buf]).expect("Error durring write bitfield");
+        }
 
+    }
 }
 
 fn dump_count_u4_exist(
@@ -166,28 +178,30 @@ fn dump_count_u4_exist(
     abundance: u8
 ) -> () {
     let mut out = std::io::BufWriter::new(std::fs::File::create(output_path).unwrap());
-    let mut read_buf = vec![0; 1];
+    let mut read_buf = vec![0; 128];
     let mut write_buf: u8 = 0;
     let mut write_buf_index: u8 = 0;
 
-    while reader.read_exact(&mut read_buf).is_ok() {
-        let data = read_buf[0];
+    while let Result::Ok(n) = reader.read(&mut read_buf) {
+        if n == 0 {break};
+        for i in 0..n {
+            let data = read_buf[i];
 
-        let mut count = data & 0b1111;    
-        write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
-        write_buf_index += 1;
-        
-        count = (data & 0b11110000) >> 4;
-        write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
-        write_buf_index += 1;
+            let mut count = data & 0b1111;    
+            write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
+            write_buf_index += 1;
+            
+            count = (data & 0b11110000) >> 4;
+            write_buf = populate_buf(write_buf, count, abundance, write_buf_index);
+            write_buf_index += 1;
 
-        if write_buf_index == 8 {
-            out.write(&[write_buf]).expect("Error durring write bitfield");
-            write_buf_index = 0;
-            write_buf = 0;
+            if write_buf_index == 8 {
+                out.write(&[write_buf]).expect("Error durring write bitfield");
+                write_buf_index = 0;
+                write_buf = 0;
+            }
         }
     }
-
     if write_buf_index != 0 {
         out.write(&[write_buf]).expect("Error durring write bitfield");
     }
