@@ -157,7 +157,7 @@ fn main() {
                             .short("m")
                             .long("mode")
                             .takes_value(true)
-                            .possible_values(&["csv", "exist"])
+                            .possible_values(&["csv", "exist", "spectrum"])
                             .help("write only kmer with abudance is higher than this parametre")
                     )
         )
