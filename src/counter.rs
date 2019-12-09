@@ -52,6 +52,8 @@ pub trait Counter<CounterType, KmerType> {
     fn data(&self) -> &Box<[CounterType]>;
 
     fn nb_bit(&self) -> u8;
+
+    fn clean(&mut self) -> ();
 }
 
 pub struct BasicCounter<T> {
@@ -96,7 +98,13 @@ macro_rules! impl_basiccounter {
 
             fn nb_bit(&self) -> u8 {
                 std::mem::size_of::<$type>() as u8 * 8
-           }
+            }
+	    
+	    fn clean(&mut self) -> () {
+		for elt in self.data.iter_mut() {
+		    *elt = 0;
+		}
+	    }
         }
     };
 }
@@ -153,6 +161,12 @@ impl Counter<u8, u64> for ShortCounter {
 
     fn nb_bit(&self) -> u8 {
         4
+    }
+
+    fn clean(&mut self) -> () {
+	for elt in self.data.iter_mut() {
+	    *elt = 0;
+	}
     }
 }
 
