@@ -85,7 +85,9 @@ macro_rules! impl_basiccounter {
             }
 
             fn get(&self, kmer: u64) -> $type {
-                self.data[kmer as usize]
+		let key: usize = convert::remove_first_bit(kmer) as usize;
+		
+                self.data[key as usize]
             }
 
             fn data(&self) -> &Box<[$type]> {
@@ -137,7 +139,7 @@ impl Counter<u8, u64> for ShortCounter {
     }
     
     fn get(&self, kmer: u64) -> u8 {
-        let key: usize = kmer as usize >> 1;
+	let key: usize = convert::remove_first_bit(kmer) as usize;
             
         return match convert::get_first_bit(kmer) {
             true => self.data[key] >> 4,
