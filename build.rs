@@ -7,16 +7,22 @@ fn main() {
     let crate_dir = env::var("CARGO_MANIFEST_DIR").unwrap();
 
     cbindgen::Builder::new()
-      .with_crate(crate_dir)
-      .generate()
-      .expect("Unable to generate bindings")
-      .write_to_file("dist/pcon.h");
+        .with_crate(crate_dir)
+        .generate()
+        .expect("Unable to generate bindings")
+        .write_to_file("dist/pcon.h");
 
-    let output = Command::new("g++").args(&["dist/test_pcon.c",
-                                            "-I", "dist/",
-                                            &("target/".to_string() + &env::var("PROFILE").expect("Env error") + "/libpcon.a"),
-                                            "-lpthread", "-ldl",
-                                            "-o", "dist/test_pcon"])
+    let output = Command::new("g++")
+        .args(&[
+            "dist/test_pcon.c",
+            "-I",
+            "dist/",
+            &("target/".to_string() + &env::var("PROFILE").expect("Env error") + "/libpcon.a"),
+            "-lpthread",
+            "-ldl",
+            "-o",
+            "dist/test_pcon",
+        ])
         .output()
         .expect("failled to build");
 
@@ -30,4 +36,3 @@ fn main() {
     println!("cargo:rerun-if-changed=src/lib.rs");
     println!("cargo:rerun-if-changed=dist/test_pcon.c");
 }
-

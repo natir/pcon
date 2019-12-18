@@ -212,6 +212,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cocktail"
+version = "0.1.0"
+source = "git+https://github.com/natir/cocktail.git?tag=0.2-beta1#eccc3f5b9497d1ccf13d928eea1c076c8330696d"
+dependencies = [
+ "bv 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "csv"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -419,8 +427,10 @@ name = "pcon"
 version = "0.1.0"
 dependencies = [
  "bio 0.29.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bv 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cbindgen 0.9.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cocktail 0.1.0 (git+https://github.com/natir/cocktail.git?tag=0.2-beta1)",
  "csv 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -908,6 +918,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum cfg-if 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "082bb9b28e00d3c9d39cc03e64ce4cea0f1bb9b3fde493f0cbc008472d22bdf4"
 "checksum clap 2.33.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5067f5bb2d80ef5d68b4c87db81601f0b75bca627bc2ef76b141d7b846a3c6d9"
 "checksum cloudabi 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
+"checksum cocktail 0.1.0 (git+https://github.com/natir/cocktail.git?tag=0.2-beta1)" = "<none>"
 "checksum csv 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "37519ccdfd73a75821cac9319d4fce15a81b9fcf75f951df5b9988aa3a0af87d"
 "checksum csv-core 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "9b5cadb6b25c77aeff80ba701712494213f4a8418fcda2ee11b6560c3ad0bf4c"
 "checksum custom_derive 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)" = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"

@@ -32,14 +32,10 @@ extern crate csv;
 use clap::{App, Arg, SubCommand};
 
 /* project mod declaration */
-pub mod convert;
+pub mod bucketizer;
 pub mod count;
 pub mod counter;
 pub mod dump;
-pub mod io;
-//mod minimizer;
-pub mod bucketizer;
-pub mod lookup_table;
 
 fn main() {
     let matches = App::new("pcon")
@@ -74,14 +70,6 @@ fn main() {
                             .help("kmer size, if kmer size is even real value is equal to k-1, max value 31")
                     )
                     .arg(
-                        Arg::with_name("minimizer-size")
-                            .short("m")
-                            .long("minimizer-size")
-                            .required(true)
-                            .takes_value(true)
-                            .help("minimizer size, used to improve cache locality, max value k-1")
-                    )
-                    .arg(
                         Arg::with_name("nb-bit-count")
                             .short("n")
                             .long("nb-bit-count")
@@ -91,41 +79,6 @@ fn main() {
                             .help("number of bit use to count kmer")
                     )
         )
-    /*        .subcommand(SubCommand::with_name("minimizer")
-        .about("count minimizer in fasta file")
-        .arg(
-        Arg::with_name("input")
-        .short("i")
-        .long("input")
-        .required(true)
-        .takes_value(true)
-        .help("sequence input in fasta format")
-)
-        .arg(
-        Arg::with_name("output")
-        .short("o")
-        .long("output")
-        .required(true)
-        .takes_value(true)
-        .help("path where kmer count was write")
-)
-        .arg(
-        Arg::with_name("kmer-size")
-        .short("k")
-        .long("kmer-size")
-        .required(true)
-        .takes_value(true)
-        .help("kmer size")
-)
-        .arg(
-        Arg::with_name("minimizer-size")
-        .short("m")
-        .long("minimizer-size")
-        .required(true)
-        .takes_value(true)
-        .help("minimizer size, if kmer size is even real value is equal to k-1, max value 31")
-)
-)*/
         .subcommand(SubCommand::with_name("dump")
                     .about("take binary file produce by count step and generate a csv with kmer")
                     .arg(
@@ -157,7 +110,7 @@ fn main() {
                             .short("m")
                             .long("mode")
                             .takes_value(true)
-                            .possible_values(&["csv", "exist", "spectrum"])
+                            .possible_values(&["csv", "solidity", "spectrum"])
                             .help("write only kmer with abudance is higher than this parametre")
                     )
         )
@@ -171,16 +124,7 @@ fn main() {
                 .parse::<u8>()
                 .unwrap(),
         );
-        
-        let m = normalize_size_of_m(
-            count_matches
-                .value_of("minimizer-size")
-                .unwrap()
-                .parse::<u8>()
-                .unwrap(),
-            k
-        );
-        
+
         let n = count_matches
             .value_of("nb-bit-count")
             .unwrap()
@@ -191,30 +135,8 @@ fn main() {
             count_matches.values_of("input").unwrap().collect(),
             count_matches.value_of("output").unwrap(),
             k,
-            m,
             n,
         );
-        /*} else if let Some(minimizer_matches) = matches.subcommand_matches("minimizer") {
-        let k = minimizer_matches
-        .value_of("kmer-size")
-        .unwrap()
-        .parse::<u8>()
-        .unwrap();
-
-        let m = normalize_size_of_k(
-        minimizer_matches
-        .value_of("minimizer-size")
-        .unwrap()
-        .parse::<u8>()
-        .unwrap(),
-    );
-
-        minimizer::minimizer(
-        minimizer_matches.value_of("input").unwrap(),
-        minimizer_matches.value_of("output").unwrap(),
-        k,
-        m,
-    );*/
     } else if let Some(dump_matches) = matches.subcommand_matches("dump") {
         let abundance = dump_matches
             .value_of("abundance-min")
@@ -222,10 +144,8 @@ fn main() {
             .parse::<u8>()
             .unwrap();
 
-        let mode = dump::Mode::from(dump_matches
-                                    .value_of("mode")
-                                    .unwrap());
-        
+        let mode = dump::Mode::from(dump_matches.value_of("mode").unwrap());
+
         dump::dump(
             dump_matches.value_of("input").unwrap(),
             dump_matches.value_of("output").unwrap(),
@@ -240,14 +160,5 @@ fn normalize_size_of_k(k: u8) -> u8 {
         return 31;
     }
 
-    return k - (!k & 1);
-}
-
-
-fn normalize_size_of_m(m: u8, k: u8) -> u8 {
-    if m > k {
-        return k - 1;
-    }
-
-    return m;
+    k - (!k & 1)
 }

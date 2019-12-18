@@ -21,7 +21,7 @@ SOFTWARE.
  */
 
 /* project mod declaration */
-pub mod convert;
+/*
 pub mod count;
 pub mod counter;
 pub mod dump;
@@ -86,7 +86,7 @@ pub extern "C" fn pcon_get_header(subseq: *const std::os::raw::c_char, k: &mut u
 
     *k = tmp_k;
     *nb_bit = tmp_nb_bit;
-} 
+}
 
 #[no_mangle]
 pub extern "C" fn pcon_get_count(count: *const std::os::raw::c_uchar, hash: u64, k: u8, nb_bit: u8) -> u8 {
@@ -104,3 +104,4 @@ pub extern "C" fn pcon_get_kmer_space_size(k: u8) -> u64 {
 pub extern "C" fn pcon_get_data_size(k: u8, nb_bit: u8) -> u64 {
     return io::read::get_data_size(k, nb_bit);
 }
+*/
