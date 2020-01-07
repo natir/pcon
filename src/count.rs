@@ -116,9 +116,9 @@ impl Count {
     }
 
     pub fn generate_bitfield(&self, abundance_min: u8) -> bv::BitVec<u8> {
-        let mut bit_vec = bv::BitVec::new_fill(false, get_data_size(self.k, self.n));
+        let mut bit_vec = bv::BitVec::new_fill(false, cocktail::kmer::get_kmer_space_size(self.k));
 
-        for kmer in 0..get_data_size(self.k, self.n) {
+        for kmer in 0..cocktail::kmer::get_kmer_space_size(self.k) {
             if self.buckets.counter().get(kmer) >= abundance_min {
                 bit_vec.set(kmer, true);
             }

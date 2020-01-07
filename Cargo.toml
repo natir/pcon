@@ -17,7 +17,7 @@ bio             = "0.29"
 csv             = "1.1.1"
 clap            = "2.33"
 bv             = "0.11.0"
-cocktail        = {git = "https://github.com/natir/cocktail.git", tag = "0.2-beta1"}
+cocktail        = {git = "https://github.com/natir/cocktail.git", tag = "0.2-beta2"}
 
 
 
@@ -26,7 +26,7 @@ cbindgen	= "0.9.1"
 
 
 [profile.release]
-#debug = true
+#debug = true # uncomment for proffiling
 lto = 'thin'
 opt-level = 3
 overflow-checks = false
