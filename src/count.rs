@@ -29,6 +29,7 @@ use cocktail;
 /* project use */
 use crate::bucketizer;
 use crate::counter;
+use crate::set_set;
 
 use crate::bucketizer::Bucket;
 
@@ -116,9 +117,9 @@ impl Count {
     }
 
     pub fn generate_bitfield(&self, abundance_min: u8) -> bv::BitVec<u8> {
-        let mut bit_vec = bv::BitVec::new_fill(false, cocktail::kmer::get_kmer_space_size(self.k));
+        let mut bit_vec = bv::BitVec::new_fill(false, cocktail::kmer::get_hash_space_size(self.k));
 
-        for kmer in 0..cocktail::kmer::get_kmer_space_size(self.k) {
+        for kmer in 0..cocktail::kmer::get_hash_space_size(self.k) {
             if self.buckets.counter().get(kmer) >= abundance_min {
                 bit_vec.set(kmer, true);
             }
@@ -127,6 +128,10 @@ impl Count {
         bit_vec
     }
 
+    pub fn generate_set_of_set(&self, abundance_min: u8, m: u8) -> set_set::SetOfSet {
+	set_set::SetOfSet::new(self.buckets.counter(), self.k, m, abundance_min)
+    }
+    
     pub fn get_k(&self) -> u8 {
         self.k
     }
@@ -181,11 +186,12 @@ pub(crate) fn count(multi_input_path: Vec<&str>, output_path: &str, k: u8, n: u8
 
 pub(crate) fn get_data_size(k: u8, nb_bit: u8) -> u64 {
     match nb_bit {
-        8 => cocktail::kmer::get_kmer_space_size(k),
-        4 => cocktail::kmer::get_kmer_space_size(k) / 2,
+        8 => cocktail::kmer::get_hash_space_size(k),
+        4 => cocktail::kmer::get_hash_space_size(k) / 2,
         _ => panic!("Number bit isn't valid check your pcon count file."),
     }
 }
+
 
 #[cfg(test)]
 mod test {
@@ -268,6 +274,24 @@ mod test {
             assert_eq!(k1_n8.generate_bitfield(1).as_slice(), [true, false]);
             assert_eq!(k1_n8.generate_bitfield(6).as_slice(), [false, false]);
         }
+
+	#[test]
+        fn set_set() {
+            let mut k5_n8 = Count::new(5, 8);
+            let seq = b"AGGAAGCTAC";
+
+            k5_n8.add_sequence(seq);
+            k5_n8.clean_buckets();
+
+	    let set_of_set = k5_n8.generate_set_of_set(1, 3);
+
+	    for seq in &[b"AGGAA", b"GGAAG", b"GAAGC", b"AAGCT", b"GCTAC"] {
+		let kmer = cocktail::kmer::cannonical(cocktail::kmer::seq2bit(*seq), 5);
+		assert_eq!(set_of_set.contains(kmer), true);
+	    }
+
+	    assert_eq!(set_of_set.contains(0), false); // 0 is kmer AAAAA
+	}
     }
 
     #[test]
