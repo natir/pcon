@@ -95,9 +95,9 @@ fn dump_solidity(count: count::Count, output_path: &str, abundance: u8) {
 }
 
 fn dump_spectrum(mut count: count::Count, output_path: &str) {
-    let mut spectrum = vec![0; 256];
+    let mut spectrum: Vec<u64> = vec![0; 256];
 
-    for hash in 0..cocktail::kmer::get_kmer_space_size(count.get_k()) {
+    for hash in 0..cocktail::kmer::get_hash_space_size(count.get_k()) {
         let value = count.get_count(hash);
 
         spectrum[value as usize] += 1;
