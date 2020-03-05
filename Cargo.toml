@@ -16,10 +16,10 @@ name = "pcon"
 path = "src/main.rs"
 
 [dependencies]
-bio             = "0.29"
+bio             = { git = "https://github.com/rust-bio/rust-bio.git"}
 csv             = "1.1.1"
 clap            = "2.33"
-bv             = "0.11.0"
+bv              = "0.11.0"
 cocktail        = {git = "https://github.com/natir/cocktail.git"}
 
 [build-dependencies]
