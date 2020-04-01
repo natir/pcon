@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Pierre Marijon <pierre.marijon@inria.fr>
+Copyright (c) 2020 Pierre Marijon <pmarijon@mpi-inf.mpg.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,230 +20,234 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use crate::bucketizer;
-use cocktail;
+use anyhow::{Context, Result};
 
-pub trait Counter<CounterType, KmerType> {
-    fn set_data(&mut self, data: Box<[CounterType]>);
+use crate::error::IO::*;
+use crate::error::*;
 
-    fn inc(&mut self, hash: KmerType);
+pub type Count = u8;
 
-    fn incs(&mut self, bucket: &bucketizer::NoTemporalArray);
-
-    fn get(&self, hash: KmerType) -> CounterType;
-
-    fn data(&self) -> &Box<[CounterType]>;
-
-    fn nb_bit(&self) -> u8;
-
-    fn clean(&mut self) -> ();
+#[repr(C)]
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct Counter {
+    pub k: u8,
+    count: Box<[Count]>,
 }
 
-pub struct BasicCounter<T> {
-    pub data: Box<[T]>,
-}
-
-macro_rules! impl_basiccounter {
-    ($type:ty) => {
-        impl BasicCounter<$type>
-        where
-            $type: std::clone::Clone,
-        {
-            pub fn new(k: u8) -> Self {
-                BasicCounter {
-                    data: vec![0; 1 << bucketizer::nb_bit(k)].into_boxed_slice(),
-                }
-            }
-        }
-
-        impl Counter<$type, u64> for BasicCounter<$type> {
-            fn set_data(&mut self, data: Box<[$type]>) {
-                self.data = data;
-            }
-
-            fn inc(&mut self, kmer: u64) {
-                self.data[kmer as usize] = self.data[kmer as usize].saturating_add(1);
-            }
-
-            fn incs(&mut self, bucket: &bucketizer::NoTemporalArray) {
-                for i in bucket {
-                    self.inc(*i);
-                }
-            }
-
-            fn get(&self, hash: u64) -> $type {
-                self.data[hash as usize]
-            }
-
-            fn data(&self) -> &Box<[$type]> {
-                &self.data
-            }
-
-            fn nb_bit(&self) -> u8 {
-                std::mem::size_of::<$type>() as u8 * 8
-            }
-
-            fn clean(&mut self) -> () {
-                for elt in self.data.iter_mut() {
-                    *elt = 0;
-                }
-            }
-        }
-    };
-}
-
-impl_basiccounter!(u8);
-impl_basiccounter!(u16);
-
-pub struct ShortCounter {
-    pub data: Box<[u8]>,
-}
-
-impl ShortCounter {
+impl Counter {
     pub fn new(k: u8) -> Self {
-        ShortCounter {
-            data: vec![0; 1usize << (bucketizer::nb_bit(k) - 1)].into_boxed_slice(),
-        }
-    }
-}
-
-impl Counter<u8, u64> for ShortCounter {
-    fn set_data(&mut self, data: Box<[u8]>) {
-        self.data = data;
-    }
-
-    fn inc(&mut self, hash: u64) {
-        let key: usize = cocktail::kmer::remove_first_bit(hash) as usize;
-
-        match cocktail::kmer::get_first_bit(hash) {
-            true => match self.data[key] & 0b1111_0000 == 240 {
-                true => (),
-                false => self.data[key] += 16,
-            },
-            false => match self.data[key] & 0b0000_1111 == 15 {
-                true => (),
-                false => self.data[key] += 1,
-            },
+        Self {
+            k,
+            count: vec![0; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice(),
         }
     }
 
-    fn incs(&mut self, bucket: &bucketizer::NoTemporalArray) {
-        for i in bucket {
-            self.inc(*i);
+    pub fn count_fasta<R>(&mut self, fasta: R)
+    where
+        R: std::io::Read,
+    {
+        let reader = bio::io::fasta::Reader::new(fasta);
+
+        let mut iter = reader.records();
+        while let Some(Ok(record)) = iter.next() {
+            let tokenizer = cocktail::tokenizer::Tokenizer::new(record.seq(), self.k);
+
+            for kmer in tokenizer {
+                self.inc(kmer);
+            }
         }
     }
 
-    fn get(&self, hash: u64) -> u8 {
-        let key: usize = cocktail::kmer::remove_first_bit(hash) as usize;
+    pub fn count_fastq<R>(&mut self, fasta: R)
+    where
+        R: std::io::Read,
+    {
+        let reader = bio::io::fastq::Reader::new(fasta);
 
-        match cocktail::kmer::get_first_bit(hash) {
-            true => self.data[key] >> 4,
-            false => self.data[key] & 0b0000_1111,
+        let mut iter = reader.records();
+        while let Some(Ok(record)) = iter.next() {
+            let tokenizer = cocktail::tokenizer::Tokenizer::new(record.seq(), self.k);
+
+            for kmer in tokenizer {
+                self.inc(kmer);
+            }
         }
     }
 
-    fn data(&self) -> &Box<[u8]> {
-        &self.data
+    pub fn inc(&mut self, kmer: u64) {
+        let cano = cocktail::kmer::cannonical(kmer, self.k);
+        let hash = (cano >> 1) as usize;
+
+        self.count[hash] = self.count[hash].saturating_add(1);
     }
 
-    fn nb_bit(&self) -> u8 {
-        4
+    pub fn get(&self, kmer: u64) -> Count {
+        let cano = cocktail::kmer::cannonical(kmer, self.k);
+        let hash = (cano >> 1) as usize;
+
+        self.count[hash]
     }
 
-    fn clean(&mut self) {
-        for elt in self.data.iter_mut() {
-            *elt = 0;
-        }
+    pub fn get_raw_count(&self) -> Box<[Count]> {
+        self.count.clone()
+    }
+
+    pub fn serialize<W>(&self, writer: W) -> Result<()>
+    where
+        W: std::io::Write,
+    {
+        bincode::serialize_into(writer, self).with_context(|| {
+            Error::IO(ErrorDurringWrite {
+                context: "Serialize counter".to_string(),
+            })
+        })
+    }
+
+    pub fn deserialize<R>(reader: R) -> Result<Self>
+    where
+        R: std::io::Read,
+    {
+        bincode::deserialize_from(reader).with_context(|| {
+            Error::IO(ErrorDurringRead {
+                context: "Deserialize counter".to_string(),
+            })
+        })
     }
 }
 
 #[cfg(test)]
-mod test {
-    use super::*;
+mod tests {
 
-    use cocktail;
+    const FASTA_FILE: &[u8] = b">random_seq 0
+GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
+>random_seq 1
+AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
+";
+
+    const FASTA_COUNT: &[u8] = &[
+        5, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2,
+        2, 1, 0, 1, 1, 1, 2, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0,
+        1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0,
+        0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0,
+        0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2,
+        0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+        1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1,
+        0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0,
+        2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 2, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0,
+        2, 0, 0, 0, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1,
+        0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
+        2, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2,
+        1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
+        0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1,
+    ];
+
     #[test]
-    fn short_counter() -> () {
-        let kmer1 = cocktail::kmer::cannonical(cocktail::kmer::seq2bit("ACTGG".as_bytes()), 5) >> 1;
-        let kmer2 = cocktail::kmer::cannonical(cocktail::kmer::seq2bit("ACTGA".as_bytes()), 5) >> 1;
+    fn count_fasta() {
+        let mut counter = crate::counter::Counter::new(5);
 
-        let mut count = ShortCounter::new(5);
+        counter.count_fasta(FASTA_FILE);
 
-        let mut bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..2 {
-            bucket.push(kmer2);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[27], 2);
+        let mut outfile = Vec::new();
+        counter.serialize(&mut outfile).unwrap();
 
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..2 {
-            bucket.push(kmer1);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[27], 34);
+        assert_eq!(&outfile[..], &FASTA_COUNT[..]);
+    }
 
-        assert_eq!(count.get(kmer1), 2);
-        assert_eq!(count.get(kmer2), 2);
+    const FASTQ_FILE: &[u8] = b"@random_seq 0
+CCAGTAGCTTGGTGTACCGACGCTGTAGAGTTACAGTCTCGCGTGGATATAAGCTACTATCGACAGCAGGGTACGTTGTGAGTAATCTAACGTCATCTCT
++
+X-Ee--b`x6h6Yy,c7S`p_C*K~SAgs;LFManA`-oLL6!Pgi>`X'P~6np^M1jQ+xQc9.ZCTEn+Yy?5r+b|ta=EyHil%Z}>>(%y\\=IC
+@random_seq 1
+TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCATGGTGTTTATAAGCCAATGG
++
+<nS{ADz8'0V$`mP@o]1n7f6(!nq%CpN^Vq)EV,{gz:aQ`jSc/l&(ZYi3\\OFBM<Ee?%#:jdKF]bR#{5Yj\"[}B!AG2.QZU9xyU3;\"y
+";
 
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..15 {
-            bucket.push(kmer1);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[27], 242);
+    const FASTQ_COUNT: &[u8] = &[
+        5, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0,
+        1, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 2, 2, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0,
+        1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 2, 0, 0,
+        1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 2, 1, 1, 1, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+        0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 2, 1, 0, 0, 0, 1,
+        0, 0, 0, 1, 0, 1, 0, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 3, 0, 1, 2, 1, 0, 1, 0,
+        0, 2, 0, 0, 2, 1, 0, 1, 0, 0, 1, 4, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0,
+        1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0,
+        0, 2, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 2, 1, 1, 0, 0, 1, 2, 1, 0, 0, 1, 0, 0, 1,
+        2, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 1, 2, 1, 1, 1, 2, 1, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 3, 0, 0, 0, 0,
+        0, 2, 3, 0, 0, 0, 0, 0, 1, 0, 0,
+    ];
 
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..15 {
-            bucket.push(kmer2);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[27], 255);
+    #[test]
+    fn count_fastq() {
+        let mut counter = crate::counter::Counter::new(5);
 
-        assert_eq!(count.get(kmer1), 15);
-        assert_eq!(count.get(kmer2), 15);
+        counter.count_fastq(FASTQ_FILE);
+
+        let mut outfile = Vec::new();
+        counter.serialize(&mut outfile).unwrap();
+
+        assert_eq!(&outfile[..], &FASTQ_COUNT[..]);
+    }
+
+    lazy_static::lazy_static! {
+	static ref COUNTER: crate::counter::Counter = {
+            let mut counter = crate::counter::Counter::new(5);
+
+            for i in 0..cocktail::kmer::get_kmer_space_size(5) {
+		counter.inc(i);
+            }
+
+            counter
+	};
+    }
+
+    const ALLKMERSEEONE: &[u8] = &[
+        5, 0, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    ];
+
+    #[test]
+    fn serialize() {
+        let mut outfile = Vec::new();
+
+        let counter = &COUNTER;
+        counter.serialize(&mut outfile).unwrap();
+
+        assert_eq!(&outfile[..], &ALLKMERSEEONE[..]);
     }
 
     #[test]
-    fn basic_counter() -> () {
-        let kmer1 = cocktail::kmer::cannonical(cocktail::kmer::seq2bit("ACTGG".as_bytes()), 5) >> 1;
-        let kmer2 = cocktail::kmer::cannonical(cocktail::kmer::seq2bit("ACTGA".as_bytes()), 5) >> 1;
+    fn deserialize() {
+        let counter = crate::counter::Counter::deserialize(&ALLKMERSEEONE[..]).unwrap();
 
-        let mut count = BasicCounter::<u8>::new(5);
-
-        let mut bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..2 {
-            bucket.push(kmer2);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[54], 2);
-
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..2 {
-            bucket.push(kmer1);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[55], 2);
-
-        assert_eq!(count.get(kmer1), 2);
-        assert_eq!(count.get(kmer2), 2);
-
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..255 {
-            bucket.push(kmer1);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[54], 2);
-        assert_eq!(count.data[55], 255);
-
-        bucket = bucketizer::NoTemporalArray::new();
-        for _ in 0..255 {
-            bucket.push(kmer2);
-        }
-        count.incs(&bucket);
-        assert_eq!(count.data[55], 255);
-
-        assert_eq!(count.get(kmer1), 255);
-        assert_eq!(count.get(kmer2), 255);
+        assert_eq!(counter.k, COUNTER.k);
+        assert_eq!(counter.get_raw_count(), COUNTER.get_raw_count());
     }
 }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2019 Pierre Marijon <pmarijon@mmci.univ-saarland.de>
+Copyright (c) 2020 Pierre Marijon <pmarijon@mpi-inf.mpg.de>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,10 @@ SOFTWARE.
  */
 
 /* project mod declaration */
-pub mod bucketizer;
+pub mod cli;
 pub mod count;
 pub mod counter;
 pub mod dump;
-pub mod set_set;
+pub mod error;
+pub mod solid;
+

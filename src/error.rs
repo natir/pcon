@@ -21,18 +21,46 @@ SOFTWARE.
  */
 
 /* crate use */
-use anyhow::Result;
-use structopt::StructOpt;
+use thiserror::Error;
 
-use pcon::*;
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error(transparent)]
+    Cli(#[from] Cli),
 
-fn main() -> Result<()> {
-    env_logger::init();
+    #[error(transparent)]
+    IO(#[from] IO),
 
-    let params = cli::Command::from_args();
+    #[error("If you get this error please contact the author with this message and command line you use: {name:?}")]
+    NotReachableCode { name: String },
+}
 
-    match params.subcmd {
-        cli::SubCommand::Count(params) => count::count(params),
-        cli::SubCommand::Dump(params) => dump::dump(params),
-    }
+#[derive(Debug, Error)]
+pub enum Cli {
+    #[error("Kmer size must be odd")]
+    KMustBeOdd,
+
+    #[error("Minimizer size must be lower than kmer size")]
+    MinimizerLowerThanKmer,
+}
+
+#[derive(Debug, Error)]
+pub enum IO {
+    #[error("We can't create file at path {path:}")]
+    CantCreateFile { path: String },
+
+    #[error("We can't open file at path {path:}")]
+    CantOpenFile { path: String },
+
+    #[error("Error durring write: {context:}")]
+    ErrorDurringWrite { context: String },
+
+    #[error("Error durring write in {path:}")]
+    ErrorDurringWriteIn { path: String },
+
+    #[error("Error durring read: {context:}")]
+    ErrorDurringRead { context: String },
+
+    #[error("Error durring read of {path:}")]
+    ErrorDurringReadIn { path: String },
 }

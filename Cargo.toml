@@ -4,12 +4,10 @@ description = "pcon for Prompt COuNter, is a short kmer counter"
 version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
-# build = "build.rs"
-
 
 [lib]
 name = "pcon"
-crate-type = ["rlib", "staticlib"]
+crate-type = ["lib", "cdylib", "staticlib"]
 
 [[bin]]
 name = "pcon"
@@ -17,14 +15,27 @@ path = "src/main.rs"
 
 [dependencies]
 bio             = { git = "https://github.com/rust-bio/rust-bio.git"}
-csv             = "1.1.1"
-clap            = "2.33"
-bv              = "0.11.0"
 cocktail        = {git = "https://github.com/natir/cocktail.git"}
+bincode	        = "1"
+serde		= "1"
+bitvec		= { version = "0.17", features = ["serde"] }
+num-traits	= "0.2"
+cfg-if		= "0.1"
 
-[build-dependencies]
-cbindgen	= "0.9.1"
+# input output management
+niffler	       = { git = "https://github.com/luizirber/niffler.git", branch="api_1.0"}
 
+# CLI management
+structopt      = "0.3"
+
+# Logging and error management
+log 	       = "0.4"
+anyhow         = "1.0"
+thiserror      = "1.0"
+env_logger     = "0.7"
+
+[dev-dependencies]
+lazy_static	= "1.4"
 
 [profile.release]
 debug = true # uncomment for proffiling
