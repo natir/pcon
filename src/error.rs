@@ -40,8 +40,8 @@ pub enum Cli {
     #[error("Kmer size must be odd")]
     KMustBeOdd,
 
-    #[error("Minimizer size must be lower than kmer size")]
-    MinimizerLowerThanKmer,
+    #[error("Kmer size must be lower than 32")]
+    KMustBeLower32,
 }
 
 
