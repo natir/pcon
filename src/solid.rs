@@ -153,6 +153,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     const FASTA_SOLID: &[u8] = &[5, 0, 0, 2, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 112, 64, 113, 143, 130, 8, 128, 4, 6, 60, 214, 0, 243, 8, 193, 1, 30, 4, 34, 97, 4, 70, 192, 12, 16, 144, 133, 38, 192, 41, 1, 4, 218, 179, 140, 0, 0, 140, 242, 35, 90, 56, 205, 179, 64, 3, 25, 20, 226, 0, 32, 76, 1, 134, 48, 64, 7, 0, 200, 144, 98, 131, 2, 203];
     
     #[test]
+    #[ignore]
     fn serialize() {
 	let mut outfile = Vec::new();
 
