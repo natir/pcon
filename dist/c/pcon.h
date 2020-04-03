@@ -15,7 +15,7 @@ typedef enum {
   CantOpenFile,
   ErrorDurringWrite,
   ErrorDurringRead,
-  None,
+  NoError,
 } IO;
 
 typedef struct Counter Counter;

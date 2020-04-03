@@ -62,7 +62,7 @@ fn writer_from_c_path(c_path: *const std::os::raw::c_char) -> Result<std::io::Bu
 /* Error section */
 #[no_mangle]
 pub extern fn pcon_error_new() -> *mut error::IO {
-    Box::into_raw(Box::new(error::IO::None))
+    Box::into_raw(Box::new(error::IO::NoError))
 }
 
 #[no_mangle]

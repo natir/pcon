@@ -30,16 +30,15 @@ int main(void) {
   Counter* counter = pcon_counter_new(5);
 
   /* Count a fasta file */
-  pcon_counter_count_fasta(counter, "test.fasta", error);
-  if(*error != None) {
-    printf("Error durring count of test.fasta\n");
+  pcon_counter_count_fasta(counter, "../data/test.fasta", error);
+  if(*error != NoError) {
     printf("Error durring count of test.fasta error code %i\n", *error);
     return -1;
   }
 
   /* Serialize counter */
   pcon_serialize_counter(counter, "c_counter.pcon", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error serialization of counter error code %i\n", *error);
     return -1;
   }
@@ -52,7 +51,7 @@ int main(void) {
   /* Deserialize counter */
   counter = pcon_counter_new(5);
   pcon_deserialize_counter(counter, "c_counter.pcon", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring deserialization of counter error code %i\n", *error);
     return -1;
   }
@@ -66,7 +65,7 @@ int main(void) {
 
   /* Serialize solid */
   pcon_serialize_solid(solid, "c_solid.pcon", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring serialization of solid error code %i\n", *error);
     return -1;
   }
@@ -75,7 +74,7 @@ int main(void) {
   pcon_solid_free(solid);
   solid = pcon_solid_new(5);
   pcon_deserialize_solid(solid, "c_solid.pcon", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring deserialization of solid error code %i\n", *error);
     return -1;
   }
@@ -86,19 +85,19 @@ int main(void) {
   
   /* test dump */
   pcon_dump_csv(counter, 0, "c_counter.csv", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring dump counter in csv error code %i\n", *error);
     return -1;
   }
   
   pcon_dump_solid(counter, 0, "c_counter.solid", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring dump counter in solid error code %i\n", *error);
     return -1;
   }
 
   pcon_dump_spectrum(counter, "c_counter.spectrum.csv", error);
-  if(*error != None) {
+  if(*error != NoError) {
     printf("Error durring dump counter in spectrum error code %i\n", *error);
     return -1;
   }

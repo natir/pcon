@@ -61,5 +61,5 @@ pub enum IO {
     ErrorDurringRead,
 
     #[error("Isn't error if you see this please contact the author with this message and a description of what you do with pcon")]
-    None,
+    NoError,
 }
