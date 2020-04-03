@@ -20,8 +20,8 @@ If you haven't a rust environment you can use [rustup](https://rustup.rs/) or yo
 When you have a rust environment setup you can run this command:
 
 ```
-git clone https://github.com/natir/ssik.git
-cd ssik
+git clone https://github.com/natir/pcon.git
+cd pcon
 
 cargo build
 cargo test
@@ -30,10 +30,35 @@ cargo install
 
 ## Usage
 
-ssik are contains 5 subcommand:
+pcon contains 2 subcommand:
 
-- count:
-  count kmer in fasta input and write result in binary format
-- dump:
-  convert ssik binary format in csv format, or as bit field of exist or not exist kmer
+- count: count kmer in fasta input and write result in binary format
+- dump: convert pcon binary format in csv format, presence absence bitfield or kmer spectrum
 
+## Binding
+
+### Python
+
+You need [rust toolchain setup on your system](https://rustup.rs/)
+
+Give this to pip:
+```
+git+https://github.com/natir/pcon.git#egg=cocktail&subdirectory=dist/python
+```
+
+### C
+
+You need [rust toolchain setup on your system](https://rustup.rs/)
+
+```
+git clone https://github.com/natir/pcon.git
+cd cocktail
+cargo build --release
+
+cbindgen --config cbindgen.toml --crate pcon --output dist/c/pcon.h
+cd dist/c/
+make
+./test
+```
+
+Dynamic and static library is avaible her `target/release/libcocktail.{a|so}` header is her `dist/c/cocktail.h`. To build a C programe you need to add `-lpthread -lm -ldl` durring linking phase.
