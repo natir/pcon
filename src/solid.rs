@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use bitvec::prelude::*;
 
@@ -29,7 +29,7 @@ use crate::*;
 use crate::error::IO::*;
 use crate::error::*;
 
-#[repr(C)]
+//#[repr(C)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Solid {
     pub k: u8,
@@ -37,8 +37,15 @@ pub struct Solid {
 }
 
 impl Solid {
-    pub fn from_counter(counters: &counter::Counter, abundance: u8) -> Self {
-        let count = counters.get_raw_count();
+    pub fn new(k: u8) -> Self {
+	Self {
+	    k,
+	    solid: bitvec![Lsb0; 0; cocktail::kmer::get_hash_space_size(k) as usize]
+	}
+    }
+    
+    pub fn from_counter(counter: &counter::Counter, abundance: u8) -> Self {
+	let count = counter.get_raw_count();
 
         let mut solid = bitvec![Lsb0; 0; count.len()];
 
@@ -50,12 +57,12 @@ impl Solid {
             }
         }
 
-        Self {
-            k: counters.k,
-            solid,
-        }
+	Self {
+	    k: counter.k,
+	    solid,
+	}
     }
-
+    
     pub fn set(&mut self, kmer: u64, value: bool) {
 	let cano = cocktail::kmer::cannonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
@@ -76,22 +83,26 @@ impl Solid {
     where
         W: std::io::Write,
     {
-        bincode::serialize_into(writer, &self).with_context(|| {
-            Error::IO(ErrorDurringWrite {
-                context: "Serialize counter".to_string(),
+        bincode::serialize_into(writer, &self)
+	    .with_context(|| {
+		Error::IO(ErrorDurringWrite)
             })
-        })
+	    .with_context(|| {
+		anyhow!("Error durring serialize counter")
+	    })	    
     }
 
     pub fn deserialize<R>(reader: R) -> Result<Self>
     where
         R: std::io::Read,
     {
-        bincode::deserialize_from(reader).with_context(|| {
-            Error::IO(ErrorDurringRead {
-                context: "Deserialize counter".to_string(),
-            })
-        })
+        bincode::deserialize_from(reader)
+	    .with_context(|| {
+		Error::IO(ErrorDurringRead)
+	    })
+	    .with_context(|| {
+		anyhow!("Error durring deserialize counter")
+	    })
     }
 }
 

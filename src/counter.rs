@@ -20,14 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::error::IO::*;
 use crate::error::*;
 
 pub type Count = u8;
 
-#[repr(C)]
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
     pub k: u8,
@@ -96,22 +95,26 @@ impl Counter {
     where
         W: std::io::Write,
     {
-        bincode::serialize_into(writer, self).with_context(|| {
-            Error::IO(ErrorDurringWrite {
-                context: "Serialize counter".to_string(),
+        bincode::serialize_into(writer, self)
+	    .with_context(|| {
+		Error::IO(ErrorDurringWrite)
             })
-        })
+	    .with_context(|| {
+		anyhow!("Error durring serialize counter")
+	    })
     }
 
     pub fn deserialize<R>(reader: R) -> Result<Self>
     where
         R: std::io::Read,
     {
-        bincode::deserialize_from(reader).with_context(|| {
-            Error::IO(ErrorDurringRead {
-                context: "Deserialize counter".to_string(),
-            })
-        })
+        bincode::deserialize_from(reader)
+	    .with_context(|| {
+		Error::IO(ErrorDurringRead)
+	    })
+	    .with_context(|| {
+		anyhow!("Error durring deserialize counter")
+	    })
     }
 }
 

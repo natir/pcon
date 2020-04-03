@@ -36,13 +36,13 @@ pub struct Command {
 
 #[derive(StructOpt, Debug)]
 pub enum SubCommand {
-    Count(Count),
-    Dump(Dump),
+    Count(SubCommandCount),
+    Dump(SubCommandDump),
 }
 
 #[derive(StructOpt, Debug)]
 #[structopt(about = "Perform kmer count")]
-pub struct Count {
+pub struct SubCommandCount {
     #[structopt(short = "k", long = "kmer-size", help = "Size of kmer size")]
     pub kmer: u8,
 
@@ -55,7 +55,7 @@ pub struct Count {
 
 #[derive(StructOpt, Debug)]
 #[structopt(about = "Convert count in usable format")]
-pub struct Dump {
+pub struct SubCommandDump {
     #[structopt(short = "i", long = "input", help = "Path to count file")]
     pub input: String,
 
@@ -105,7 +105,7 @@ impl From<&str> for DumpMode {
 use crate::error::{Cli, Error};
 use Cli::*;
 
-pub fn check_count_param(params: Count) -> Result<Count, Error> {
+pub fn check_count_param(params: SubCommandCount) -> Result<SubCommandCount, Error> {
     if (params.kmer & 1) == 0 {
         return Err(Error::Cli(KMustBeOdd));
     }
@@ -113,6 +113,6 @@ pub fn check_count_param(params: Count) -> Result<Count, Error> {
     Ok(params)
 }
 
-pub fn check_dump_param(params: Dump) -> Result<Dump, Error> {
+pub fn check_dump_param(params: SubCommandDump) -> Result<SubCommandDump, Error> {
     Ok(params)
 }

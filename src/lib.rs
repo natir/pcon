@@ -28,3 +28,5 @@ pub mod dump;
 pub mod error;
 pub mod solid;
 
+pub mod c_binding;
+

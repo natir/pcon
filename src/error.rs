@@ -44,23 +44,22 @@ pub enum Cli {
     MinimizerLowerThanKmer,
 }
 
+
+#[repr(C)]
 #[derive(Debug, Error)]
 pub enum IO {
-    #[error("We can't create file at path {path:}")]
-    CantCreateFile { path: String },
+    #[error("We can't create file")]
+    CantCreateFile,
 
-    #[error("We can't open file at path {path:}")]
-    CantOpenFile { path: String },
+    #[error("We can't open file")]
+    CantOpenFile,
 
-    #[error("Error durring write: {context:}")]
-    ErrorDurringWrite { context: String },
+    #[error("Error durring write")]
+    ErrorDurringWrite,
 
-    #[error("Error durring write in {path:}")]
-    ErrorDurringWriteIn { path: String },
+    #[error("Error durring read")]
+    ErrorDurringRead,
 
-    #[error("Error durring read: {context:}")]
-    ErrorDurringRead { context: String },
-
-    #[error("Error durring read of {path:}")]
-    ErrorDurringReadIn { path: String },
+    #[error("Isn't error if you see this please contact the author with this message and a description of what you do with pcon")]
+    None,
 }

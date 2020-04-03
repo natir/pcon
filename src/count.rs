@@ -20,14 +20,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 
 use crate::*;
 
 use crate::error::IO::*;
 use crate::error::*;
 
-pub fn count(params: cli::Count) -> Result<()> {
+pub fn count(params: cli::SubCommandCount) -> Result<()> {
     let params = cli::check_count_param(params)?;
 
     log::info!("Start of count structure initialization");
@@ -37,12 +37,19 @@ pub fn count(params: cli::Count) -> Result<()> {
     for input in params.inputs.iter() {
 	log::info!("Start of kmer count of the file {}", input);
         let reader =
-            niffler::get_reader(Box::new(std::fs::File::open(input).with_context(|| {
-                Error::IO(CantOpenFile {
-                    path: input.clone(),
-                })
-            })?))?
-            .0;
+            niffler::get_reader(
+		Box::new(
+		    std::fs::File::open(input)
+			.with_context(|| {
+			    Error::IO(CantOpenFile)
+			})
+			.with_context(|| {
+			    anyhow!("File {}", input.clone())
+			})?
+		)
+	    ).with_context(|| {
+		anyhow!("File {}", input.clone())
+	    })?.0;
 
         counter.count_fasta(reader);
 
@@ -51,17 +58,24 @@ pub fn count(params: cli::Count) -> Result<()> {
 
     log::info!("Start of write of count");
     let writer =
-        std::io::BufWriter::new(std::fs::File::create(&params.output).with_context(|| {
-            Error::IO(CantCreateFile {
-                path: params.output.clone(),
-            })
-        })?);
+        std::io::BufWriter::new(
+	    std::fs::File::create(&params.output)
+		.with_context(|| {
+		    Error::IO(CantCreateFile)
+		})
+		.with_context(|| {
+		    anyhow!("File {}", params.output.clone())
+		})?
+	);
 
-    counter.serialize(writer).with_context(|| {
-        Error::IO(ErrorDurringWriteIn {
-            path: params.output.clone(),
-        })
-    })?;
+    counter.serialize(writer)
+	.with_context(|| {
+            Error::IO(ErrorDurringWrite)
+	})
+	.with_context(|| {
+	    anyhow!("In file {}", params.output.clone())
+	})?;
+    
     log::info!("End of write of count");
     
     Ok(())
