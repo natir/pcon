@@ -1,6 +1,6 @@
 # Prompt COuNter, is a short kmer counter
 
-[![Build Status](https://travis-ci.org/natir/pcon.svg?branch=master)](https://travis-ci.org/natir/pcon)
+[![Build Status](https://travis-ci.org/natir/pcon.svg?branch=master)](https://travis-ci.org/natir/pcon) [Documentation](https://natir.github.io/pcon/pcon)
 
 pcon is a fast kmer counter but with some important limitations:
 

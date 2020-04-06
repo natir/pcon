@@ -60,11 +60,13 @@ fn writer_from_c_path(c_path: *const std::os::raw::c_char) -> Result<std::io::Bu
 }
 
 /* Error section */
+/// Create a new pcon io error it's init to no error, see [error::IO]. In python corresponding string error is emit.
 #[no_mangle]
 pub extern fn pcon_error_new() -> *mut error::IO {
     Box::into_raw(Box::new(error::IO::NoError))
 }
 
+/// Free a pcon io error
 #[no_mangle]
 pub extern fn pcon_error_free(error: *mut error::IO) {
     if error.is_null() {
@@ -75,11 +77,14 @@ pub extern fn pcon_error_free(error: *mut error::IO) {
 }
 
 /* Counter section */
+/// Create a new Counter. In python binding Counter is an object, new is the default constructor.
+/// See [counter::Counter::new].
 #[no_mangle]
 pub extern fn pcon_counter_new(k: u8) -> *mut counter::Counter {
     Box::into_raw(Box::new(counter::Counter::new(k)))
 }
 
+/// Free a Counter. In Python use del on Counter object.
 #[no_mangle]
 pub extern fn pcon_counter_free(counter: *mut counter::Counter) {
     if counter.is_null() {
@@ -89,6 +94,11 @@ pub extern fn pcon_counter_free(counter: *mut counter::Counter) {
     unsafe { Box::from_raw(counter) };
 }
 
+/// Perform count of kmer in fasta file in path, this file can be compress in gzip, bzip2, xz.
+/// You must check value of `io_error` is equal to NoError before use `counter`.
+///
+/// In Python it's count_fasta method of Counter object.
+/// See [counter::Counter::count_fasta].
 #[no_mangle]
 pub extern fn pcon_counter_count_fasta(counter: &mut counter::Counter, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let reader = reader_from_c_path(c_path);
@@ -99,6 +109,11 @@ pub extern fn pcon_counter_count_fasta(counter: &mut counter::Counter, c_path: *
     }
 }
 
+/// Perform count of kmer in fastq file in path, this file can be compress in gzip, bzip2, xz.
+/// You must check value of `io_error` is equal to NoError before use `counter`.
+///
+/// In Python it's count_fastq method of Counter object.
+/// See [counter::Counter::count_fastq].
 #[no_mangle]
 pub extern fn pcon_counter_count_fastq(counter: &mut counter::Counter, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let reader = reader_from_c_path(c_path);
@@ -109,16 +124,29 @@ pub extern fn pcon_counter_count_fastq(counter: &mut counter::Counter, c_path: *
     }
 }
 
+/// Increase the count of `kmer` 
+///
+/// In Python it's inc method of Counter object.
+/// See [counter::Counter::inc].
 #[no_mangle]
 pub extern fn pcon_counter_inc(counter: &mut counter::Counter, kmer: u64) {
     counter.inc(kmer);
 }
 
+/// Get the count of value `kmer` 
+///
+/// In Python it's get method of Counter object.
+/// See [counter::Counter::get].
 #[no_mangle]
 pub extern fn pcon_counter_get(counter: &counter::Counter, kmer: u64) -> counter::Count {
     counter.get(kmer)
 }
 
+/// Serialize Counter in path of file
+/// You must check value of `io_error` is equal to NoError before use `counter`
+///
+/// In Python it's serialize method of Counter object.
+/// See [counter::Counter::serialize].
 #[no_mangle]
 pub extern fn pcon_serialize_counter(counter: &counter::Counter, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let writer = writer_from_c_path(c_path);
@@ -132,6 +160,11 @@ pub extern fn pcon_serialize_counter(counter: &counter::Counter, c_path: *const 
     }
 }
 
+/// Deserialize Counter from `c_path` in `counter`
+/// You must check value of `io_error` is equal to NoError before use `counter`
+///
+/// In Python it's deserialize class method of Counter.
+/// See [counter::Counter::deserialize].
 #[no_mangle]
 pub extern fn pcon_deserialize_counter(counter: &mut counter::Counter, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let reader = reader_from_c_path(c_path);
@@ -146,16 +179,22 @@ pub extern fn pcon_deserialize_counter(counter: &mut counter::Counter, c_path: *
 } 
 
 /* solid section */
+/// Create a new Solid. In python binding Solid is an object, new is the default constructor.
+/// See [solid::Solid::new]
 #[no_mangle]
 pub extern fn pcon_solid_new(k: u8) -> *mut solid::Solid {
     Box::into_raw(Box::new(solid::Solid::new(k)))
 }
 
+/// Create a new Solid from value in Counter
+/// In python binding, this is a Solid class method from_counter.
+/// See [solid::Solid::from_counter].
 #[no_mangle]
-pub extern fn pcon_solid_from_counter(counter: &counter::Counter, abundance: u8) -> *mut solid::Solid {
+pub extern fn pcon_solid_from_counter(counter: &counter::Counter, abundance: counter::Count) -> *mut solid::Solid {
     Box::into_raw(Box::new(solid::Solid::from_counter(counter, abundance)))
 }
 
+/// Free a Solid. In Python use del on Solid object.
 #[no_mangle]
 pub extern fn pcon_solid_free(solid: *mut solid::Solid) {
     if solid.is_null() {
@@ -165,16 +204,29 @@ pub extern fn pcon_solid_free(solid: *mut solid::Solid) {
     unsafe { Box::from_raw(solid) };
 }
 
+/// Set the solidity status of `kmer` to `value` 
+///
+/// In Python it's set method of Solid object.
+/// See [solid::Solid::set].
 #[no_mangle]
 pub extern fn pcon_solid_set(solid: &mut solid::Solid, kmer: u64, value: bool) {
     solid.set(kmer, value);
 }
 
+/// Get the solidity status of `kmer` 
+///
+/// In Python it's get method of Solid object.
+/// See [solid::Solid::get].
 #[no_mangle]
 pub extern fn pcon_solid_get(solid: &mut solid::Solid, kmer: u64) -> bool {
     solid.get(kmer)
 }
 
+/// Serialize Solid in path of file
+/// You must check value of `io_error` is equal to NoError before use `solid`
+///
+/// In Python it's serialize method of Solid object.
+/// See [solid::Solid::serialize].
 #[no_mangle]
 pub extern fn pcon_serialize_solid(solid: &solid::Solid, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let writer = writer_from_c_path(c_path);
@@ -188,6 +240,11 @@ pub extern fn pcon_serialize_solid(solid: &solid::Solid, c_path: *const std::os:
     }
 }
 
+/// Deserialize Solid from `c_path` in `counter`
+/// You must check value of `io_error` is equal to NoError before use `solid`
+///
+/// In Python it's deserialize class method of solid.
+/// See [solid::Solid::deserialize].
 #[no_mangle]
 pub extern fn pcon_deserialize_solid(solid: &mut solid::Solid, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let reader = reader_from_c_path(c_path);
@@ -202,8 +259,12 @@ pub extern fn pcon_deserialize_solid(solid: &mut solid::Solid, c_path: *const st
 } 
 
 /* Dump section */
+/// See [dump::csv].
+/// You must check value of `io_error` is equal to NoError to be sure no problem occure durring write 
+///
+/// In Python it's csv function of dump module.
 #[no_mangle]
-pub extern fn pcon_dump_csv(counter: &counter::Counter, abundance: u8, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
+pub extern fn pcon_dump_csv(counter: &counter::Counter, abundance: counter::Count, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let writer = writer_from_c_path(c_path);
 
     match writer {
@@ -215,8 +276,12 @@ pub extern fn pcon_dump_csv(counter: &counter::Counter, abundance: u8, c_path: *
     }
 }
 
+/// See [dump::solid()].
+/// You must check value of `io_error` is equal to NoError to be sure no problem occure durring write 
+///
+/// In Python it's solid function of dump module.
 #[no_mangle]
-pub extern fn pcon_dump_solid(counter: &counter::Counter, abundance: u8, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
+pub extern fn pcon_dump_solid(counter: &counter::Counter, abundance: counter::Count, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let writer = writer_from_c_path(c_path);
 
     match writer {
@@ -228,6 +293,10 @@ pub extern fn pcon_dump_solid(counter: &counter::Counter, abundance: u8, c_path:
     }
 }
 
+/// See [dump::spectrum].
+/// You must check value of `io_error` is equal to NoError to be sure no problem occure durring write 
+///
+/// In Python it's spectrum function of dump module.
 #[no_mangle]
 pub extern fn pcon_dump_spectrum(counter: &counter::Counter, c_path: *const std::os::raw::c_char, io_error: &mut error::IO) {
     let writer = writer_from_c_path(c_path);

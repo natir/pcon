@@ -68,7 +68,7 @@ pub struct SubCommandDump {
         default_value = "0",
         help = "Minimal abundance"
     )]
-    pub abundance: u8,
+    pub abundance: crate::counter::Count,
 
     #[structopt(
 	short = "m",

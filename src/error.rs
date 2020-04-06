@@ -23,43 +23,54 @@ SOFTWARE.
 /* crate use */
 use thiserror::Error;
 
+/// All error produce by Pcon
 #[derive(Debug, Error)]
 pub enum Error {
+    /// See enum [Cli]
     #[error(transparent)]
     Cli(#[from] Cli),
 
+    /// See enum [IO]
     #[error(transparent)]
     IO(#[from] IO),
-
-    #[error("If you get this error please contact the author with this message and command line you use: {name:?}")]
-    NotReachableCode { name: String },
 }
 
+/// Error emmit durring Cli parsing
 #[derive(Debug, Error)]
 pub enum Cli {
+
+    /// For efficient computation of cannonical the kmer size must be odd
     #[error("Kmer size must be odd")]
     KMustBeOdd,
 
+    /// Kmer is store 2bit form on 64bit we can't manage larger kmer  
     #[error("Kmer size must be lower than 32")]
     KMustBeLower32,
 }
 
 
+/// Error emmit when pcon try to work with file
 #[repr(C)]
 #[derive(Debug, Error)]
 pub enum IO {
+
+    /// We can't create file. In C binding it's equal to 0
     #[error("We can't create file")]
     CantCreateFile,
 
+    /// We can't open file. In C binding it's equal to 1
     #[error("We can't open file")]
     CantOpenFile,
 
+    /// Error durring write in file. In C binding it's equal to 2
     #[error("Error durring write")]
     ErrorDurringWrite,
 
+    /// Error durring read file. In C binding it's equal to 3
     #[error("Error durring read")]
     ErrorDurringRead,
 
+    /// No error, this exist only for C binding it's the value of a new error pointer
     #[error("Isn't error if you see this please contact the author with this message and a description of what you do with pcon")]
     NoError,
 }

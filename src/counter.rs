@@ -20,6 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+
 use anyhow::{anyhow, Context, Result};
 
 use crate::error::IO::*;
@@ -27,6 +28,8 @@ use crate::error::*;
 
 pub type Count = u8;
 
+/// A counter of kmer based on cocktail crate 2bit conversion, cannonicalisation and hashing.
+/// If kmer occure more than 256 other occurence are ignored
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
     pub k: u8,
@@ -34,6 +37,7 @@ pub struct Counter {
 }
 
 impl Counter {
+    /// Create a new Counter for kmer size equal to k
     pub fn new(k: u8) -> Self {
         Self {
             k,
@@ -41,6 +45,7 @@ impl Counter {
         }
     }
 
+    /// Read the given an instance of io::Read as a fasta format and count kmer init
     pub fn count_fasta<R>(&mut self, fasta: R)
     where
         R: std::io::Read,
@@ -57,6 +62,7 @@ impl Counter {
         }
     }
 
+    /// Read the given an instance of io::Read as a fastq format and count kmer init
     pub fn count_fastq<R>(&mut self, fasta: R)
     where
         R: std::io::Read,
@@ -73,6 +79,7 @@ impl Counter {
         }
     }
 
+    /// Increase the counter of a kmer
     pub fn inc(&mut self, kmer: u64) {
         let cano = cocktail::kmer::cannonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
@@ -80,6 +87,7 @@ impl Counter {
         self.count[hash] = self.count[hash].saturating_add(1);
     }
 
+    /// Get the counter of a kmer
     pub fn get(&self, kmer: u64) -> Count {
         let cano = cocktail::kmer::cannonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
@@ -87,10 +95,11 @@ impl Counter {
         self.count[hash]
     }
 
-    pub fn get_raw_count(&self) -> Box<[Count]> {
+    pub(crate) fn get_raw_count(&self) -> Box<[Count]> {
         self.count.clone()
     }
 
+    /// Serialize counter in given [std::io::Write]
     pub fn serialize<W>(&self, writer: W) -> Result<()>
     where
         W: std::io::Write,
@@ -104,6 +113,7 @@ impl Counter {
 	    })
     }
 
+    /// Deserialize counter for given [std::io::Read]
     pub fn deserialize<R>(reader: R) -> Result<Self>
     where
         R: std::io::Read,

@@ -96,7 +96,9 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
     Ok(())
 }
 
-pub fn csv<W>(mut writer: W, counter: &counter::Counter, abundance: u8) -> Result<()>
+/// Write in the given instance of io::Write the count in `counter` in csv format.
+/// Only count upper than `abundance` is write.
+pub fn csv<W>(mut writer: W, counter: &counter::Counter, abundance: counter::Count) -> Result<()>
 where
     W: std::io::Write,
 {
@@ -115,7 +117,8 @@ where
     Ok(())
 }
 
-pub fn solid<W>(writer: W, counter: &counter::Counter, abundance: u8) -> Result<()>
+/// Serialize in the given instance of io::Write an instance of [solid::Solid] build from counts in `counter` upper than `abundance`.
+pub fn solid<W>(writer: W, counter: &counter::Counter, abundance: counter::Count) -> Result<()>
 where
     W: std::io::Write,
 {
@@ -129,6 +132,7 @@ where
     Ok(())
 }
 
+/// Write in the given instance of io::Write the kmer spectrum from counts in `counter`
 pub fn spectrum<W>(mut writer: W, counter: &counter::Counter) -> Result<()>
 where
     W: std::io::Write,

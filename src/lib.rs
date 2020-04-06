@@ -22,11 +22,12 @@ SOFTWARE.
 
 /* project mod declaration */
 pub mod cli;
+pub mod error;
+
 pub mod count;
 pub mod counter;
 pub mod dump;
-pub mod error;
 pub mod solid;
 
-pub mod c_binding;
+pub mod binding;
 

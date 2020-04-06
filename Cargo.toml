@@ -7,20 +7,19 @@ edition = "2018"
 
 [lib]
 name = "pcon"
-crate-type = ["lib", "cdylib", "staticlib"]
+crate-type = ["rlib", "cdylib", "staticlib"]
 
 [[bin]]
 name = "pcon"
 path = "src/main.rs"
 
 [dependencies]
-bio             = { git = "https://github.com/rust-bio/rust-bio.git" }
+bio             = "0.30"
 cocktail        = { git = "https://github.com/natir/cocktail.git" }
 bincode	        = "1"
 serde		= "1"
 bitvec		= { version = "0.17", features = ["serde"] }
 num-traits	= "0.2"
-cfg-if		= "0.1"
 
 # input output management
 niffler	       = { git = "https://github.com/luizirber/niffler.git", branch="api_1.0"}

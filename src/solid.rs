@@ -29,7 +29,8 @@ use crate::*;
 use crate::error::IO::*;
 use crate::error::*;
 
-//#[repr(C)]
+
+/// A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Solid {
     pub k: u8,
@@ -37,14 +38,16 @@ pub struct Solid {
 }
 
 impl Solid {
+    /// Create a new Solid for kmer size equal to `k`
     pub fn new(k: u8) -> Self {
 	Self {
 	    k,
 	    solid: bitvec![Lsb0; 0; cocktail::kmer::get_hash_space_size(k) as usize]
 	}
     }
-    
-    pub fn from_counter(counter: &counter::Counter, abundance: u8) -> Self {
+
+    /// Create a new Solid with count in `counter` only kmer upper than `abundance` are solid
+    pub fn from_counter(counter: &counter::Counter, abundance: counter::Count) -> Self {
 	let count = counter.get_raw_count();
 
         let mut solid = bitvec![Lsb0; 0; count.len()];
@@ -62,7 +65,8 @@ impl Solid {
 	    solid,
 	}
     }
-    
+
+    /// Solidity status of `kmer` is set to `value`
     pub fn set(&mut self, kmer: u64, value: bool) {
 	let cano = cocktail::kmer::cannonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
@@ -72,6 +76,7 @@ impl Solid {
         }
     }
 
+    /// Get the solidity status of `kmer`
     pub fn get(&self, kmer: u64) -> bool {
         let cano = cocktail::kmer::cannonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
@@ -79,6 +84,7 @@ impl Solid {
         self.solid[hash]
     }
 
+    /// Serialize counter in given [std::io::Write]
     pub fn serialize<W>(&self, writer: W) -> Result<()>
     where
         W: std::io::Write,
@@ -92,6 +98,7 @@ impl Solid {
 	    })	    
     }
 
+    /// Deserialize counter for given [std::io::Read]
     pub fn deserialize<R>(reader: R) -> Result<Self>
     where
         R: std::io::Read,
