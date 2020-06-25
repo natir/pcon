@@ -110,7 +110,7 @@ pub fn check_count_param(params: SubCommandCount) -> Result<SubCommandCount, Err
         return Err(Error::Cli(KMustBeOdd));
     }
 
-    if params.kmer < 32 {
+    if params.kmer > 32 {
         return Err(Error::Cli(KMustBeLower32));
     }
 
