@@ -33,50 +33,35 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
     log::info!("Start of count structure initialization");
     let mut counter = counter::Counter::new(params.kmer);
     log::info!("End of count structure initialization");
-    
+
     for input in params.inputs.iter() {
-	log::info!("Start of kmer count of the file {}", input);
-        let reader =
-            niffler::get_reader(
-		Box::new(
-		    std::fs::File::open(input)
-			.with_context(|| {
-			    Error::IO(CantOpenFile)
-			})
-			.with_context(|| {
-			    anyhow!("File {}", input.clone())
-			})?
-		)
-	    ).with_context(|| {
-		anyhow!("File {}", input.clone())
-	    })?.0;
+        log::info!("Start of kmer count of the file {}", input);
+        let reader = niffler::get_reader(Box::new(
+            std::fs::File::open(input)
+                .with_context(|| Error::IO(CantOpenFile))
+                .with_context(|| anyhow!("File {}", input.clone()))?,
+        ))
+        .with_context(|| anyhow!("File {}", input.clone()))?
+        .0;
 
         counter.count_fasta(reader);
 
-	log::info!("End of kmer count of the file {}", &input);
+        log::info!("End of kmer count of the file {}", &input);
     }
 
     log::info!("Start of write of count");
-    let writer =
-        std::io::BufWriter::new(
-	    std::fs::File::create(&params.output)
-		.with_context(|| {
-		    Error::IO(CantCreateFile)
-		})
-		.with_context(|| {
-		    anyhow!("File {}", params.output.clone())
-		})?
-	);
+    let writer = std::io::BufWriter::new(
+        std::fs::File::create(&params.output)
+            .with_context(|| Error::IO(CantCreateFile))
+            .with_context(|| anyhow!("File {}", params.output.clone()))?,
+    );
 
-    counter.serialize(writer)
-	.with_context(|| {
-            Error::IO(ErrorDurringWrite)
-	})
-	.with_context(|| {
-	    anyhow!("In file {}", params.output.clone())
-	})?;
-    
+    counter
+        .serialize(writer)
+        .with_context(|| Error::IO(ErrorDurringWrite))
+        .with_context(|| anyhow!("In file {}", params.output.clone()))?;
+
     log::info!("End of write of count");
-    
+
     Ok(())
 }

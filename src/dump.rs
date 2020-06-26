@@ -33,65 +33,62 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
     let params = cli::check_dump_param(params)?;
 
     log::info!("Start of read of count");
-    let reader =
-        std::io::BufReader::new(
-	    std::fs::File::open(&params.input)
-		.with_context(|| {
-		    Error::IO(CantOpenFile)
-		})
-		.with_context(|| {
-		    anyhow!("File {}", params.input.clone())
-		})?
-	);
-    
+    let reader = std::io::BufReader::new(
+        std::fs::File::open(&params.input)
+            .with_context(|| Error::IO(CantOpenFile))
+            .with_context(|| anyhow!("File {}", params.input.clone()))?,
+    );
+
     let counter = counter::Counter::deserialize(reader)
-	.with_context(|| {
-            Error::IO(ErrorDurringRead)
-	})
-	.with_context(|| {
-	    anyhow!("File {}", params.input.clone())
-	})?;
-    
+        .with_context(|| Error::IO(ErrorDurringRead))
+        .with_context(|| anyhow!("File {}", params.input.clone()))?;
+
     log::info!("End of read of count");
 
-    log::info!("Start of dump count data in format {:?}", params.mode);
+    if let Some(output) = params.csv.clone() {
+        log::info!("Start of dump count data in csv");
 
-    let writer =
-        std::io::BufWriter::new(
-	    std::fs::File::create(&params.output)
-		.with_context(|| {
-		    Error::IO(CantOpenFile)
-		})
-		.with_context(|| {
-		    anyhow!("File {}", params.input.clone())
-		})?
-	);
+        let writer = std::io::BufWriter::new(
+            std::fs::File::create(&output)
+                .with_context(|| Error::IO(CantOpenFile))
+                .with_context(|| anyhow!("File {}", params.input.clone()))?,
+        );
+        csv(writer, &counter, params.abundance)
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("File {} in csv format", output))?;
 
-    match params.mode {
-        cli::DumpMode::Csv => csv(writer, &counter, params.abundance)
-	    .with_context(|| {
-		Error::IO(ErrorDurringWrite)
-            })
-	    .with_context(|| {
-		anyhow!("File {} in csv format", params.output)
-	    })?,
-        cli::DumpMode::Solid => solid(writer, &counter, params.abundance)
-	    .with_context(|| {
-		Error::IO(ErrorDurringWrite)
-            })
-	    .with_context(|| {
-		anyhow!("File {} in solid format", params.output)
-	    })?,
-        cli::DumpMode::Spectrum => spectrum(writer, &counter)
-	    .with_context(|| {
-		Error::IO(ErrorDurringWrite)
-            })
-	    .with_context(|| {
-		anyhow!("File {} in spectrum format", params.output)
-	    })?,
+        log::info!("End of dump count data in csv");
     }
-    
-    log::info!("End of dump count data in format {:?}", params.mode);
+
+    if let Some(output) = params.solid.clone() {
+        log::info!("Start of dump count data in solid format");
+
+        let writer = std::io::BufWriter::new(
+            std::fs::File::create(&output)
+                .with_context(|| Error::IO(CantOpenFile))
+                .with_context(|| anyhow!("File {}", params.input.clone()))?,
+        );
+        solid(writer, &counter, params.abundance)
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("File {} in solid format", output))?;
+
+        log::info!("End of dump count data in solid format");
+    }
+
+    if let Some(output) = params.spectrum.clone() {
+        log::info!("Start of dump count data in spectrum");
+
+        let writer = std::io::BufWriter::new(
+            std::fs::File::create(&output)
+                .with_context(|| Error::IO(CantOpenFile))
+                .with_context(|| anyhow!("File {}", params.input.clone()))?,
+        );
+        spectrum(writer, &counter)
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("File {} in spectrum format", output))?;
+
+        log::info!("End of dump count data in spectrum");
+    }
 
     Ok(())
 }
@@ -108,10 +105,8 @@ where
         let count = counter.get(cano);
         if count > abundance {
             writeln!(writer, "{},{}", kmer::kmer2seq(kmer, counter.k), count)
-		.with_context(|| {
-                    Error::IO(ErrorDurringWrite)
-		})?;
-	}
+                .with_context(|| Error::IO(ErrorDurringWrite))?;
+        }
     }
 
     Ok(())
@@ -124,10 +119,9 @@ where
 {
     let solid = solid::Solid::from_counter(&counter, abundance);
 
-    solid.serialize(writer)
-	.with_context(|| {
-            Error::IO(ErrorDurringWrite)
-	})?;
+    solid
+        .serialize(writer)
+        .with_context(|| Error::IO(ErrorDurringWrite))?;
 
     Ok(())
 }
@@ -148,10 +142,7 @@ where
     }
 
     for (i, nb) in spectrum.iter().enumerate() {
-        writeln!(writer, "{},{}", i, nb)
-	    .with_context(|| {
-		Error::IO(ErrorDurringWrite)
-	    })?;
+        writeln!(writer, "{},{}", i, nb).with_context(|| Error::IO(ErrorDurringWrite))?;
     }
 
     Ok(())
@@ -160,17 +151,17 @@ where
 #[cfg(test)]
 mod tests {
     lazy_static::lazy_static! {
-	static ref COUNTER: crate::counter::Counter = {
+    static ref COUNTER: crate::counter::Counter = {
             let mut counter = crate::counter::Counter::new(5);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
-		counter.inc(i);
+        counter.inc(i);
             }
 
             counter.inc(0);
 
             counter
-	};
+    };
     }
 
     const CSV_ABUNDANCE_MIN_1: &[u8] = &[

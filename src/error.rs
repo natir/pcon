@@ -38,7 +38,6 @@ pub enum Error {
 /// Error emmit durring Cli parsing
 #[derive(Debug, Error)]
 pub enum Cli {
-
     /// For efficient computation of cannonical the kmer size must be odd
     #[error("Kmer size must be odd")]
     KMustBeOdd,
@@ -46,14 +45,16 @@ pub enum Cli {
     /// Kmer is store 2bit form on 64bit we can't manage larger kmer  
     #[error("Kmer size must be lower than 32")]
     KMustBeLower32,
-}
 
+    /// You must set at least one dump option csv, solid, spectrum
+    #[error("You must set at least one dump option csv, solid, spectrum")]
+    ADumpOptionMustBeSet,
+}
 
 /// Error emmit when pcon try to work with file
 #[repr(C)]
 #[derive(Debug, Error)]
 pub enum IO {
-
     /// We can't create file. In C binding it's equal to 0
     #[error("We can't create file")]
     CantCreateFile,

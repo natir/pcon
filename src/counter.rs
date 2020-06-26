@@ -20,7 +20,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-
 use anyhow::{anyhow, Context, Result};
 
 use crate::error::IO::*;
@@ -105,12 +104,8 @@ impl Counter {
         W: std::io::Write,
     {
         bincode::serialize_into(writer, self)
-	    .with_context(|| {
-		Error::IO(ErrorDurringWrite)
-            })
-	    .with_context(|| {
-		anyhow!("Error durring serialize counter")
-	    })
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("Error durring serialize counter"))
     }
 
     /// Deserialize counter for given [std::io::Read]
@@ -119,12 +114,8 @@ impl Counter {
         R: std::io::Read,
     {
         bincode::deserialize_from(reader)
-	    .with_context(|| {
-		Error::IO(ErrorDurringRead)
-	    })
-	    .with_context(|| {
-		anyhow!("Error durring deserialize counter")
-	    })
+            .with_context(|| Error::IO(ErrorDurringRead))
+            .with_context(|| anyhow!("Error durring deserialize counter"))
     }
 }
 
@@ -214,15 +205,15 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
     }
 
     lazy_static::lazy_static! {
-	static ref COUNTER: crate::counter::Counter = {
+    static ref COUNTER: crate::counter::Counter = {
             let mut counter = crate::counter::Counter::new(5);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
-		counter.inc(i);
+        counter.inc(i);
             }
 
             counter
-	};
+    };
     }
 
     const ALLKMERSEEONE: &[u8] = &[

@@ -59,9 +59,6 @@ pub struct SubCommandDump {
     #[structopt(short = "i", long = "input", help = "Path to count file")]
     pub input: String,
 
-    #[structopt(short = "o", long = "output", help = "Path to output")]
-    pub output: String,
-
     #[structopt(
         short = "a",
         long = "abundance",
@@ -70,36 +67,22 @@ pub struct SubCommandDump {
     )]
     pub abundance: crate::counter::Count,
 
+    #[structopt(short = "c", long = "csv", help = "Path where count is write in csv")]
+    pub csv: Option<String>,
+
     #[structopt(
-	short = "m",
-	long = "mode",
-	possible_values = &["csv", "solid", "spectrum"],
-	help = "Write mode:
-- csv: a two column csv, first for kmer sequence, second for occurence of this kmer
-- solid: an binary format to store only if kmer is solid or not
-- spectrum: a two column csv, first for count, second for occurence of this count
-",
-	parse(from_str),
+        short = "s",
+        long = "solid",
+        help = "Path where count is write in solid format"
     )]
-    pub mode: DumpMode,
-}
+    pub solid: Option<String>,
 
-#[derive(Debug)]
-pub enum DumpMode {
-    Csv,
-    Solid,
-    Spectrum,
-}
-
-impl From<&str> for DumpMode {
-    fn from(s: &str) -> Self {
-        match s {
-            "csv" => DumpMode::Csv,
-            "solid" => DumpMode::Solid,
-            "spectrum" => DumpMode::Spectrum,
-            _ => DumpMode::Csv,
-        }
-    }
+    #[structopt(
+        short = "S",
+        long = "spectrum",
+        help = "Path where kmer spectrum is write"
+    )]
+    pub spectrum: Option<String>,
 }
 
 use crate::error::{Cli, Error};
@@ -118,5 +101,12 @@ pub fn check_count_param(params: SubCommandCount) -> Result<SubCommandCount, Err
 }
 
 pub fn check_dump_param(params: SubCommandDump) -> Result<SubCommandDump, Error> {
+    if ![&params.csv, &params.solid, &params.spectrum]
+        .iter()
+        .any(|x| x.is_some())
+    {
+        return Err(Error::Cli(ADumpOptionMustBeSet));
+    }
+
     Ok(params)
 }
