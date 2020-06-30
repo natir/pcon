@@ -20,67 +20,64 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-/* crate use */
-use structopt::StructOpt;
-
-#[derive(StructOpt, Debug)]
-#[structopt(
+#[derive(clap::Clap, Debug)]
+#[clap(
     version = "0.1",
     author = "Pierre Marijon <pmarijon@mpi-inf.mpg.de>",
     about = "Prompt COuNter is short kmer counter"
 )]
 pub struct Command {
-    #[structopt(subcommand)]
+    #[clap(subcommand)]
     pub subcmd: SubCommand,
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(clap::Clap, Debug)]
 pub enum SubCommand {
     Count(SubCommandCount),
     Dump(SubCommandDump),
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(about = "Perform kmer count")]
+#[derive(clap::Clap, Debug)]
+#[clap(about = "Perform kmer count")]
 pub struct SubCommandCount {
-    #[structopt(short = "k", long = "kmer-size", help = "Size of kmer size")]
+    #[clap(short = "k", long = "kmer-size", about = "Size of kmer size")]
     pub kmer: u8,
 
-    #[structopt(short = "i", long = "inputs", help = "Path to inputs")]
+    #[clap(short = "i", long = "inputs", about = "Path to inputs")]
     pub inputs: Vec<String>,
 
-    #[structopt(short = "o", long = "output", help = "Path where count are store")]
+    #[clap(short = "o", long = "output", about = "Path where count are store")]
     pub output: String,
 }
 
-#[derive(StructOpt, Debug)]
-#[structopt(about = "Convert count in usable format")]
+#[derive(clap::Clap, Debug)]
+#[clap(about = "Convert count in usable format")]
 pub struct SubCommandDump {
-    #[structopt(short = "i", long = "input", help = "Path to count file")]
+    #[clap(short = "i", long = "input", about = "Path to count file")]
     pub input: String,
 
-    #[structopt(
+    #[clap(
         short = "a",
         long = "abundance",
         default_value = "0",
-        help = "Minimal abundance"
+        about = "Minimal abundance"
     )]
     pub abundance: crate::counter::Count,
 
-    #[structopt(short = "c", long = "csv", help = "Path where count is write in csv")]
+    #[clap(short = "c", long = "csv", about = "Path where count is write in csv")]
     pub csv: Option<String>,
 
-    #[structopt(
+    #[clap(
         short = "s",
         long = "solid",
-        help = "Path where count is write in solid format"
+        about = "Path where count is write in solid format"
     )]
     pub solid: Option<String>,
 
-    #[structopt(
+    #[clap(
         short = "S",
         long = "spectrum",
-        help = "Path where kmer spectrum is write"
+        about = "Path where kmer spectrum is write"
     )]
     pub spectrum: Option<String>,
 }

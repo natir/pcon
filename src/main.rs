@@ -21,15 +21,15 @@ SOFTWARE.
  */
 
 /* crate use */
+use clap::Clap;
 use anyhow::Result;
-use structopt::StructOpt;
 
 use pcon::*;
 
 fn main() -> Result<()> {
     env_logger::init();
 
-    let params = cli::Command::from_args();
+    let params = cli::Command::parse();
 
     match params.subcmd {
         cli::SubCommand::Count(params) => count::count(params),

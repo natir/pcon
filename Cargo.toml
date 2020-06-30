@@ -22,10 +22,10 @@ bitvec		= { version = "0.17", features = ["serde"] }
 num-traits	= "0.2"
 
 # input output management
-niffler	       = { git = "https://github.com/luizirber/niffler.git", branch="api_1.0"}
+niffler	       = "2"
 
 # CLI management
-structopt      = "0.3"
+clap           = "3.0.0-beta.1"
 
 # Logging and error management
 log 	       = "0.4"
