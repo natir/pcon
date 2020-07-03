@@ -29,6 +29,14 @@ SOFTWARE.
 pub struct Command {
     #[clap(subcommand)]
     pub subcmd: SubCommand,
+
+    #[clap(
+        short = "v",
+        long = "verbosity",
+        parse(from_occurrences),
+        about = "verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored"
+    )]
+    pub verbosity: i8,
 }
 
 #[derive(clap::Clap, Debug)]
@@ -107,3 +115,15 @@ pub fn check_dump_param(params: SubCommandDump) -> Result<SubCommandDump, Error>
 
     Ok(params)
 }
+
+pub fn i82level(level: i8) -> Option<log::Level> {
+    match level {
+        std::i8::MIN..=0 => None,
+        1 => Some(log::Level::Error),
+        2 => Some(log::Level::Warn),
+        3 => Some(log::Level::Info),
+        4 => Some(log::Level::Debug),
+        5..=std::i8::MAX => Some(log::Level::Trace),
+    }
+}
+

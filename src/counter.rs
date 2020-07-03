@@ -27,7 +27,7 @@ use crate::error::*;
 
 pub type Count = u8;
 
-/// A counter of kmer based on cocktail crate 2bit conversion, cannonicalisation and hashing.
+/// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
 /// If kmer occure more than 256 other occurence are ignored
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
@@ -53,10 +53,10 @@ impl Counter {
 
         let mut iter = reader.records();
         while let Some(Ok(record)) = iter.next() {
-            let tokenizer = cocktail::tokenizer::Tokenizer::new(record.seq(), self.k);
+            let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
-            for kmer in tokenizer {
-                self.inc(kmer);
+            for canonical in tokenizer {
+                self.canonical_inc(canonical);
             }
         }
     }
@@ -80,15 +80,18 @@ impl Counter {
 
     /// Increase the counter of a kmer
     pub fn inc(&mut self, kmer: u64) {
-        let cano = cocktail::kmer::cannonical(kmer, self.k);
-        let hash = (cano >> 1) as usize;
+        self.canonical_inc(cocktail::kmer::canonical(kmer, self.k));
+    }
+
+    fn canonical_inc(&mut self, canonical: u64) {
+        let hash = (canonical >> 1) as usize;
 
         self.count[hash] = self.count[hash].saturating_add(1);
     }
 
     /// Get the counter of a kmer
     pub fn get(&self, kmer: u64) -> Count {
-        let cano = cocktail::kmer::cannonical(kmer, self.k);
+        let cano = cocktail::kmer::canonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
 
         self.count[hash]

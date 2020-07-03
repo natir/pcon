@@ -38,7 +38,7 @@ pub enum Error {
 /// Error emmit durring Cli parsing
 #[derive(Debug, Error)]
 pub enum Cli {
-    /// For efficient computation of cannonical the kmer size must be odd
+    /// For efficient computation of canonical the kmer size must be odd
     #[error("Kmer size must be odd")]
     KMustBeOdd,
 

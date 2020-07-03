@@ -100,7 +100,7 @@ where
     W: std::io::Write,
 {
     for kmer in 0..kmer::get_kmer_space_size(counter.k) {
-        let cano = kmer::cannonical(kmer, counter.k);
+        let cano = kmer::canonical(kmer, counter.k);
 
         let count = counter.get(cano);
         if count > abundance {
@@ -134,7 +134,7 @@ where
     let mut spectrum: Box<[u128]> = vec![0; 1 << 8].into_boxed_slice();
 
     for kmer in 0..kmer::get_kmer_space_size(counter.k) {
-        let cano = kmer::cannonical(kmer, counter.k);
+        let cano = kmer::canonical(kmer, counter.k);
 
         let count: counter::Count = counter.get(cano);
 

@@ -21,15 +21,24 @@ SOFTWARE.
  */
 
 /* crate use */
-use clap::Clap;
 use anyhow::Result;
+use clap::Clap;
 
 use pcon::*;
 
 fn main() -> Result<()> {
-    env_logger::init();
-
     let params = cli::Command::parse();
+
+    if let Some(level) = cli::i82level(params.verbosity) {
+        env_logger::builder()
+            .format_timestamp(None)
+            .filter_level(level.to_level_filter())
+            .init();
+    } else {
+        env_logger::Builder::from_env("PCON_LOG")
+            .format_timestamp(None)
+            .init();
+    }
 
     match params.subcmd {
         cli::SubCommand::Count(params) => count::count(params),

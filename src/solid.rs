@@ -67,7 +67,7 @@ impl Solid {
 
     /// Solidity status of `kmer` is set to `value`
     pub fn set(&mut self, kmer: u64, value: bool) {
-        let cano = cocktail::kmer::cannonical(kmer, self.k);
+        let cano = cocktail::kmer::canonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
 
         if let Some(mut v) = self.solid.get_mut(hash) {
@@ -77,7 +77,7 @@ impl Solid {
 
     /// Get the solidity status of `kmer`
     pub fn get(&self, kmer: u64) -> bool {
-        let cano = cocktail::kmer::cannonical(kmer, self.k);
+        let cano = cocktail::kmer::canonical(kmer, self.k);
         let hash = (cano >> 1) as usize;
 
         self.solid[hash]
