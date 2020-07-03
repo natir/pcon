@@ -81,12 +81,28 @@ void pcon_counter_free(Counter *counter);
 Count pcon_counter_get(const Counter *counter, uint64_t kmer);
 
 /**
+ * Get the count of value a canonical `kmer`
+ *
+ * In Python it's get_canonic method of Counter object.
+ * See [counter::Counter::get_canonic].
+ */
+Count pcon_counter_get_canonic(const Counter *counter, uint64_t kmer);
+
+/**
  * Increase the count of `kmer`
  *
  * In Python it's inc method of Counter object.
  * See [counter::Counter::inc].
  */
 void pcon_counter_inc(Counter *counter, uint64_t kmer);
+
+/**
+ * Increase the count of a canonical `kmer`
+ *
+ * In Python it's inc_canonic method of Counter object.
+ * See [counter::Counter::inc_canonic].
+ */
+void pcon_counter_inc_canonic(Counter *counter, uint64_t kmer);
 
 /**
  * Create a new Counter. In python binding Counter is an object, new is the default constructor.
@@ -185,6 +201,14 @@ Solid *pcon_solid_from_counter(const Counter *counter, Count abundance);
 bool pcon_solid_get(Solid *solid, uint64_t kmer);
 
 /**
+ * Get the solidity status of a canonical `kmer`
+ *
+ * In Python it's get_canonic method of Solid object.
+ * See [solid::Solid::get_canonic].
+ */
+bool pcon_solid_get_canonic(Solid *solid, uint64_t kmer);
+
+/**
  * Create a new Solid. In python binding Solid is an object, new is the default constructor.
  * See [solid::Solid::new]
  */
@@ -197,5 +221,13 @@ Solid *pcon_solid_new(uint8_t k);
  * See [solid::Solid::set].
  */
 void pcon_solid_set(Solid *solid, uint64_t kmer, bool value);
+
+/**
+ * Set the solidity status of a canonical `kmer` to `value`
+ *
+ * In Python it's set_canonic method of Solid object.
+ * See [solid::Solid::set_canonic].
+ */
+void pcon_solid_set_canonic(Solid *solid, uint64_t kmer, bool value);
 
 #endif /* _PCON_HEADER_GUARD_ */

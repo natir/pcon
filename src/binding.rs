@@ -145,6 +145,15 @@ pub extern "C" fn pcon_counter_inc(counter: &mut counter::Counter, kmer: u64) {
     counter.inc(kmer);
 }
 
+/// Increase the count of a canonical `kmer`
+///
+/// In Python it's inc_canonic method of Counter object.
+/// See [counter::Counter::inc_canonic].
+#[no_mangle]
+pub extern "C" fn pcon_counter_inc_canonic(counter: &mut counter::Counter, kmer: u64) {
+    counter.inc_canonic(kmer);
+}
+
 /// Get the count of value `kmer`
 ///
 /// In Python it's get method of Counter object.
@@ -152,6 +161,15 @@ pub extern "C" fn pcon_counter_inc(counter: &mut counter::Counter, kmer: u64) {
 #[no_mangle]
 pub extern "C" fn pcon_counter_get(counter: &counter::Counter, kmer: u64) -> counter::Count {
     counter.get(kmer)
+}
+
+/// Get the count of value a canonical `kmer`
+///
+/// In Python it's get_canonic method of Counter object.
+/// See [counter::Counter::get_canonic].
+#[no_mangle]
+pub extern "C" fn pcon_counter_get_canonic(counter: &counter::Counter, kmer: u64) -> counter::Count {
+    counter.get_canonic(kmer)
 }
 
 /// Serialize Counter in path of file
@@ -236,6 +254,15 @@ pub extern "C" fn pcon_solid_set(solid: &mut solid::Solid, kmer: u64, value: boo
     solid.set(kmer, value);
 }
 
+/// Set the solidity status of a canonical `kmer` to `value`
+///
+/// In Python it's set_canonic method of Solid object.
+/// See [solid::Solid::set_canonic].
+#[no_mangle]
+pub extern "C" fn pcon_solid_set_canonic(solid: &mut solid::Solid, kmer: u64, value: bool) {
+    solid.set_canonic(kmer, value);
+}
+
 /// Get the solidity status of `kmer`
 ///
 /// In Python it's get method of Solid object.
@@ -243,6 +270,15 @@ pub extern "C" fn pcon_solid_set(solid: &mut solid::Solid, kmer: u64, value: boo
 #[no_mangle]
 pub extern "C" fn pcon_solid_get(solid: &mut solid::Solid, kmer: u64) -> bool {
     solid.get(kmer)
+}
+
+/// Get the solidity status of a canonical `kmer`
+///
+/// In Python it's get_canonic method of Solid object.
+/// See [solid::Solid::get_canonic].
+#[no_mangle]
+pub extern "C" fn pcon_solid_get_canonic(solid: &mut solid::Solid, kmer: u64) -> bool {
+    solid.get_canonic(kmer)
 }
 
 /// Serialize Solid in path of file

@@ -67,22 +67,30 @@ impl Solid {
 
     /// Solidity status of `kmer` is set to `value`
     pub fn set(&mut self, kmer: u64, value: bool) {
-        let cano = cocktail::kmer::canonical(kmer, self.k);
-        let hash = (cano >> 1) as usize;
+        self.set_canonic(cocktail::kmer::canonical(kmer, self.k), value);
+    }
+
+    /// Solidity status of a canonical`kmer` is set to `value`
+    pub fn set_canonic(&mut self, canonical: u64, value: bool) {
+        let hash = (canonical >> 1) as usize;
 
         if let Some(mut v) = self.solid.get_mut(hash) {
             *v = value;
         }
     }
-
+    
     /// Get the solidity status of `kmer`
     pub fn get(&self, kmer: u64) -> bool {
-        let cano = cocktail::kmer::canonical(kmer, self.k);
-        let hash = (cano >> 1) as usize;
+	self.get_canonic(cocktail::kmer::canonical(kmer, self.k))
+    }
+
+    /// Get the solidity status of a canonical `kmer`
+    pub fn get_canonic(&self, canonical: u64) -> bool {
+        let hash = (canonical >> 1) as usize;
 
         self.solid[hash]
     }
-
+    
     /// Serialize counter in given [std::io::Write]
     pub fn serialize<W>(&self, writer: W) -> Result<()>
     where

@@ -18,9 +18,15 @@ class Counter(RustObject):
     def inc(self, kmer: int):
         self._methodcall(lib.pcon_counter_inc, kmer)
 
+    def inc_canonic(self, kmer: int):
+        self._methodcall(lib.pcon_counter_inc_canonic, kmer)
+        
     def get(self, kmer: int) -> int:
         return self._methodcall(lib.pcon_counter_get, kmer)
 
+    def get_canonic(self, kmer: int) -> int:
+        return self._methodcall(lib.pcon_counter_get_canonic, kmer)
+    
     def serialize(self, path: str):
         self._methodcall_can_produce_error(lib.pcon_serialize_counter, path.encode("utf-8"))
 

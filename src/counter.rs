@@ -56,7 +56,7 @@ impl Counter {
             let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
             for canonical in tokenizer {
-                self.canonical_inc(canonical);
+                self.inc_canonic(canonical);
             }
         }
     }
@@ -70,20 +70,21 @@ impl Counter {
 
         let mut iter = reader.records();
         while let Some(Ok(record)) = iter.next() {
-            let tokenizer = cocktail::tokenizer::Tokenizer::new(record.seq(), self.k);
+            let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
             for kmer in tokenizer {
-                self.inc(kmer);
+                self.inc_canonic(kmer);
             }
         }
     }
 
     /// Increase the counter of a kmer
     pub fn inc(&mut self, kmer: u64) {
-        self.canonical_inc(cocktail::kmer::canonical(kmer, self.k));
+        self.inc_canonic(cocktail::kmer::canonical(kmer, self.k));
     }
 
-    fn canonical_inc(&mut self, canonical: u64) {
+    /// Increase the counter of a canonical kmer
+    pub fn inc_canonic(&mut self, canonical: u64) {
         let hash = (canonical >> 1) as usize;
 
         self.count[hash] = self.count[hash].saturating_add(1);
@@ -91,12 +92,16 @@ impl Counter {
 
     /// Get the counter of a kmer
     pub fn get(&self, kmer: u64) -> Count {
-        let cano = cocktail::kmer::canonical(kmer, self.k);
-        let hash = (cano >> 1) as usize;
+        self.get_canonic(cocktail::kmer::canonical(kmer, self.k))
+    }
+
+    /// Get the counter of a canonical kmer
+    pub fn get_canonic(&self, canonical: u64) -> Count {
+        let hash = (canonical >> 1) as usize;
 
         self.count[hash]
     }
-
+    
     pub(crate) fn get_raw_count(&self) -> Box<[Count]> {
         self.count.clone()
     }

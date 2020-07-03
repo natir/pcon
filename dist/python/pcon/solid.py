@@ -21,9 +21,15 @@ class Solid(RustObject):
     def set(self, kmer: int, value: bool):
         self._methodcall(lib.pcon_solid_set, kmer, value)
 
+    def set_canonic(self, kmer: int, value: bool):
+        self._methodcall(lib.pcon_solid_set_canonic, kmer, value)
+
     def get(self, kmer: int) -> bool: 
         return self._methodcall(lib.pcon_solid_get, kmer)
 
+    def get_canonic(self, kmer: int) -> bool: 
+        return self._methodcall(lib.pcon_solid_get_canonic, kmer)
+    
     def serialize(self, path: str):
         self._methodcall_can_produce_error(lib.pcon_serialize_solid, path.encode("utf-8"))
 
