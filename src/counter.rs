@@ -53,6 +53,10 @@ impl Counter {
 
         let mut iter = reader.records();
         while let Some(Ok(record)) = iter.next() {
+            if record.seq().len() < self.k as usize {
+                continue;
+            }
+
             let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
             for canonical in tokenizer {
@@ -70,6 +74,10 @@ impl Counter {
 
         let mut iter = reader.records();
         while let Some(Ok(record)) = iter.next() {
+            if record.seq().len() < self.k as usize {
+                continue;
+            }
+
             let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
             for kmer in tokenizer {
@@ -101,9 +109,9 @@ impl Counter {
 
         self.count[hash]
     }
-    
-    pub(crate) fn get_raw_count(&self) -> Box<[Count]> {
-        self.count.clone()
+
+    pub(crate) fn get_raw_count(&self) -> &Box<[Count]> {
+        &self.count
     }
 
     /// Serialize counter in given [std::io::Write]

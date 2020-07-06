@@ -168,7 +168,10 @@ pub extern "C" fn pcon_counter_get(counter: &counter::Counter, kmer: u64) -> cou
 /// In Python it's get_canonic method of Counter object.
 /// See [counter::Counter::get_canonic].
 #[no_mangle]
-pub extern "C" fn pcon_counter_get_canonic(counter: &counter::Counter, kmer: u64) -> counter::Count {
+pub extern "C" fn pcon_counter_get_canonic(
+    counter: &counter::Counter,
+    kmer: u64,
+) -> counter::Count {
     counter.get_canonic(kmer)
 }
 

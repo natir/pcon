@@ -99,13 +99,15 @@ pub fn csv<W>(mut writer: W, counter: &counter::Counter, abundance: counter::Cou
 where
     W: std::io::Write,
 {
-    for kmer in 0..kmer::get_kmer_space_size(counter.k) {
-        let cano = kmer::canonical(kmer, counter.k);
+    for (hash, count) in counter.get_raw_count().iter().enumerate() {
+        let kmer = if cocktail::kmer::parity_even(hash as u64) {
+            kmer::kmer2seq((hash as u64) << 1, counter.k)
+        } else {
+            kmer::kmer2seq(((hash as u64) << 1) ^ 0b1, counter.k)
+        };
 
-        let count = counter.get(cano);
-        if count > abundance {
-            writeln!(writer, "{},{}", kmer::kmer2seq(kmer, counter.k), count)
-                .with_context(|| Error::IO(ErrorDurringWrite))?;
+        if count > &abundance {
+            writeln!(writer, "{},{}", kmer, count).with_context(|| Error::IO(ErrorDurringWrite))?;
         }
     }
 

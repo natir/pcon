@@ -126,4 +126,3 @@ pub fn i82level(level: i8) -> Option<log::Level> {
         5..=std::i8::MAX => Some(log::Level::Trace),
     }
 }
-

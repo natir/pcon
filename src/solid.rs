@@ -78,10 +78,10 @@ impl Solid {
             *v = value;
         }
     }
-    
+
     /// Get the solidity status of `kmer`
     pub fn get(&self, kmer: u64) -> bool {
-	self.get_canonic(cocktail::kmer::canonical(kmer, self.k))
+        self.get_canonic(cocktail::kmer::canonical(kmer, self.k))
     }
 
     /// Get the solidity status of a canonical `kmer`
@@ -90,7 +90,7 @@ impl Solid {
 
         self.solid[hash]
     }
-    
+
     /// Serialize counter in given [std::io::Write]
     pub fn serialize<W>(&self, writer: W) -> Result<()>
     where
