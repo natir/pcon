@@ -16,10 +16,11 @@ path = "src/main.rs"
 [dependencies]
 bio             = "0.30"
 cocktail        = { git = "https://github.com/natir/cocktail.git" }
+
+# serialization
 bincode	        = "1"
 serde		= "1"
 bitvec		= { version = "0.17", features = ["serde"] }
-num-traits	= "0.2"
 
 # input output management
 niffler	       = "2"
