@@ -14,7 +14,7 @@ name = "pcon"
 path = "src/main.rs"
 
 [dependencies]
-bio             = "0.30"
+bio             = "0.31"
 cocktail        = { git = "https://github.com/natir/cocktail.git" }
 
 # serialization
