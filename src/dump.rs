@@ -133,17 +133,21 @@ pub fn spectrum<W>(mut writer: W, counter: &counter::Counter) -> Result<()>
 where
     W: std::io::Write,
 {
+    for (i, nb) in compute_spectrum(counter).iter().enumerate() {
+        writeln!(writer, "{},{}", i, nb).with_context(|| Error::IO(ErrorDurringWrite))?;
+    }
+
+    Ok(())
+}
+
+pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u128]> {
     let mut spectrum: Box<[u128]> = vec![0; 1 << 8].into_boxed_slice();
 
     for count in counter.get_raw_count().iter() {
         spectrum[*count as usize] = spectrum[*count as usize].saturating_add(1);
     }
 
-    for (i, nb) in spectrum.iter().enumerate() {
-        writeln!(writer, "{},{}", i, nb).with_context(|| Error::IO(ErrorDurringWrite))?;
-    }
-
-    Ok(())
+    spectrum
 }
 
 #[cfg(test)]
@@ -344,9 +348,7 @@ mod tests {
         50, 10,
     ];
 
-    const CSV_ABUNDANCE_MIN_2: &[u8] = &[
-	65, 65, 65, 65, 65, 44, 51, 10
-    ];
+    const CSV_ABUNDANCE_MIN_2: &[u8] = &[65, 65, 65, 65, 65, 44, 51, 10];
 
     #[test]
     fn csv() {
