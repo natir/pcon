@@ -30,3 +30,11 @@ pub mod dump;
 pub mod solid;
 
 pub mod binding;
+
+/// Set the number of threads use by count step
+pub fn set_count_nb_threads(nb_threads: usize) {
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(nb_threads)
+        .build_global()
+        .unwrap();
+}

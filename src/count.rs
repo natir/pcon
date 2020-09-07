@@ -33,10 +33,7 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
     if let Some(threads) = params.threads {
         log::info!("Set number of threads to {}", threads);
 
-        rayon::ThreadPoolBuilder::new()
-            .num_threads(threads)
-            .build_global()
-            .unwrap();
+        set_count_nb_threads(threads);
     }
 
     let record_buffer = if let Some(len) = params.record_buffer {

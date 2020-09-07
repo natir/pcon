@@ -146,7 +146,7 @@ impl Counter {
         self.count[hash].load(atomic::Ordering::SeqCst)
     }
 
-    pub(crate) fn get_raw_count(&self) -> &Box<[AtoCount]> {
+    pub(crate) fn get_raw_count(&self) -> &[AtoCount] {
         &self.count
     }
 
