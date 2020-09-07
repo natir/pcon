@@ -84,8 +84,8 @@ pub extern "C" fn pcon_error_free(error: *mut error::IO) {
 /// Create a new Counter. In python binding Counter is an object, new is the default constructor.
 /// See [counter::Counter::new].
 #[no_mangle]
-pub extern "C" fn pcon_counter_new(k: u8) -> *mut counter::Counter {
-    Box::into_raw(Box::new(counter::Counter::new(k)))
+pub extern "C" fn pcon_counter_new(k: u8, read_buffer_len: usize) -> *mut counter::Counter {
+    Box::into_raw(Box::new(counter::Counter::new(k, read_buffer_len)))
 }
 
 /// Free a Counter. In Python use del on Counter object.
@@ -113,25 +113,6 @@ pub extern "C" fn pcon_counter_count_fasta(
 
     match reader {
         Ok(r) => counter.count_fasta(r),
-        Err(e) => *io_error = e,
-    }
-}
-
-/// Perform count of kmer in fastq file in path, this file can be compress in gzip, bzip2, xz.
-/// You must check value of `io_error` is equal to NoError before use `counter`.
-///
-/// In Python it's count_fastq method of Counter object.
-/// See [counter::Counter::count_fastq].
-#[no_mangle]
-pub extern "C" fn pcon_counter_count_fastq(
-    counter: &mut counter::Counter,
-    c_path: *const std::os::raw::c_char,
-    io_error: &mut error::IO,
-) {
-    let reader = reader_from_c_path(c_path);
-
-    match reader {
-        Ok(r) => counter.count_fastq(r),
         Err(e) => *io_error = e,
     }
 }

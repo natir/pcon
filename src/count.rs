@@ -30,8 +30,23 @@ use crate::error::*;
 pub fn count(params: cli::SubCommandCount) -> Result<()> {
     let params = cli::check_count_param(params)?;
 
+    if let Some(threads) = params.threads {
+        log::info!("Set number of threads to {}", threads);
+
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(threads)
+            .build_global()
+            .unwrap();
+    }
+
+    let record_buffer = if let Some(len) = params.record_buffer {
+        len
+    } else {
+        8192
+    };
+
     log::info!("Start of count structure initialization");
-    let mut counter = counter::Counter::new(params.kmer);
+    let mut counter = counter::Counter::new(params.kmer, record_buffer);
     log::info!("End of count structure initialization");
 
     for input in params.inputs.iter() {

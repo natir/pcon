@@ -56,6 +56,20 @@ pub struct SubCommandCount {
 
     #[clap(short = "o", long = "output", about = "Path where count are store")]
     pub output: String,
+
+    #[clap(
+        short = "t",
+        long = "threads",
+        about = "Number of thread use by pcon to count, 0 use all avaible core, default value 0"
+    )]
+    pub threads: Option<usize>,
+
+    #[clap(
+        short = "b",
+        long = "record_buffer",
+        about = "Number of sequence record load in buffer, default 8192"
+    )]
+    pub record_buffer: Option<usize>,
 }
 
 #[derive(clap::Clap, Debug)]

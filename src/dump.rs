@@ -106,8 +106,9 @@ where
             kmer::kmer2seq(((hash as u64) << 1) ^ 0b1, counter.k)
         };
 
-        if count > &abundance {
-            writeln!(writer, "{},{}", kmer, count).with_context(|| Error::IO(ErrorDurringWrite))?;
+        let c = count.load(std::sync::atomic::Ordering::SeqCst);
+        if c > abundance {
+            writeln!(writer, "{},{}", kmer, c).with_context(|| Error::IO(ErrorDurringWrite))?;
         }
     }
 
@@ -144,7 +145,8 @@ pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u128]> {
     let mut spectrum: Box<[u128]> = vec![0; 1 << 8].into_boxed_slice();
 
     for count in counter.get_raw_count().iter() {
-        spectrum[*count as usize] = spectrum[*count as usize].saturating_add(1);
+        let idx = count.load(std::sync::atomic::Ordering::SeqCst) as usize;
+        spectrum[idx] = spectrum[idx].saturating_add(1);
     }
 
     spectrum
@@ -154,7 +156,7 @@ pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u128]> {
 mod tests {
     lazy_static::lazy_static! {
     static ref COUNTER: crate::counter::Counter = {
-            let mut counter = crate::counter::Counter::new(5);
+            let mut counter = crate::counter::Counter::new(5, 1);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
         counter.inc(i);

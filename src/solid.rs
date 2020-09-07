@@ -52,7 +52,7 @@ impl Solid {
         let mut solid = bitvec![Lsb0; 0; count.len()];
 
         for (index, val) in count.iter().enumerate() {
-            if val > &abundance {
+            if val.load(std::sync::atomic::Ordering::SeqCst) > abundance {
                 if let Some(mut v) = solid.get_mut(index) {
                     *v = true;
                 }
@@ -123,7 +123,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
 
     lazy_static::lazy_static! {
     static ref SOLID: std::sync::Mutex<crate::solid::Solid> = {
-        let mut counter = crate::counter::Counter::new(5);
+        let mut counter = crate::counter::Counter::new(5, 1);
 
         counter.count_fasta(FASTA_FILE);
 

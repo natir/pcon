@@ -20,11 +20,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-use anyhow::{anyhow, Context, Result};
+/* std use */
+use std::sync::atomic;
 
+/* crate use */
+use anyhow::{anyhow, Context, Result};
+use rayon::prelude::*;
+
+/* local use */
 use crate::error::IO::*;
 use crate::error::*;
 
+pub type AtoCount = atomic::AtomicU8;
 pub type Count = u8;
 
 /// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
@@ -32,15 +39,22 @@ pub type Count = u8;
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
     pub k: u8,
-    count: Box<[Count]>,
+    record_buffer_len: usize,
+    count: Box<[AtoCount]>,
 }
 
 impl Counter {
-    /// Create a new Counter for kmer size equal to k
-    pub fn new(k: u8) -> Self {
+    /// Create a new Counter for kmer size equal to k, record_buffer_len control the number of record read in same time
+    pub fn new(k: u8, record_buffer_len: usize) -> Self {
+        let mut tmp = Vec::with_capacity(cocktail::kmer::get_hash_space_size(k) as usize);
+        for _ in 0..cocktail::kmer::get_hash_space_size(k) {
+            tmp.push(AtoCount::new(0));
+        }
+
         Self {
             k,
-            count: vec![0; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice(),
+            record_buffer_len,
+            count: tmp.into_boxed_slice(),
         }
     }
 
@@ -52,36 +66,35 @@ impl Counter {
         let reader = bio::io::fasta::Reader::new(fasta);
 
         let mut iter = reader.records();
-        while let Some(Ok(record)) = iter.next() {
-            if record.seq().len() < self.k as usize {
-                continue;
+        let mut records = Vec::with_capacity(self.record_buffer_len);
+
+        let mut end = false;
+        loop {
+            for _ in 0..self.record_buffer_len {
+                if let Some(Ok(record)) = iter.next() {
+                    records.push(record);
+                } else {
+                    end = true;
+                    break;
+                }
             }
 
-            let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
+            log::debug!("Buffer len: {}", records.len());
 
-            for canonical in tokenizer {
-                self.inc_canonic(canonical);
-            }
-        }
-    }
+            records.par_iter().for_each(|record| {
+                if record.seq().len() > self.k as usize {
+                    let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
-    /// Read the given an instance of io::Read as a fastq format and count kmer init
-    pub fn count_fastq<R>(&mut self, fasta: R)
-    where
-        R: std::io::Read,
-    {
-        let reader = bio::io::fastq::Reader::new(fasta);
+                    for canonical in tokenizer {
+                        Counter::inc_canonic_ato(&self.count, canonical);
+                    }
+                }
+            });
 
-        let mut iter = reader.records();
-        while let Some(Ok(record)) = iter.next() {
-            if record.seq().len() < self.k as usize {
-                continue;
-            }
+            records.clear();
 
-            let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
-
-            for kmer in tokenizer {
-                self.inc_canonic(kmer);
+            if end {
+                break;
             }
         }
     }
@@ -93,9 +106,32 @@ impl Counter {
 
     /// Increase the counter of a canonical kmer
     pub fn inc_canonic(&mut self, canonical: u64) {
-        let hash = (canonical >> 1) as usize;
+        Counter::inc_canonic_ato(&self.count, canonical);
+    }
 
-        self.count[hash] = self.count[hash].saturating_add(1);
+    fn inc_canonic_ato(count: &[atomic::AtomicU8], canonical: u64) {
+        let hash = (canonical >> 1) as usize;
+        let mut old = count[hash].load(atomic::Ordering::SeqCst);
+
+        if old == 255 {
+            return;
+        }
+
+        while count[hash]
+            .compare_exchange(
+                old,
+                old + 1,
+                atomic::Ordering::SeqCst,
+                atomic::Ordering::Acquire,
+            )
+            .is_err()
+        {
+            old = count[hash].load(atomic::Ordering::SeqCst);
+
+            if old == 255 {
+                return;
+            }
+        }
     }
 
     /// Get the counter of a kmer
@@ -107,10 +143,10 @@ impl Counter {
     pub fn get_canonic(&self, canonical: u64) -> Count {
         let hash = (canonical >> 1) as usize;
 
-        self.count[hash]
+        self.count[hash].load(atomic::Ordering::SeqCst)
     }
 
-    pub(crate) fn get_raw_count(&self) -> &Box<[Count]> {
+    pub(crate) fn get_raw_count(&self) -> &Box<[AtoCount]> {
         &self.count
     }
 
@@ -145,29 +181,29 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
 ";
 
     const FASTA_COUNT: &[u8] = &[
-        5, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2,
-        2, 1, 0, 1, 1, 1, 2, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0,
-        1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0,
-        0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0,
-        0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2,
-        0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-        0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-        1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1,
-        0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0,
-        2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 2, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0,
-        2, 0, 0, 0, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1,
-        0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1,
-        2, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0,
-        0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2,
-        1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0,
-        0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1,
+        5, 0, 32, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0,
+        0, 2, 0, 2, 0, 0, 0, 2, 2, 1, 0, 1, 1, 1, 2, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0,
+        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0,
+        0, 1, 1, 2, 2, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 1,
+        1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1,
+        0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1,
+        0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0,
+        0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 2, 0,
+        0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0,
+        0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 1,
+        1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 2, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1,
+        1, 2, 1, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1,
+        0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 1, 0, 0, 0, 0, 1, 2, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0,
+        0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 2, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 2, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0,
+        0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1,
     ];
 
     #[test]
     fn count_fasta() {
-        let mut counter = crate::counter::Counter::new(5);
+        let mut counter = crate::counter::Counter::new(5, 8192);
 
         counter.count_fasta(FASTA_FILE);
 
@@ -209,10 +245,11 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
     ];
 
     #[test]
+    #[should_panic("fastq isn't support now")]
     fn count_fastq() {
-        let mut counter = crate::counter::Counter::new(5);
+        let mut counter = crate::counter::Counter::new(5, 8192);
 
-        counter.count_fastq(FASTQ_FILE);
+        counter.count_fasta(FASTQ_FILE);
 
         let mut outfile = Vec::new();
         counter.serialize(&mut outfile).unwrap();
@@ -222,7 +259,7 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
 
     lazy_static::lazy_static! {
     static ref COUNTER: crate::counter::Counter = {
-            let mut counter = crate::counter::Counter::new(5);
+            let mut counter = crate::counter::Counter::new(5, 8192);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
         counter.inc(i);
@@ -233,7 +270,7 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
     }
 
     const ALLKMERSEEONE: &[u8] = &[
-        5, 0, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        5, 0, 32, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
@@ -250,7 +287,7 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+        2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
     ];
 
     #[test]
@@ -268,6 +305,16 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
         let counter = crate::counter::Counter::deserialize(&ALLKMERSEEONE[..]).unwrap();
 
         assert_eq!(counter.k, COUNTER.k);
-        assert_eq!(counter.get_raw_count(), COUNTER.get_raw_count());
+
+        for (a, b) in counter
+            .get_raw_count()
+            .iter()
+            .zip(COUNTER.get_raw_count().iter())
+        {
+            assert_eq!(
+                a.load(std::sync::atomic::Ordering::SeqCst),
+                b.load(std::sync::atomic::Ordering::SeqCst)
+            );
+        }
     }
 }
