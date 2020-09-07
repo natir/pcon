@@ -71,13 +71,18 @@ pub extern "C" fn pcon_error_new() -> *mut error::IO {
 }
 
 /// Free a pcon io error
+///
+/// # Safety
+/// It's safe
 #[no_mangle]
-pub extern "C" fn pcon_error_free(error: *mut error::IO) {
+pub unsafe extern "C" fn pcon_error_free(error: *mut error::IO) {
     if error.is_null() {
         return;
     }
 
-    unsafe { Box::from_raw(error) };
+    let boxed = Box::from_raw(error);
+
+    drop(boxed);
 }
 
 /* Counter section */
@@ -89,13 +94,18 @@ pub extern "C" fn pcon_counter_new(k: u8, read_buffer_len: usize) -> *mut counte
 }
 
 /// Free a Counter. In Python use del on Counter object.
+///
+/// # Safety
+/// It's safe
 #[no_mangle]
-pub extern "C" fn pcon_counter_free(counter: *mut counter::Counter) {
+pub unsafe extern "C" fn pcon_counter_free(counter: *mut counter::Counter) {
     if counter.is_null() {
         return;
     }
 
-    unsafe { Box::from_raw(counter) };
+    let boxed = Box::from_raw(counter);
+
+    drop(boxed);
 }
 
 /// Perform count of kmer in fasta file in path, this file can be compress in gzip, bzip2, xz.
@@ -220,13 +230,18 @@ pub extern "C" fn pcon_solid_from_counter(
 }
 
 /// Free a Solid. In Python use del on Solid object.
+///
+/// # Safety
+/// It's safe
 #[no_mangle]
-pub extern "C" fn pcon_solid_free(solid: *mut solid::Solid) {
+pub unsafe extern "C" fn pcon_solid_free(solid: *mut solid::Solid) {
     if solid.is_null() {
         return;
     }
 
-    unsafe { Box::from_raw(solid) };
+    let boxed = Box::from_raw(solid);
+
+    drop(boxed);
 }
 
 /// Set the solidity status of `kmer` to `value`
@@ -373,4 +388,10 @@ pub extern "C" fn pcon_dump_spectrum(
         },
         Err(e) => *io_error = e,
     }
+}
+
+/// See [set_count_nb_threads]
+#[no_mangle]
+pub extern "C" fn pcon_set_count_nb_threads(nb_threads: usize) {
+    crate::set_count_nb_threads(nb_threads);
 }
