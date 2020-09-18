@@ -25,6 +25,7 @@ use std::sync::atomic;
 
 /* crate use */
 use anyhow::{anyhow, Context, Result};
+use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 
 /* local use */
@@ -79,9 +80,9 @@ impl Counter {
                 }
             }
 
-            log::debug!("Buffer len: {}", records.len());
+            log::info!("Buffer len: {}", records.len());
 
-            records.par_iter().for_each(|record| {
+            records.drain(..).par_bridge().for_each(|record| {
                 if record.seq().len() > self.k as usize {
                     let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 

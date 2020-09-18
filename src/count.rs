@@ -20,12 +20,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+/* crate use */
 use anyhow::{anyhow, Context, Result};
 
-use crate::*;
-
+/* local use */
 use crate::error::IO::*;
 use crate::error::*;
+use crate::*;
 
 pub fn count(params: cli::SubCommandCount) -> Result<()> {
     let params = cli::check_count_param(params)?;

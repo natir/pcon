@@ -17,7 +17,7 @@ path = "src/main.rs"
 bio             = "0.32"
 cocktail        = { git = "https://github.com/natir/cocktail.git" }
 
-# paralelise
+# parallel
 rayon           = "1"
 
 # serialization
