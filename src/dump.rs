@@ -20,8 +20,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+/* crate use */
 use anyhow::{anyhow, Context, Result};
+use rayon::iter::ParallelBridge;
+use rayon::prelude::*;
 
+/* local use */
 use cocktail::*;
 
 use crate::*;
@@ -141,15 +145,40 @@ where
     Ok(())
 }
 
-pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u128]> {
-    let mut spectrum: Box<[u128]> = vec![0; 1 << 8].into_boxed_slice();
+pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u64]> {
+    let spectrum: Box<[std::sync::atomic::AtomicU64]> = (0..256)
+        .map(|_| std::sync::atomic::AtomicU64::new(0))
+        .collect::<Box<[std::sync::atomic::AtomicU64]>>();
 
-    for count in counter.get_raw_count().iter() {
-        let idx = count.load(std::sync::atomic::Ordering::SeqCst) as usize;
-        spectrum[idx] = spectrum[idx].saturating_add(1);
-    }
+    counter.get_raw_count().par_iter().for_each(|count| {
+        let index = count.load(std::sync::atomic::Ordering::SeqCst) as usize;
+        let mut old = spectrum[index].load(std::sync::atomic::Ordering::SeqCst);
+
+        if old == std::u64::MAX {
+            return;
+        }
+
+        while spectrum[index]
+            .compare_exchange(
+                old,
+                old + 1,
+                std::sync::atomic::Ordering::SeqCst,
+                std::sync::atomic::Ordering::Acquire,
+            )
+            .is_err()
+        {
+            old = spectrum[index].load(std::sync::atomic::Ordering::SeqCst);
+
+            if old == 255 {
+                return;
+            }
+        }
+    });
 
     spectrum
+        .iter()
+        .map(|x| (*x).load(std::sync::atomic::Ordering::SeqCst))
+        .collect()
 }
 
 #[cfg(test)]

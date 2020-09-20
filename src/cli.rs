@@ -31,7 +31,7 @@ pub struct Command {
     pub subcmd: SubCommand,
 
     #[clap(
-        short = "v",
+        short = 'v',
         long = "verbosity",
         parse(from_occurrences),
         about = "verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored"
@@ -48,24 +48,24 @@ pub enum SubCommand {
 #[derive(clap::Clap, Debug)]
 #[clap(about = "Perform kmer count")]
 pub struct SubCommandCount {
-    #[clap(short = "k", long = "kmer-size", about = "Size of kmer size")]
+    #[clap(short = 'k', long = "kmer-size", about = "Size of kmer size")]
     pub kmer: u8,
 
-    #[clap(short = "i", long = "inputs", about = "Path to inputs")]
+    #[clap(short = 'i', long = "inputs", about = "Path to inputs")]
     pub inputs: Vec<String>,
 
-    #[clap(short = "o", long = "output", about = "Path where count are store")]
+    #[clap(short = 'o', long = "output", about = "Path where count are store")]
     pub output: String,
 
     #[clap(
-        short = "t",
+        short = 't',
         long = "threads",
         about = "Number of thread use by pcon to count, 0 use all avaible core, default value 0"
     )]
     pub threads: Option<usize>,
 
     #[clap(
-        short = "b",
+        short = 'b',
         long = "record_buffer",
         about = "Number of sequence record load in buffer, default 8192"
     )]
@@ -75,29 +75,29 @@ pub struct SubCommandCount {
 #[derive(clap::Clap, Debug)]
 #[clap(about = "Convert count in usable format")]
 pub struct SubCommandDump {
-    #[clap(short = "i", long = "input", about = "Path to count file")]
+    #[clap(short = 'i', long = "input", about = "Path to count file")]
     pub input: String,
 
     #[clap(
-        short = "a",
+        short = 'a',
         long = "abundance",
         default_value = "0",
         about = "Minimal abundance"
     )]
     pub abundance: crate::counter::Count,
 
-    #[clap(short = "c", long = "csv", about = "Path where count is write in csv")]
+    #[clap(short = 'c', long = "csv", about = "Path where count is write in csv")]
     pub csv: Option<String>,
 
     #[clap(
-        short = "s",
+        short = 's',
         long = "solid",
         about = "Path where count is write in solid format"
     )]
     pub solid: Option<String>,
 
     #[clap(
-        short = "S",
+        short = 'S',
         long = "spectrum",
         about = "Path where kmer spectrum is write"
     )]
