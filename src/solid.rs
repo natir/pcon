@@ -20,9 +20,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
+/* crate use */
 use anyhow::{anyhow, Context, Result};
-
 use bitvec::prelude::*;
+use rayon::iter::ParallelBridge;
+use rayon::prelude::*;
 
 use crate::*;
 
@@ -51,12 +53,15 @@ impl Solid {
 
         let mut solid = bitvec![Lsb0; 0; count.len()];
 
-        for (index, val) in count.iter().enumerate() {
-            if val.load(std::sync::atomic::Ordering::SeqCst) > abundance {
-                if let Some(mut v) = solid.get_mut(index) {
-                    *v = true;
-                }
-            }
+        for index in count
+            .iter()
+            .enumerate()
+            .par_bridge()
+            .filter(|(_, val)| val.load(std::sync::atomic::Ordering::SeqCst) > abundance)
+            .map(|(index, _)| index)
+            .collect::<Vec<usize>>()
+        {
+            solid.set(index, true);
         }
 
         Self {

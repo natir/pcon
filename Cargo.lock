@@ -250,7 +250,7 @@ dependencies = [
 [[package]]
 name = "cocktail"
 version = "0.1.0"
-source = "git+https://github.com/natir/cocktail.git#37cd13ff974c31ab182d178ac44a35bba1af9ae4"
+source = "git+https://github.com/natir/cocktail.git#7a60167b48a145446586439d8b8b12fa33c418b8"
 dependencies = [
  "term_size",
 ]

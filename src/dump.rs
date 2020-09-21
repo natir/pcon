@@ -150,34 +150,18 @@ pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u64]> {
         .map(|_| std::sync::atomic::AtomicU64::new(0))
         .collect::<Box<[std::sync::atomic::AtomicU64]>>();
 
-    counter.get_raw_count().par_iter().for_each(|count| {
-        let index = count.load(std::sync::atomic::Ordering::SeqCst) as usize;
-        let mut old = spectrum[index].load(std::sync::atomic::Ordering::SeqCst);
+    counter.get_raw_count().iter().par_bridge().for_each(|x| {
+        let index = x.load(std::sync::atomic::Ordering::SeqCst) as usize;
 
-        if old == std::u64::MAX {
-            return;
-        }
-
-        while spectrum[index]
-            .compare_exchange(
-                old,
-                old + 1,
-                std::sync::atomic::Ordering::SeqCst,
-                std::sync::atomic::Ordering::Acquire,
-            )
-            .is_err()
-        {
-            old = spectrum[index].load(std::sync::atomic::Ordering::SeqCst);
-
-            if old == 255 {
-                return;
-            }
+        if spectrum[index].load(std::sync::atomic::Ordering::SeqCst) != std::u64::MAX {
+            spectrum[x.load(std::sync::atomic::Ordering::SeqCst) as usize]
+                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
     });
 
     spectrum
         .iter()
-        .map(|x| (*x).load(std::sync::atomic::Ordering::SeqCst))
+        .map(|x| x.load(std::sync::atomic::Ordering::SeqCst) as u64)
         .collect()
 }
 
@@ -385,12 +369,6 @@ mod tests {
     fn csv() {
         let mut outfile = Vec::new();
         let counter = &*COUNTER;
-
-        println!(
-            "{}",
-            String::from_utf8(CSV_ABUNDANCE_MIN_1.to_vec()).unwrap()
-        );
-        println!("{}", String::from_utf8(outfile.to_vec()).unwrap());
 
         crate::dump::csv(&mut outfile, counter, 1).unwrap();
         assert_eq!(&outfile[..], &CSV_ABUNDANCE_MIN_1[..]);
