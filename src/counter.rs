@@ -47,15 +47,14 @@ pub struct Counter {
 impl Counter {
     /// Create a new Counter for kmer size equal to k, record_buffer_len control the number of record read in same time
     pub fn new(k: u8, record_buffer_len: usize) -> Self {
-        let mut tmp = Vec::with_capacity(cocktail::kmer::get_hash_space_size(k) as usize);
-        for _ in 0..cocktail::kmer::get_hash_space_size(k) {
-            tmp.push(AtoCount::new(0));
-        }
+        let tmp = vec![0u64; cocktail::kmer::get_hash_space_size(k) as usize];
 
         Self {
             k,
             record_buffer_len,
-            count: tmp.into_boxed_slice(),
+            count: unsafe {
+                std::mem::transmute::<Box<[u64]>, Box<[AtoCount]>>(tmp.into_boxed_slice())
+            },
         }
     }
 
