@@ -45,6 +45,8 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
         .with_context(|| Error::IO(ErrorDurringRead))
         .with_context(|| anyhow!("File {}", params.input.clone()))?;
 
+    log::info!("End of read of count");
+
     dump_worker(
         counter,
         None,
@@ -53,8 +55,6 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
         params.spectrum,
         params.abundance,
     )?;
-
-    log::info!("End of read of count");
 
     Ok(())
 }
@@ -67,75 +67,93 @@ pub(crate) fn dump_worker(
     spectrum_path: Option<String>,
     abundance: counter::Count,
 ) -> Result<()> {
-    if let Some(output) = bin_path.clone() {
-        log::info!("Start of dump count data in binary");
-        let writer = std::fs::File::create(&output)
-            .with_context(|| Error::IO(CantCreateFile))
-            .with_context(|| anyhow!("File {}", output.clone()))?;
+    rayon::scope(|s| {
+        s.spawn(|_| {
+            if let Some(output) = bin_path.clone() {
+                log::info!("Start of dump count data in binary");
+                let writer = std::fs::File::create(&output)
+                    .with_context(|| Error::IO(CantCreateFile))
+                    .with_context(|| anyhow!("File {}", output.clone()))
+                    .unwrap();
 
-        counter
-            .serialize(writer)
-            .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("In file {}", output.clone()))?;
+                counter
+                    .serialize(writer, abundance)
+                    .with_context(|| Error::IO(ErrorDurringWrite))
+                    .with_context(|| anyhow!("In file {}", output.clone()))
+                    .unwrap();
 
-        log::info!("End of dump count data in binary");
-    }
+                log::info!("End of dump count data in binary");
+            }
+        });
 
-    if let Some(output) = csv_path.clone() {
-        log::info!("Start of dump count data in csv");
+        s.spawn(|_| {
+            if let Some(output) = csv_path.clone() {
+                log::info!("Start of dump count data in csv");
 
-        let writer = std::io::BufWriter::new(
-            std::fs::File::create(&output)
-                .with_context(|| Error::IO(CantOpenFile))
-                .with_context(|| anyhow!("File {}", output.clone()))?,
-        );
-        csv(writer, &counter, abundance)
-            .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("File {} in csv format", output))?;
+                let writer = std::io::BufWriter::new(
+                    std::fs::File::create(&output)
+                        .with_context(|| Error::IO(CantOpenFile))
+                        .with_context(|| anyhow!("File {}", output.clone()))
+                        .unwrap(),
+                );
+                csv(writer, &counter, abundance)
+                    .with_context(|| Error::IO(ErrorDurringWrite))
+                    .with_context(|| anyhow!("File {} in csv format", output))
+                    .unwrap();
 
-        log::info!("End of dump count data in csv");
-    }
+                log::info!("End of dump count data in csv");
+            }
+        });
 
-    if let Some(output) = solid_path.clone() {
-        log::info!("Start of dump count data in solid format");
+        s.spawn(|_| {
+            if let Some(output) = solid_path.clone() {
+                log::info!("Start of dump count data in solid format");
 
-        let writer = std::io::BufWriter::new(
-            std::fs::File::create(&output)
-                .with_context(|| Error::IO(CantOpenFile))
-                .with_context(|| anyhow!("File {}", output.clone()))?,
-        );
-        solid(writer, &counter, abundance)
-            .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("File {} in solid format", output))?;
+                let writer = std::io::BufWriter::new(
+                    std::fs::File::create(&output)
+                        .with_context(|| Error::IO(CantOpenFile))
+                        .with_context(|| anyhow!("File {}", output.clone()))
+                        .unwrap(),
+                );
+                solid(writer, &counter, abundance)
+                    .with_context(|| Error::IO(ErrorDurringWrite))
+                    .with_context(|| anyhow!("File {} in solid format", output))
+                    .unwrap();
 
-        log::info!("End of dump count data in solid format");
-    }
+                log::info!("End of dump count data in solid format");
+            }
+        });
 
-    if let Some(output) = spectrum_path.clone() {
-        log::info!("Start of dump count data in spectrum");
+        s.spawn(|_| {
+            if let Some(output) = spectrum_path.clone() {
+                log::info!("Start of dump count data in spectrum");
 
-        let writer = std::io::BufWriter::new(
-            std::fs::File::create(&output)
-                .with_context(|| Error::IO(CantOpenFile))
-                .with_context(|| anyhow!("File {}", output.clone()))?,
-        );
-        spectrum(writer, &counter)
-            .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("File {} in spectrum format", output))?;
+                let writer = std::io::BufWriter::new(
+                    std::fs::File::create(&output)
+                        .with_context(|| Error::IO(CantOpenFile))
+                        .with_context(|| anyhow!("File {}", output.clone()))
+                        .unwrap(),
+                );
+                spectrum(writer, &counter)
+                    .with_context(|| Error::IO(ErrorDurringWrite))
+                    .with_context(|| anyhow!("File {} in spectrum format", output))
+                    .unwrap();
 
-        log::info!("End of dump count data in spectrum");
-    }
+                log::info!("End of dump count data in spectrum");
+            }
+        });
+    });
 
     Ok(())
 }
 
 /// Write in the given instance of io::Write the count in `counter` in binary format.
-pub fn binary<W>(writer: W, counter: &counter::Counter) -> Result<()>
+pub fn binary<W>(writer: W, counter: &counter::Counter, abundance: counter::Count) -> Result<()>
 where
     W: std::io::Write,
 {
     counter
-        .serialize(writer)
+        .serialize(writer, abundance)
         .with_context(|| Error::IO(ErrorDurringWrite))?;
 
     Ok(())
