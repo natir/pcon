@@ -37,11 +37,9 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
     let params = cli::check_dump_param(params)?;
 
     log::info!("Start of read of count");
-    let reader = std::io::BufReader::new(
-        std::fs::File::open(&params.input)
-            .with_context(|| Error::IO(CantOpenFile))
-            .with_context(|| anyhow!("File {}", params.input.clone()))?,
-    );
+    let reader = std::fs::File::open(&params.input)
+        .with_context(|| Error::IO(CantOpenFile))
+        .with_context(|| anyhow!("File {}", params.input.clone()))?;
 
     let counter = counter::Counter::deserialize(reader)
         .with_context(|| Error::IO(ErrorDurringRead))

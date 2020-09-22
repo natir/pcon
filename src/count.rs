@@ -57,11 +57,9 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
     }
 
     log::info!("Start of write of count");
-    let writer = std::io::BufWriter::new(
-        std::fs::File::create(&params.output)
-            .with_context(|| Error::IO(CantCreateFile))
-            .with_context(|| anyhow!("File {}", params.output.clone()))?,
-    );
+    let writer = std::fs::File::create(&params.output)
+        .with_context(|| Error::IO(CantCreateFile))
+        .with_context(|| anyhow!("File {}", params.output.clone()))?;
 
     counter
         .serialize(writer)
