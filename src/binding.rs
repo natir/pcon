@@ -180,7 +180,7 @@ pub extern "C" fn pcon_serialize_counter(
     let writer = writer_from_c_path(c_path);
 
     match writer {
-        Ok(w) => match counter.serialize(w) {
+        Ok(w) => match counter.serialize(w, 0) {
             Ok(_) => (),
             Err(_) => *io_error = IO::ErrorDurringWrite,
         },
