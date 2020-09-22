@@ -111,26 +111,9 @@ impl Counter {
 
     fn inc_canonic_ato(count: &[atomic::AtomicU8], canonical: u64) {
         let hash = (canonical >> 1) as usize;
-        let mut old = count[hash].load(atomic::Ordering::SeqCst);
 
-        if old == 255 {
-            return;
-        }
-
-        while count[hash]
-            .compare_exchange(
-                old,
-                old + 1,
-                atomic::Ordering::SeqCst,
-                atomic::Ordering::Acquire,
-            )
-            .is_err()
-        {
-            old = count[hash].load(atomic::Ordering::SeqCst);
-
-            if old == 255 {
-                return;
-            }
+        if count[hash].load(std::sync::atomic::Ordering::SeqCst) != std::u8::MAX {
+            count[hash].fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         }
     }
 
