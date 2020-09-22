@@ -172,7 +172,7 @@ impl Counter {
 
         reader.read_exact(&mut buf_u8)?;
         let k = buf_u8[0];
-        println!("k {}", k);
+
         let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize];
 
         loop {

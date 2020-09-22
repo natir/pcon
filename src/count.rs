@@ -56,17 +56,14 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
         log::info!("End of kmer count of the file {}", &input);
     }
 
-    log::info!("Start of write of count");
-    let writer = std::fs::File::create(&params.output)
-        .with_context(|| Error::IO(CantCreateFile))
-        .with_context(|| anyhow!("File {}", params.output.clone()))?;
-
-    counter
-        .serialize(writer)
-        .with_context(|| Error::IO(ErrorDurringWrite))
-        .with_context(|| anyhow!("In file {}", params.output.clone()))?;
-
-    log::info!("End of write of count");
+    dump::dump_worker(
+        counter,
+        params.output,
+        params.csv,
+        params.solid,
+        params.spectrum,
+        params.abundance,
+    )?;
 
     Ok(())
 }

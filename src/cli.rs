@@ -61,8 +61,12 @@ pub struct SubCommandCount {
     #[clap(short = 'i', long = "inputs", about = "Path to inputs")]
     pub inputs: Vec<String>,
 
-    #[clap(short = 'o', long = "output", about = "Path where count are store")]
-    pub output: String,
+    #[clap(
+        short = 'o',
+        long = "output",
+        about = "Path where count are store in binary format"
+    )]
+    pub output: Option<String>,
 
     #[clap(
         short = 'b',
@@ -70,6 +74,31 @@ pub struct SubCommandCount {
         about = "Number of sequence record load in buffer, default 8192"
     )]
     pub record_buffer: Option<usize>,
+
+    #[clap(
+        short = 'a',
+        long = "abundance",
+        default_value = "0",
+        about = "Minimal abundance"
+    )]
+    pub abundance: crate::counter::Count,
+
+    #[clap(short = 'c', long = "csv", about = "Path where count is write in csv")]
+    pub csv: Option<String>,
+
+    #[clap(
+        short = 's',
+        long = "solid",
+        about = "Path where count is write in solid format"
+    )]
+    pub solid: Option<String>,
+
+    #[clap(
+        short = 'S',
+        long = "spectrum",
+        about = "Path where kmer spectrum is write"
+    )]
+    pub spectrum: Option<String>,
 }
 
 #[derive(clap::Clap, Debug)]
