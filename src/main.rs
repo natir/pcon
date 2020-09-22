@@ -40,6 +40,12 @@ fn main() -> Result<()> {
             .init();
     }
 
+    if let Some(threads) = params.threads {
+        log::info!("Set number of threads to {}", threads);
+
+        set_count_nb_threads(threads);
+    }
+
     match params.subcmd {
         cli::SubCommand::Count(params) => count::count(params),
         cli::SubCommand::Dump(params) => dump::dump(params),

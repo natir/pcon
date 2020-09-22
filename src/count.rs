@@ -31,12 +31,6 @@ use crate::*;
 pub fn count(params: cli::SubCommandCount) -> Result<()> {
     let params = cli::check_count_param(params)?;
 
-    if let Some(threads) = params.threads {
-        log::info!("Set number of threads to {}", threads);
-
-        set_count_nb_threads(threads);
-    }
-
     let record_buffer = if let Some(len) = params.record_buffer {
         len
     } else {
