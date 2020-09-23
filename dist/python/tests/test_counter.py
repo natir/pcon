@@ -1,13 +1,13 @@
-from . import pcon
+import pcon
 
 def test_count():
     a = pcon.Counter(5)
     
-    a.count_fasta("../data/test.fasta")
+    a.count_fasta("../data/test.fasta", 10)
 
     assert a.get(108) == 18
 
-    a.serialize("python_counter.pcon")
+    a.serialize("python_counter.pcon", 0)
 
     b = pcon.Counter.deserialize("python_counter.pcon")
 

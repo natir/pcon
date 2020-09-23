@@ -56,19 +56,16 @@ typedef uint8_t Count;
  * In Python it's count_fasta method of Counter object.
  * See [counter::Counter::count_fasta].
  */
-void pcon_counter_count_fasta(Counter *counter, const char *c_path, IO *io_error);
-
-/**
- * Perform count of kmer in fastq file in path, this file can be compress in gzip, bzip2, xz.
- * You must check value of `io_error` is equal to NoError before use `counter`.
- *
- * In Python it's count_fastq method of Counter object.
- * See [counter::Counter::count_fastq].
- */
-void pcon_counter_count_fastq(Counter *counter, const char *c_path, IO *io_error);
+void pcon_counter_count_fasta(Counter *counter,
+                              const char *c_path,
+                              uintptr_t read_buffer_len,
+                              IO *io_error);
 
 /**
  * Free a Counter. In Python use del on Counter object.
+ *
+ * # Safety
+ * It's safe
  */
 void pcon_counter_free(Counter *counter);
 
@@ -154,6 +151,9 @@ void pcon_dump_spectrum(const Counter *counter, const char *c_path, IO *io_error
 
 /**
  * Free a pcon io error
+ *
+ * # Safety
+ * It's safe
  */
 void pcon_error_free(IO *error);
 
@@ -169,7 +169,10 @@ IO *pcon_error_new(void);
  * In Python it's serialize method of Counter object.
  * See [counter::Counter::serialize].
  */
-void pcon_serialize_counter(const Counter *counter, const char *c_path, IO *io_error);
+void pcon_serialize_counter(const Counter *counter,
+                            const char *c_path,
+                            uint8_t min_abundance,
+                            IO *io_error);
 
 /**
  * Serialize Solid in path of file
@@ -181,7 +184,15 @@ void pcon_serialize_counter(const Counter *counter, const char *c_path, IO *io_e
 void pcon_serialize_solid(const Solid *solid, const char *c_path, IO *io_error);
 
 /**
+ * See [set_count_nb_threads]
+ */
+void pcon_set_nb_threads(uintptr_t nb_threads);
+
+/**
  * Free a Solid. In Python use del on Solid object.
+ *
+ * # Safety
+ * It's safe
  */
 void pcon_solid_free(Solid *solid);
 

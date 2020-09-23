@@ -1,4 +1,4 @@
-from . import pcon
+import pcon
 
 def test_solid():
     a = pcon.Counter(5)

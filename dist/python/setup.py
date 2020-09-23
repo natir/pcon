@@ -22,7 +22,7 @@ CLASSIFIERS = [
     "Environment :: Console",
     "Environment :: MacOS X",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: BSD License",
+    "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
@@ -38,7 +38,7 @@ SETUP_METADATA = {
     "description": "lib to perform kmer counting in memory (k <= 31)",
     "url": "https://github.com/natir/pcon",
     "author": "Pierre Marijon",
-    "author_email": "pmarijon@mpi-inf.mpg.de",
+    "author_email": "marijon@hhu.de",
     "license": "BSD 3-clause",
     "packages": find_packages(),
     "setup_requires": [

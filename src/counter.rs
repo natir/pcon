@@ -42,18 +42,16 @@ pub type Count = u8;
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
     pub k: u8,
-    record_buffer_len: usize,
     count: Box<[AtoCount]>,
 }
 
 impl Counter {
     /// Create a new Counter for kmer size equal to k, record_buffer_len control the number of record read in same time
-    pub fn new(k: u8, record_buffer_len: usize) -> Self {
+    pub fn new(k: u8) -> Self {
         let tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize];
 
         Self {
             k,
-            record_buffer_len,
             count: unsafe {
                 std::mem::transmute::<Box<[u8]>, Box<[AtoCount]>>(tmp.into_boxed_slice())
             },
@@ -61,18 +59,18 @@ impl Counter {
     }
 
     /// Read the given an instance of io::Read as a fasta format and count kmer init
-    pub fn count_fasta<R>(&mut self, fasta: R)
+    pub fn count_fasta<R>(&mut self, fasta: R, record_buffer_len: usize)
     where
         R: std::io::Read,
     {
         let reader = bio::io::fasta::Reader::new(fasta);
 
         let mut iter = reader.records();
-        let mut records = Vec::with_capacity(self.record_buffer_len);
+        let mut records = Vec::with_capacity(record_buffer_len);
 
         let mut end = false;
         loop {
-            for _ in 0..self.record_buffer_len {
+            for _ in 0..record_buffer_len {
                 if let Some(Ok(record)) = iter.next() {
                     records.push(record);
                 } else {
@@ -191,7 +189,6 @@ impl Counter {
 
         Ok(Self {
             k,
-            record_buffer_len: 8192,
             count: unsafe {
                 std::mem::transmute::<Box<[u8]>, Box<[AtoCount]>>(tmp.into_boxed_slice())
             },
@@ -238,9 +235,9 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
 
     #[test]
     fn count_fasta() {
-        let mut counter = crate::counter::Counter::new(5, 8192);
+        let mut counter = crate::counter::Counter::new(5);
 
-        counter.count_fasta(FASTA_FILE);
+        counter.count_fasta(FASTA_FILE, 1);
 
         let mut outfile = Vec::new();
         counter.serialize(&mut outfile, 0).unwrap();
@@ -280,11 +277,11 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
     ];
 
     #[test]
-    #[ignore]
+    #[ignore] // We didn't manage fastq now
     fn count_fastq() {
-        let mut counter = crate::counter::Counter::new(5, 8192);
+        let mut counter = crate::counter::Counter::new(5);
 
-        counter.count_fasta(FASTQ_FILE);
+        counter.count_fasta(FASTQ_FILE, 1);
 
         let mut outfile = Vec::new();
         counter.serialize(&mut outfile, 0).unwrap();
@@ -294,7 +291,7 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
 
     lazy_static::lazy_static! {
     static ref COUNTER: crate::counter::Counter = {
-            let mut counter = crate::counter::Counter::new(5, 8192);
+            let mut counter = crate::counter::Counter::new(5);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
         counter.inc(i);

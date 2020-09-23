@@ -89,8 +89,8 @@ pub unsafe extern "C" fn pcon_error_free(error: *mut error::IO) {
 /// Create a new Counter. In python binding Counter is an object, new is the default constructor.
 /// See [counter::Counter::new].
 #[no_mangle]
-pub extern "C" fn pcon_counter_new(k: u8, read_buffer_len: usize) -> *mut counter::Counter {
-    Box::into_raw(Box::new(counter::Counter::new(k, read_buffer_len)))
+pub extern "C" fn pcon_counter_new(k: u8) -> *mut counter::Counter {
+    Box::into_raw(Box::new(counter::Counter::new(k)))
 }
 
 /// Free a Counter. In Python use del on Counter object.
@@ -117,12 +117,13 @@ pub unsafe extern "C" fn pcon_counter_free(counter: *mut counter::Counter) {
 pub extern "C" fn pcon_counter_count_fasta(
     counter: &mut counter::Counter,
     c_path: *const std::os::raw::c_char,
+    read_buffer_len: usize,
     io_error: &mut error::IO,
 ) {
     let reader = reader_from_c_path(c_path);
 
     match reader {
-        Ok(r) => counter.count_fasta(r),
+        Ok(r) => counter.count_fasta(r, read_buffer_len),
         Err(e) => *io_error = e,
     }
 }
@@ -175,12 +176,13 @@ pub extern "C" fn pcon_counter_get_canonic(
 pub extern "C" fn pcon_serialize_counter(
     counter: &counter::Counter,
     c_path: *const std::os::raw::c_char,
+    min_abundance: u8,
     io_error: &mut error::IO,
 ) {
     let writer = writer_from_c_path(c_path);
 
     match writer {
-        Ok(w) => match counter.serialize(w, 0) {
+        Ok(w) => match counter.serialize(w, min_abundance) {
             Ok(_) => (),
             Err(_) => *io_error = IO::ErrorDurringWrite,
         },
@@ -392,6 +394,6 @@ pub extern "C" fn pcon_dump_spectrum(
 
 /// See [set_count_nb_threads]
 #[no_mangle]
-pub extern "C" fn pcon_set_count_nb_threads(nb_threads: usize) {
-    crate::set_count_nb_threads(nb_threads);
+pub extern "C" fn pcon_set_nb_threads(nb_threads: usize) {
+    crate::set_nb_threads(nb_threads);
 }

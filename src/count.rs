@@ -38,7 +38,7 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
     };
 
     log::info!("Start of count structure initialization");
-    let mut counter = counter::Counter::new(params.kmer, record_buffer);
+    let mut counter = counter::Counter::new(params.kmer);
     log::info!("End of count structure initialization");
 
     for input in params.inputs.iter() {
@@ -51,7 +51,7 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
         .with_context(|| anyhow!("File {}", input.clone()))?
         .0;
 
-        counter.count_fasta(reader);
+        counter.count_fasta(reader, record_buffer);
 
         log::info!("End of kmer count of the file {}", &input);
     }

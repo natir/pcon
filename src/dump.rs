@@ -231,7 +231,7 @@ pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u64]> {
 mod tests {
     lazy_static::lazy_static! {
     static ref COUNTER: crate::counter::Counter = {
-            let mut counter = crate::counter::Counter::new(5, 1);
+            let mut counter = crate::counter::Counter::new(5);
 
             for i in 0..cocktail::kmer::get_kmer_space_size(5) {
         counter.inc(i);

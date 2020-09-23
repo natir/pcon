@@ -43,7 +43,7 @@ fn main() -> Result<()> {
     if let Some(threads) = params.threads {
         log::info!("Set number of threads to {}", threads);
 
-        set_count_nb_threads(threads);
+        set_nb_threads(threads);
     }
 
     match params.subcmd {

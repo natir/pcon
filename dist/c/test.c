@@ -30,7 +30,7 @@ int main(void) {
   Counter* counter = pcon_counter_new(5);
 
   /* Count a fasta file */
-  pcon_counter_count_fasta(counter, "../data/test.fasta", error);
+  pcon_counter_count_fasta(counter, "../data/test.fasta", 10, error);
   if(*error != NoError) {
     printf("Error durring count of test.fasta error code %i\n", *error);
     return -1;

@@ -128,9 +128,9 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
 
     lazy_static::lazy_static! {
     static ref SOLID: std::sync::Mutex<crate::solid::Solid> = {
-        let mut counter = crate::counter::Counter::new(5, 1);
+        let mut counter = crate::counter::Counter::new(5);
 
-        counter.count_fasta(FASTA_FILE);
+        counter.count_fasta(FASTA_FILE, 1);
 
             std::sync::Mutex::new(crate::solid::Solid::from_counter(&counter, 0))
     };

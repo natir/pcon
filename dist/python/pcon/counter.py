@@ -9,8 +9,8 @@ class Counter(RustObject):
     def __init__(self, k: int):
         self._objptr = lib.pcon_counter_new(k)
 
-    def count_fasta(self, path: str):
-        self._methodcall_can_produce_error(lib.pcon_counter_count_fasta, path.encode("utf-8"))
+    def count_fasta(self, path: str, buffer_size: int):
+        self._methodcall_can_produce_error(lib.pcon_counter_count_fasta, path.encode("utf-8"), buffer_size)
 
     def count_fastq(self, path: str):
         self._methodcall_can_produce_error(lib.pcon_counter_count_fastq, path.encode("utf-8"))
@@ -27,8 +27,8 @@ class Counter(RustObject):
     def get_canonic(self, kmer: int) -> int:
         return self._methodcall(lib.pcon_counter_get_canonic, kmer)
     
-    def serialize(self, path: str):
-        self._methodcall_can_produce_error(lib.pcon_serialize_counter, path.encode("utf-8"))
+    def serialize(self, path: str, min_abundance: int):
+        self._methodcall_can_produce_error(lib.pcon_serialize_counter, path.encode("utf-8"), min_abundance)
 
     @classmethod
     def deserialize(cls, path: str):
