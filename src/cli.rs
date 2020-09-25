@@ -131,6 +131,9 @@ pub struct SubCommandDump {
         about = "Path where kmer spectrum is write"
     )]
     pub spectrum: Option<String>,
+
+    #[clap(short = 'b', long = "bin", about = "Path where count is write in bin")]
+    pub bin: Option<String>,
 }
 
 use crate::error::{Cli, Error};
@@ -149,7 +152,7 @@ pub fn check_count_param(params: SubCommandCount) -> Result<SubCommandCount, Err
 }
 
 pub fn check_dump_param(params: SubCommandDump) -> Result<SubCommandDump, Error> {
-    if ![&params.csv, &params.solid, &params.spectrum]
+    if ![&params.csv, &params.solid, &params.spectrum, &params.bin]
         .iter()
         .any(|x| x.is_some())
     {

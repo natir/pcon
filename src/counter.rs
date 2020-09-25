@@ -141,7 +141,7 @@ impl Counter {
         let mut writer = niffler::get_writer(
             Box::new(w),
             niffler::compression::Format::Gzip,
-            niffler::compression::Level::Two,
+            niffler::compression::Level::One,
         )?;
 
         writer.write_all(&[self.k])?;
@@ -155,8 +155,6 @@ impl Counter {
                 writer.write_all(&[val])?;
             }
         }
-
-        writer.flush()?;
 
         Ok(())
     }

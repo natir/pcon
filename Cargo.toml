@@ -6,12 +6,16 @@ authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
 
 [lib]
-name = "pcon"
-crate-type = ["rlib", "cdylib", "staticlib"]
+#name = "pcon"
+#crate-type = ["rlib", "cdylib", "staticlib"]
 
 [[bin]]
 name = "pcon"
 path = "src/main.rs"
+
+[[bench]]
+name = "dump"
+harness = false
 
 [dependencies]
 bio             = "0.32"
@@ -39,9 +43,11 @@ env_logger     = "0.7"
 
 [dev-dependencies]
 lazy_static	= "1.4"
+criterion        = "0.3"
+
 
 [profile.release]
-#debug = true # uncomment for profiling
+debug = true # uncomment for profiling
 lto = 'thin'
 opt-level = 3
 overflow-checks = false

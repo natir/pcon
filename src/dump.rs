@@ -49,7 +49,7 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
 
     dump_worker(
         counter,
-        None,
+        params.bin,
         params.csv,
         params.solid,
         params.spectrum,
@@ -71,10 +71,12 @@ pub(crate) fn dump_worker(
         s.spawn(|_| {
             if let Some(output) = bin_path.clone() {
                 log::info!("Start of dump count data in binary");
-                let writer = std::fs::File::create(&output)
-                    .with_context(|| Error::IO(CantCreateFile))
-                    .with_context(|| anyhow!("File {}", output.clone()))
-                    .unwrap();
+                let writer = std::io::BufWriter::new(
+                    std::fs::File::create(&output)
+                        .with_context(|| Error::IO(CantCreateFile))
+                        .with_context(|| anyhow!("File {}", output.clone()))
+                        .unwrap(),
+                );
 
                 counter
                     .serialize(writer, abundance)
