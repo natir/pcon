@@ -50,6 +50,14 @@ fn dump_bin(c: &mut Criterion) {
         })
     });
 
+    g.bench_function("bincode", |b| {
+        b.iter(|| {
+            let writer = std::fs::File::create("bincode.pcon").unwrap();
+
+            bincode::serialize_into(writer, counter).unwrap();
+        })
+    });
+
     for power in 10..17 {
         let buffer_len = 1 << power;
 
