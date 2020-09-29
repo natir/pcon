@@ -31,8 +31,7 @@ use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 
 /* local use */
-// use crate::error::IO::*;
-// use crate::error::*;
+use crate::rle;
 
 pub type AtoCount = atomic::AtomicU8;
 pub type Count = u8;
@@ -153,6 +152,30 @@ impl Counter {
 
                 writer.write_all(&bytes)?;
                 writer.write_all(&[val])?;
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn serialize_rle<W>(&self, w: W) -> Result<()>
+    where
+        W: std::io::Write,
+    {
+        let mut writer = niffler::get_writer(
+            Box::new(w),
+            niffler::compression::Format::Gzip,
+            niffler::compression::Level::One,
+        )?;
+
+        writer.write_all(&[self.k])?;
+
+        unsafe {
+            for buffer in rle::Encoder::new(
+                &std::mem::transmute::<&[AtoCount], &[u8]>(&self.count),
+                8192,
+            ) {
+                writer.write_all(&buffer)?;
             }
         }
 

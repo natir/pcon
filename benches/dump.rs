@@ -24,8 +24,8 @@ use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criteri
 
 use pcon;
 
-fn build_counter() -> pcon::counter::Counter {
-    let mut counter = pcon::counter::Counter::new(15);
+fn build_counter(k: u8) -> pcon::counter::Counter {
+    let mut counter = pcon::counter::Counter::new(k);
 
     let reader = std::fs::File::open("reads.fasta").unwrap();
 
@@ -35,88 +35,45 @@ fn build_counter() -> pcon::counter::Counter {
 }
 
 fn dump_bin(c: &mut Criterion) {
-    let counter = build_counter();
-
     let mut g = c.benchmark_group("dump_bin");
 
     g.sample_size(10);
     g.warm_up_time(std::time::Duration::from_secs(1));
 
-    g.bench_function("raw", |b| {
-        b.iter(|| {
-            let writer = std::fs::File::create("raw.pcon").unwrap();
+    for k in &[15, 17, 19] {
+        let counter = build_counter(*k);
 
-            counter.serialize(writer, 0).unwrap();
-        })
-    });
+        g.bench_with_input(BenchmarkId::new("all_count", k), &k, |b, k| {
+            b.iter(|| {
+                let writer = std::io::BufWriter::new(
+                    std::fs::File::create(format!("bincode_{}.pcon", k)).unwrap(),
+                );
 
-    g.bench_function("bincode", |b| {
-        b.iter(|| {
-            let writer = std::fs::File::create("bincode.pcon").unwrap();
+                bincode::serialize_into(writer, &counter).unwrap();
+            })
+        });
 
-            bincode::serialize_into(writer, counter).unwrap();
-        })
-    });
+        g.bench_with_input(BenchmarkId::new("index+count_gzip", k), &k, |b, k| {
+            b.iter(|| {
+                let writer =
+                    std::fs::File::create(format!("index+count_gzip_k{}.pcon", k)).unwrap();
 
-    for power in 10..17 {
-        let buffer_len = 1 << power;
+                counter.serialize(writer, 0).unwrap();
+            })
+        });
 
-        g.bench_with_input(
-            BenchmarkId::new("buffer", buffer_len),
-            &buffer_len,
-            |b, buffer_len| {
-                b.iter(|| {
-                    let writer = std::io::BufWriter::with_capacity(
-                        *buffer_len,
-                        std::fs::File::create(format!("buffer_{}.pcon", buffer_len)).unwrap(),
-                    );
+        g.bench_with_input(BenchmarkId::new("count_rle_gzip", k), &k, |b, k| {
+            b.iter(|| {
+                let writer = std::fs::File::create(format!("count_rle_gzip_k{}.pcon", k)).unwrap();
 
-                    counter.serialize(writer, 0).unwrap();
-                })
-            },
-        );
-    }
-}
-
-fn dump_csv(c: &mut Criterion) {
-    let counter = build_counter();
-
-    let mut g = c.benchmark_group("dump_csv");
-
-    g.sample_size(10);
-    g.warm_up_time(std::time::Duration::from_secs(1));
-
-    g.bench_function("raw", |b| {
-        b.iter(|| {
-            let writer = std::fs::File::create("raw.csv").unwrap();
-
-            counter.serialize(writer, 0).unwrap();
-        })
-    });
-
-    for power in 10..17 {
-        let buffer_len = 1 << power;
-
-        g.bench_with_input(
-            BenchmarkId::new("buffer", buffer_len),
-            &buffer_len,
-            |b, buffer_len| {
-                b.iter(|| {
-                    let writer = std::io::BufWriter::with_capacity(
-                        *buffer_len,
-                        std::fs::File::create(format!("buffer_{}.csv", buffer_len)).unwrap(),
-                    );
-
-                    pcon::dump::csv(writer, &counter, 0).unwrap();
-                })
-            },
-        );
+                counter.serialize(writer, 0).unwrap();
+            })
+        });
     }
 }
 
 fn setup(c: &mut Criterion) {
     dump_bin(c);
-    dump_csv(c);
 }
 
 criterion_group!(benches, setup);
