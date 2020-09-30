@@ -25,17 +25,20 @@ use std::io::Write;
 use std::sync::atomic;
 
 /* crate use */
-use anyhow::Result;
+use anyhow::{anyhow, Context, Result};
 use byteorder::{ReadBytesExt, WriteBytesExt};
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
+
+/* local use */
+use crate::error::IO::*;
+use crate::error::*;
 
 pub type AtoCount = atomic::AtomicU8;
 pub type Count = u8;
 
 /// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
 /// If kmer occure more than 256 other occurence are ignored
-#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Counter {
     pub k: u8,
     count: Box<[AtoCount]>,
@@ -140,9 +143,15 @@ impl Counter {
             niffler::compression::Level::One,
         )?;
 
-        writer.write_u8(self.k)?;
+        writer
+            .write_u8(self.k)
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("Error durring serialize counter"))?;
         unsafe {
-            writer.write_all(&*(&self.count as *const Box<[AtoCount]> as *const Box<[Count]>))?;
+            writer
+                .write_all(&*(&self.count as *const Box<[AtoCount]> as *const Box<[Count]>))
+                .with_context(|| Error::IO(ErrorDurringWrite))
+                .with_context(|| anyhow!("Error durring serialize counter"))?;
         }
 
         Ok(())
@@ -155,10 +164,16 @@ impl Counter {
     {
         let mut reader = niffler::get_reader(Box::new(r))?.0;
 
-        let k = reader.read_u8()?;
+        let k = reader
+            .read_u8()
+            .with_context(|| Error::IO(ErrorDurringRead))
+            .with_context(|| anyhow!("Error durring deserialize counter"))?;
 
         let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice();
-        reader.read_exact(&mut tmp)?;
+        reader
+            .read_exact(&mut tmp)
+            .with_context(|| Error::IO(ErrorDurringRead))
+            .with_context(|| anyhow!("Error durring deserialize counter"))?;
 
         Ok(Self {
             k,

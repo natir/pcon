@@ -23,19 +23,19 @@ SOFTWARE.
 /* crate use */
 use anyhow::{anyhow, Context, Result};
 use bitvec::prelude::*;
+use byteorder::{ReadBytesExt, WriteBytesExt};
 use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 
-use crate::*;
-
+/* local use */
 use crate::error::IO::*;
 use crate::error::*;
+use crate::*;
 
 /// A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid
-#[derive(serde::Serialize, serde::Deserialize)]
 pub struct Solid {
     pub k: u8,
-    solid: BitVec,
+    solid: BitBox<Lsb0, u8>,
 }
 
 impl Solid {
@@ -43,7 +43,7 @@ impl Solid {
     pub fn new(k: u8) -> Self {
         Self {
             k,
-            solid: bitvec![Lsb0; 0; cocktail::kmer::get_hash_space_size(k) as usize],
+            solid: bitbox![Lsb0, u8; 0; cocktail::kmer::get_hash_space_size(k) as usize],
         }
     }
 
@@ -51,7 +51,7 @@ impl Solid {
     pub fn from_counter(counter: &counter::Counter, abundance: counter::Count) -> Self {
         let count = counter.get_raw_count();
 
-        let mut solid = bitvec![Lsb0; 0; count.len()];
+        let mut solid = bitbox![Lsb0, u8; 0; count.len()];
 
         for index in count
             .iter()
@@ -96,29 +96,64 @@ impl Solid {
         self.solid[hash]
     }
 
+    #[allow(dead_code)]
+    pub(crate) fn get_raw_solid(&self) -> &BitBox<Lsb0, u8> {
+        &self.solid
+    }
+
     /// Serialize counter in given [std::io::Write]
-    pub fn serialize<W>(&self, writer: W) -> Result<()>
+    pub fn serialize<W>(&self, w: W) -> Result<()>
     where
         W: std::io::Write,
     {
-        bincode::serialize_into(writer, &self)
+        let mut writer = niffler::get_writer(
+            Box::new(w),
+            niffler::compression::Format::Gzip,
+            niffler::compression::Level::One,
+        )?;
+
+        writer
+            .write_u8(self.k)
             .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("Error durring serialize counter"))
+            .with_context(|| anyhow!("Error durring serialize counter"))?;
+
+        writer
+            .write_all(self.solid.as_slice())
+            .with_context(|| Error::IO(ErrorDurringWrite))
+            .with_context(|| anyhow!("Error durring serialize counter"))?;
+
+        Ok(())
     }
 
     /// Deserialize counter for given [std::io::Read]
-    pub fn deserialize<R>(reader: R) -> Result<Self>
+    pub fn deserialize<R>(r: R) -> Result<Self>
     where
         R: std::io::Read,
     {
-        bincode::deserialize_from(reader)
+        let mut reader = niffler::get_reader(Box::new(r))?.0;
+
+        let k = reader
+            .read_u8()
             .with_context(|| Error::IO(ErrorDurringRead))
-            .with_context(|| anyhow!("Error durring deserialize counter"))
+            .with_context(|| anyhow!("Error durring deserialize counter"))?;
+
+        let mut tmp =
+            vec![0u8; (cocktail::kmer::get_hash_space_size(k) >> 3) as usize].into_boxed_slice();
+        reader
+            .read_exact(&mut tmp)
+            .with_context(|| Error::IO(ErrorDurringRead))
+            .with_context(|| anyhow!("Error durring deserialize counter"))?;
+
+        Ok(Self {
+            k,
+            solid: BitBox::from_boxed_slice(tmp),
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
 
     const FASTA_FILE: &[u8] = b">random_seq 0
 GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
@@ -126,54 +161,57 @@ GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAG
 AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
 ";
 
-    lazy_static::lazy_static! {
-    static ref SOLID: std::sync::Mutex<crate::solid::Solid> = {
+    fn get_solid() -> solid::Solid {
         let mut counter = crate::counter::Counter::new(5);
 
         counter.count_fasta(FASTA_FILE, 1);
 
-            std::sync::Mutex::new(crate::solid::Solid::from_counter(&counter, 0))
-    };
+        solid::Solid::from_counter(&counter, 0)
     }
+
+    const SOLID: &[u8] = &[
+        112, 64, 113, 143, 130, 8, 128, 4, 6, 60, 214, 0, 243, 8, 193, 1, 30, 4, 34, 97, 4, 70,
+        192, 12, 16, 144, 133, 38, 192, 41, 1, 4, 218, 179, 140, 0, 0, 140, 242, 35, 90, 56, 205,
+        179, 64, 3, 25, 20, 226, 0, 32, 76, 1, 134, 48, 64, 7, 0, 200, 144, 98, 131, 2, 203,
+    ];
 
     #[test]
     fn presence() {
-        let solid = SOLID.lock().unwrap();
+        let solid = get_solid();
 
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"GTTCT")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AAATG")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AGGAT")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"CTCAG")), true);
+        assert_eq!(solid.get_raw_solid().as_slice(), SOLID);
     }
+
+    const SOLID_SET: &[u8] = &[
+        112, 64, 113, 143, 130, 8, 128, 4, 6, 52, 214, 0, 243, 8, 193, 1, 30, 4, 2, 97, 4, 70, 192,
+        12, 16, 144, 133, 36, 192, 41, 1, 4, 218, 179, 140, 0, 0, 140, 242, 35, 90, 56, 205, 179,
+        64, 3, 25, 20, 226, 0, 32, 76, 1, 134, 48, 64, 7, 0, 192, 144, 98, 131, 2, 203,
+    ];
 
     #[test]
     fn set_value() {
-        let mut solid = SOLID.lock().unwrap();
+        let mut solid = get_solid();
 
         solid.set(cocktail::kmer::seq2bit(b"GTTCT"), false);
         solid.set(cocktail::kmer::seq2bit(b"AAATG"), false);
         solid.set(cocktail::kmer::seq2bit(b"AGGAT"), false);
         solid.set(cocktail::kmer::seq2bit(b"CTCAG"), false);
 
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"GTTCT")), false);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AAATG")), false);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AGGAT")), false);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"CTCAG")), false);
+        assert_eq!(solid.get_raw_solid().as_slice(), SOLID_SET);
     }
 
     const FASTA_SOLID: &[u8] = &[
-        5, 0, 0, 2, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 112, 64, 113, 143, 130, 8, 128, 4, 6,
-        60, 214, 0, 243, 8, 193, 1, 30, 4, 34, 97, 4, 70, 192, 12, 16, 144, 133, 38, 192, 41, 1, 4,
-        218, 179, 140, 0, 0, 140, 242, 35, 90, 56, 205, 179, 64, 3, 25, 20, 226, 0, 32, 76, 1, 134,
-        48, 64, 7, 0, 200, 144, 98, 131, 2, 203,
+        31, 139, 8, 0, 0, 0, 0, 0, 4, 255, 1, 65, 0, 190, 255, 5, 112, 64, 113, 143, 130, 8, 128,
+        4, 6, 60, 214, 0, 243, 8, 193, 1, 30, 4, 34, 97, 4, 70, 192, 12, 16, 144, 133, 38, 192, 41,
+        1, 4, 218, 179, 140, 0, 0, 140, 242, 35, 90, 56, 205, 179, 64, 3, 25, 20, 226, 0, 32, 76,
+        1, 134, 48, 64, 7, 0, 200, 144, 98, 131, 2, 203, 186, 210, 139, 120, 65, 0, 0, 0,
     ];
 
     #[test]
-    #[ignore]
     fn serialize() {
         let mut outfile = Vec::new();
 
-        let solid = SOLID.lock().unwrap();
+        let solid = get_solid();
         solid.serialize(&mut outfile).unwrap();
 
         assert_eq!(&outfile[..], &FASTA_SOLID[..]);
@@ -184,9 +222,6 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         let solid = crate::solid::Solid::deserialize(&FASTA_SOLID[..]).unwrap();
 
         assert_eq!(solid.k, 5);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"GTTCT")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AAATG")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"AGGAT")), true);
-        assert_eq!(solid.get(cocktail::kmer::seq2bit(b"CTCAG")), true);
+        assert_eq!(solid.get_raw_solid().as_slice(), SOLID);
     }
 }

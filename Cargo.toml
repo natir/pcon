@@ -21,26 +21,23 @@ cocktail        = { git = "https://github.com/natir/cocktail.git" }
 rayon           = "1"
 
 # serialization
-bincode	        = "1"
-serde		= "1"
-bitvec		= { version = "0.17", features = ["serde"] }
+bitvec		= "0.19"
 byteorder       = "1"
 
 # input output management
 niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }
 
 # CLI management
-clap           = "3.0.0-beta.1"
+clap           = "3.0.0-beta.2"
 
 # Logging and error management
 log 	       = "0.4"
-anyhow         = "1.0"
-thiserror      = "1.0"
+anyhow         = "1"
+thiserror      = "1"
 env_logger     = "0.7"
 
 [dev-dependencies]
-lazy_static	= "1.4"
-criterion        = "0.3"
+lazy_static	= "1"
 
 
 [profile.release]
