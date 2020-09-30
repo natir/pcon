@@ -27,8 +27,8 @@ class Counter(RustObject):
     def get_canonic(self, kmer: int) -> int:
         return self._methodcall(lib.pcon_counter_get_canonic, kmer)
     
-    def serialize(self, path: str, min_abundance: int):
-        self._methodcall_can_produce_error(lib.pcon_serialize_counter, path.encode("utf-8"), min_abundance)
+    def serialize(self, path: str):
+        self._methodcall_can_produce_error(lib.pcon_serialize_counter, path.encode("utf-8"))
 
     @classmethod
     def deserialize(cls, path: str):

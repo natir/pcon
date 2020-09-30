@@ -169,10 +169,7 @@ IO *pcon_error_new(void);
  * In Python it's serialize method of Counter object.
  * See [counter::Counter::serialize].
  */
-void pcon_serialize_counter(const Counter *counter,
-                            const char *c_path,
-                            uint8_t min_abundance,
-                            IO *io_error);
+void pcon_serialize_counter(const Counter *counter, const char *c_path, IO *io_error);
 
 /**
  * Serialize Solid in path of file

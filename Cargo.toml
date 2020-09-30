@@ -6,16 +6,12 @@ authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2018"
 
 [lib]
-#name = "pcon"
-#crate-type = ["rlib", "cdylib", "staticlib"]
+name = "pcon"
+crate-type = ["rlib", "cdylib", "staticlib"]
 
 [[bin]]
 name = "pcon"
 path = "src/main.rs"
-
-[[bench]]
-name = "dump"
-harness = false
 
 [dependencies]
 bio             = "0.32"
@@ -28,6 +24,7 @@ rayon           = "1"
 bincode	        = "1"
 serde		= "1"
 bitvec		= { version = "0.17", features = ["serde"] }
+byteorder       = "1"
 
 # input output management
 niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }

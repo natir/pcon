@@ -79,7 +79,7 @@ pub(crate) fn dump_worker(
                 );
 
                 counter
-                    .serialize(writer, abundance)
+                    .serialize(writer)
                     .with_context(|| Error::IO(ErrorDurringWrite))
                     .with_context(|| anyhow!("In file {}", output.clone()))
                     .unwrap();
@@ -98,6 +98,7 @@ pub(crate) fn dump_worker(
                         .with_context(|| anyhow!("File {}", output.clone()))
                         .unwrap(),
                 );
+
                 csv(writer, &counter, abundance)
                     .with_context(|| Error::IO(ErrorDurringWrite))
                     .with_context(|| anyhow!("File {} in csv format", output))
@@ -117,6 +118,7 @@ pub(crate) fn dump_worker(
                         .with_context(|| anyhow!("File {}", output.clone()))
                         .unwrap(),
                 );
+
                 solid(writer, &counter, abundance)
                     .with_context(|| Error::IO(ErrorDurringWrite))
                     .with_context(|| anyhow!("File {} in solid format", output))
@@ -136,6 +138,7 @@ pub(crate) fn dump_worker(
                         .with_context(|| anyhow!("File {}", output.clone()))
                         .unwrap(),
                 );
+
                 spectrum(writer, &counter)
                     .with_context(|| Error::IO(ErrorDurringWrite))
                     .with_context(|| anyhow!("File {} in spectrum format", output))
@@ -150,12 +153,12 @@ pub(crate) fn dump_worker(
 }
 
 /// Write in the given instance of io::Write the count in `counter` in binary format.
-pub fn binary<W>(writer: W, counter: &counter::Counter, abundance: counter::Count) -> Result<()>
+pub fn binary<W>(writer: W, counter: &counter::Counter) -> Result<()>
 where
     W: std::io::Write,
 {
     counter
-        .serialize(writer, abundance)
+        .serialize(writer)
         .with_context(|| Error::IO(ErrorDurringWrite))?;
 
     Ok(())

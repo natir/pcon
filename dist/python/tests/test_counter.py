@@ -7,7 +7,7 @@ def test_count():
 
     assert a.get(108) == 18
 
-    a.serialize("python_counter.pcon", 0)
+    a.serialize("python_counter.pcon")
 
     b = pcon.Counter.deserialize("python_counter.pcon")
 

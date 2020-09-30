@@ -176,13 +176,12 @@ pub extern "C" fn pcon_counter_get_canonic(
 pub extern "C" fn pcon_serialize_counter(
     counter: &counter::Counter,
     c_path: *const std::os::raw::c_char,
-    min_abundance: u8,
     io_error: &mut error::IO,
 ) {
     let writer = writer_from_c_path(c_path);
 
     match writer {
-        Ok(w) => match counter.serialize(w, min_abundance) {
+        Ok(w) => match counter.serialize(w) {
             Ok(_) => (),
             Err(_) => *io_error = IO::ErrorDurringWrite,
         },
