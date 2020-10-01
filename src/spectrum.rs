@@ -185,7 +185,9 @@ impl Spectrum {
         }
         last_line[0] = b'0';
         if let Some(pos) = point {
-            last_line[pos as usize] = b'*';
+            if pos < last_line.len() {
+                last_line[pos as usize] = b'*';
+            }
         }
 
         writeln!(out, "{}", std::str::from_utf8(&last_line).unwrap())?;
