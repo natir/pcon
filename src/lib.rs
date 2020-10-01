@@ -28,6 +28,7 @@ pub mod count;
 pub mod counter;
 pub mod dump;
 pub mod solid;
+pub mod spectrum;
 
 pub mod binding;
 

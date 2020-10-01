@@ -25,6 +25,7 @@ bitvec		= "0.19"
 byteorder       = "1"
 
 # input output management
+term_size      = "0.3"
 niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }
 
 # CLI management

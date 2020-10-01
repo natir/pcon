@@ -22,16 +22,12 @@ SOFTWARE.
 
 /* crate use */
 use anyhow::{anyhow, Context, Result};
-use rayon::iter::ParallelBridge;
-use rayon::prelude::*;
-
-/* local use */
 use cocktail::*;
 
-use crate::*;
-
+/* local use */
 use crate::error::IO::*;
 use crate::error::*;
+use crate::*;
 
 pub fn dump(params: cli::SubCommandDump) -> Result<()> {
     let params = cli::check_dump_param(params)?;
@@ -201,35 +197,17 @@ where
 }
 
 /// Write in the given instance of io::Write the kmer spectrum from counts in `counter`
-pub fn spectrum<W>(mut writer: W, counter: &counter::Counter) -> Result<()>
+pub fn spectrum<W>(writer: W, counter: &counter::Counter) -> Result<()>
 where
     W: std::io::Write,
 {
-    for (i, nb) in compute_spectrum(counter).iter().enumerate() {
-        writeln!(writer, "{},{}", i, nb).with_context(|| Error::IO(ErrorDurringWrite))?;
-    }
-
-    Ok(())
-}
-
-pub fn compute_spectrum(counter: &counter::Counter) -> Box<[u64]> {
-    let spectrum: Box<[std::sync::atomic::AtomicU64]> = (0..256)
-        .map(|_| std::sync::atomic::AtomicU64::new(0))
-        .collect::<Box<[std::sync::atomic::AtomicU64]>>();
-
-    counter.get_raw_count().iter().par_bridge().for_each(|x| {
-        let index = x.load(std::sync::atomic::Ordering::SeqCst) as usize;
-
-        if spectrum[index].load(std::sync::atomic::Ordering::SeqCst) != std::u64::MAX {
-            spectrum[x.load(std::sync::atomic::Ordering::SeqCst) as usize]
-                .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
-        }
-    });
+    let spectrum = spectrum::Spectrum::from_counter(counter);
 
     spectrum
-        .iter()
-        .map(|x| x.load(std::sync::atomic::Ordering::SeqCst) as u64)
-        .collect()
+        .write_csv(writer)
+        .with_context(|| Error::IO(ErrorDurringWrite))?;
+
+    Ok(())
 }
 
 #[cfg(test)]
