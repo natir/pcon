@@ -185,7 +185,7 @@ impl Spectrum {
         }
         last_line[0] = b'0';
         if let Some(pos) = point {
-            if pos < last_line.len() {
+            if (pos as usize) < last_line.len() {
                 last_line[pos as usize] = b'*';
             }
         }

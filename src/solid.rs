@@ -24,8 +24,6 @@ SOFTWARE.
 use anyhow::{anyhow, Context, Result};
 use bitvec::prelude::*;
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use rayon::iter::ParallelBridge;
-use rayon::prelude::*;
 
 /* local use */
 use crate::error::IO::*;
@@ -53,15 +51,16 @@ impl Solid {
 
         let mut solid = bitbox![Lsb0, u8; 0; count.len()];
 
-        for index in count
-            .iter()
-            .enumerate()
-            .par_bridge()
-            .filter(|(_, val)| val.load(std::sync::atomic::Ordering::SeqCst) > abundance)
-            .map(|(index, _)| index)
-            .collect::<Vec<usize>>()
-        {
-            solid.set(index, true);
+        unsafe {
+            for (index, count) in (*(counter.get_raw_count() as *const [counter::AtoCount]
+                as *const [counter::Count]))
+                .iter()
+                .enumerate()
+            {
+                if *count > abundance {
+                    solid.set(index, true);
+                }
+            }
         }
 
         Self {
