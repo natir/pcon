@@ -47,9 +47,11 @@ impl Solid {
 
     /// Create a new Solid with count in `counter` only kmer upper than `abundance` are solid
     pub fn from_counter(counter: &counter::Counter, abundance: counter::Count) -> Self {
-        let count = counter.get_raw_count();
+        let counts = unsafe {
+            &(*(counter.get_raw_count() as *const [counter::AtoCount] as *const [counter::Count]))
+        };
 
-        let mut solid = bitbox![Lsb0, u8; 0; count.len()];
+        let mut solid = bitbox![Lsb0, u8; 0; counts.len()];
 
         unsafe {
             for (index, count) in (*(counter.get_raw_count() as *const [counter::AtoCount]

@@ -22,6 +22,7 @@ SOFTWARE.
 
 /* crate use */
 use anyhow::{Context, Result};
+use rayon::prelude::*;
 
 /* local use */
 use crate::error::IO::*;
@@ -52,16 +53,33 @@ pub struct Spectrum {
 
 impl Spectrum {
     pub fn from_counter(counter: &counter::Counter) -> Self {
-        let mut data: Box<[u64]> = vec![0u64; 256].into_boxed_slice();
+        let counts = unsafe {
+            &(*(counter.get_raw_count() as *const [counter::AtoCount] as *const [counter::Count]))
+        };
 
-        unsafe {
-            for count in (*(counter.get_raw_count() as *const [counter::AtoCount]
-                as *const [counter::Count]))
-                .iter()
-            {
-                data[*count as usize] = data[*count as usize].saturating_add(1);
-            }
-        }
+        let data = counts
+            .par_chunks(counts.len() / rayon::current_num_threads())
+            .map(|chunk| {
+                let mut d: Box<[u64]> = vec![0u64; 256].into_boxed_slice();
+
+                for count in chunk.iter() {
+                    d[*count as usize] = d[*count as usize].saturating_add(1);
+                }
+
+                d
+            })
+            .reduce(
+                || vec![0u64; 256].into_boxed_slice(),
+                |a, b| {
+                    let mut d = Vec::with_capacity(256);
+
+                    for x in a.iter().zip(b.iter()) {
+                        d.push(x.0.saturating_add(*x.1));
+                    }
+
+                    d.into_boxed_slice()
+                },
+            );
 
         Self { data }
     }
