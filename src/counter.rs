@@ -26,8 +26,8 @@ use std::sync::atomic;
 
 /* crate use */
 use anyhow::{anyhow, Context, Result};
+use bio::io::fasta::FastaRead;
 use byteorder::{ReadBytesExt, WriteBytesExt};
-use rayon::iter::ParallelBridge;
 use rayon::prelude::*;
 
 /* local use */
@@ -62,25 +62,23 @@ impl Counter {
     where
         R: std::io::Read,
     {
-        let reader = bio::io::fasta::Reader::new(fasta);
+        let mut reader = bio::io::fasta::Reader::new(fasta);
 
-        let mut iter = reader.records();
-        let mut records = Vec::with_capacity(record_buffer_len);
+        let mut records = vec![bio::io::fasta::Record::new(); record_buffer_len];
 
         let mut end = false;
         loop {
-            for _ in 0..record_buffer_len {
-                if let Some(Ok(record)) = iter.next() {
-                    records.push(record);
-                } else {
+            for i in 0..record_buffer_len {
+                if reader.read(&mut records[i]).is_err() || records[i].is_empty() {
                     end = true;
+                    records.truncate(i);
                     break;
                 }
             }
 
             log::info!("Buffer len: {}", records.len());
 
-            records.drain(..).par_bridge().for_each(|record| {
+            records.par_iter().for_each(|record| {
                 if record.seq().len() >= self.k as usize {
                     let tokenizer = cocktail::tokenizer::Canonical::new(record.seq(), self.k);
 
@@ -89,8 +87,6 @@ impl Counter {
                     }
                 }
             });
-
-            records.clear();
 
             if end {
                 break;
@@ -104,7 +100,7 @@ impl Counter {
     }
 
     /// Increase the counter of a canonical kmer
-    pub fn inc_canonic(&mut self, canonical: u64) {
+    pub fn inc_canonic(&self, canonical: u64) {
         Counter::inc_canonic_ato(&self.count, canonical);
     }
 
