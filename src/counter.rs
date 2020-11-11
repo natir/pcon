@@ -21,6 +21,7 @@ SOFTWARE.
  */
 
 /* std use */
+use std::io::Read;
 use std::io::Write;
 use std::sync::atomic;
 
@@ -133,19 +134,37 @@ impl Counter {
     where
         W: std::io::Write,
     {
-        let mut writer = niffler::get_writer(
-            Box::new(w),
-            niffler::compression::Format::Gzip,
-            niffler::compression::Level::One,
-        )?;
+        let mut writer = w;
+        let count = unsafe { &*(&self.count as *const Box<[AtoCount]> as *const Box<[Count]>) };
 
         writer
             .write_u8(self.k)
             .with_context(|| Error::IO(ErrorDurringWrite))
             .with_context(|| anyhow!("Error durring serialize counter"))?;
-        unsafe {
+
+        for b in count
+            .par_chunks(2usize.pow(25))
+            .map(|in_buffer| {
+                let mut out_buffer = Vec::new();
+
+                {
+                    let mut writer =
+                        flate2::write::GzEncoder::new(&mut out_buffer, flate2::Compression::fast());
+
+                    writer
+                        .write_all(&in_buffer)
+                        .with_context(|| Error::IO(ErrorDurringWrite))
+                        .with_context(|| anyhow!("Error durring serialize counter"))?;
+                }
+
+                Ok(out_buffer)
+            })
+            .collect::<Vec<Result<Vec<u8>>>>()
+        {
+            let buf = b?;
+
             writer
-                .write_all(&*(&self.count as *const Box<[AtoCount]> as *const Box<[Count]>))
+                .write_all(&buf)
                 .with_context(|| Error::IO(ErrorDurringWrite))
                 .with_context(|| anyhow!("Error durring serialize counter"))?;
         }
@@ -158,15 +177,17 @@ impl Counter {
     where
         R: std::io::Read,
     {
-        let mut reader = niffler::get_reader(Box::new(r))?.0;
+        let mut reader = r;
 
         let k = reader
             .read_u8()
             .with_context(|| Error::IO(ErrorDurringRead))
             .with_context(|| anyhow!("Error durring deserialize counter"))?;
 
+        let mut deflate = flate2::read::MultiGzDecoder::new(reader);
         let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice();
-        reader
+
+        deflate
             .read_exact(&mut tmp)
             .with_context(|| Error::IO(ErrorDurringRead))
             .with_context(|| anyhow!("Error durring deserialize counter"))?;
@@ -280,8 +301,8 @@ TCAAATTGGCCGCCGCACAGTGAACCCGGAACTAAACAAGCACCGCACCGTTTGGTACACTTGAACACCGTATAAATTCA
     }
 
     const ALLKMERSEEONE: &[u8] = &[
-        31, 139, 8, 0, 0, 0, 0, 0, 4, 255, 237, 208, 1, 9, 0, 0, 0, 131, 48, 56, 188, 127, 101,
-        131, 232, 34, 236, 139, 122, 0, 93, 105, 195, 13, 1, 2, 0, 0,
+        5, 31, 139, 8, 0, 0, 0, 0, 0, 4, 255, 237, 208, 1, 9, 0, 0, 0, 128, 32, 232, 255, 232, 134,
+        148, 19, 100, 233, 1, 1, 118, 18, 53, 208, 0, 2, 0, 0,
     ];
 
     #[test]

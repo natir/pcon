@@ -724,6 +724,7 @@ dependencies = [
  "clap",
  "cocktail",
  "env_logger",
+ "flate2",
  "lazy_static",
  "log",
  "niffler",
