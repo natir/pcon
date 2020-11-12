@@ -166,16 +166,19 @@ pub fn csv<W>(mut writer: W, counter: &counter::Counter, abundance: counter::Cou
 where
     W: std::io::Write,
 {
-    for (hash, count) in counter.get_raw_count().iter().enumerate() {
+    let counts = unsafe {
+        &(*(counter.get_raw_count() as *const [counter::AtoCount] as *const [counter::Count]))
+    };
+
+    for (hash, value) in counts.iter().enumerate() {
         let kmer = if cocktail::kmer::parity_even(hash as u64) {
             kmer::kmer2seq((hash as u64) << 1, counter.k)
         } else {
             kmer::kmer2seq(((hash as u64) << 1) ^ 0b1, counter.k)
         };
 
-        let c = count.load(std::sync::atomic::Ordering::SeqCst);
-        if c > abundance {
-            writeln!(writer, "{},{}", kmer, c).with_context(|| Error::IO(ErrorDurringWrite))?;
+        if value > &abundance {
+            writeln!(writer, "{},{}", kmer, value).with_context(|| Error::IO(ErrorDurringWrite))?;
         }
     }
 
