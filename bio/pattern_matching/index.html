@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `pattern_matching` mod in crate `bio`."><meta name="keywords" content="rust, rustlang, rust-lang, pattern_matching"><title>bio::pattern_matching - Rust</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings"></script><script src="../../storage.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../bio/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a><p class="location">Module pattern_matching</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#modules">Modules</a></li></ul></div><p class="location"><a href="../index.html">bio</a></p><div id="sidebar-vars" data-name="pattern_matching" data-ty="mod" data-relpath="../"></div><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../settings.html"><img src="../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Module <a href="../index.html">bio</a>::<wbr><a class="mod" href="">pattern_matching</a></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../src/bio/pattern_matching/mod.rs.html#6-27" title="goto source code">[src]</a></span></h1><div class="docblock"><p>This module contains various useful pattern matching algorithms.
+The implementations are based on the lecture notes
+&quot;Algorithmen auf Sequenzen&quot;, Kopczynski, Marschall, Martin and Rahmann, 2008 - 2015.</p>
+<ul>
+<li>Algorithm of Horspool: fastest for a sufficiently large alphabet</li>
+<li>Shift And algorithm: fast for patterns with less than 64 symbols and very small alphabets.</li>
+<li>BNDM algorithm: fast for patterns with less than 64 symbols.</li>
+<li>BOM algorithm: fast for long patterns and small alphabet.</li>
+<li>KMP algorithm: the classical ancestor.</li>
+<li>Ukkonens algorithm: approximate pattern matching with dynamic programming.</li>
+<li>Myers algorithm: linear-time approximate pattern matching with edit distance for small patterns</li>
+</ul>
+<p>Another fast pattern matching algorithm is available in the twoway crate: https://crates.io/crates/twoway</p>
+</div><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="bndm/index.html" title="bio::pattern_matching::bndm mod">bndm</a></td><td class="docblock-short"><p>Backward nondeterministic DAWG matching (BNDM).
+Best-case complexity: O(n / m) with pattern of length m &lt;= 64 and text of length n.
+Worst case complexity: O(n * m).</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="bom/index.html" title="bio::pattern_matching::bom mod">bom</a></td><td class="docblock-short"><p>Backward oracle matching algorithm.
+Best-case complexity: O(n / m) with pattern of length m and text of length n.
+Worst case complexity: O(n * m).</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="horspool/index.html" title="bio::pattern_matching::horspool mod">horspool</a></td><td class="docblock-short"><p>Algorithm of Horspool.
+Window-based, similar to but faster than Boyer-Moore.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="kmp/index.html" title="bio::pattern_matching::kmp mod">kmp</a></td><td class="docblock-short"><p>Algorithm of Knuth Morris and Pratt.
+Constructs an automaton recognizing the pattern, and scans linearly over
+a text of length n. Complexity: O(n).
+The transition function delta is simulated via the lps-function, that assigns to each position
+q in the pattern the longest prefix of the pattern that is suffix of pattern[..q+1].
+Then, in the NFA for the pattern, active states after reading position q are
+{q, lps(q), lps(lps(q)), ... 0}.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="myers/index.html" title="bio::pattern_matching::myers mod">myers</a></td><td class="docblock-short"><p>Myers bit-parallel approximate pattern matching algorithm.
+Finds all matches up to a given edit distance. The pattern has to fit into a bitvector,
+and is thus limited to 64 or (since stable Rust version 1.26) to 128 symbols.
+Complexity: O(n)</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="pssm/index.html" title="bio::pattern_matching::pssm mod">pssm</a></td><td class="docblock-short"><p>Create a weight matrix representing a set of aligned reference sequences
+that constitute a motif, and use this matrix to scan query sequences for
+occurrences of this motif.
+Complexity: O(n*m) for motif length n and query length m</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="shift_and/index.html" title="bio::pattern_matching::shift_and mod">shift_and</a></td><td class="docblock-short"><p><code>ShiftAnd</code> algorithm for pattern matching.
+Patterns may contain at most 64 symbols.
+Complexity: O(n) with text length n.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="ukkonen/index.html" title="bio::pattern_matching::ukkonen mod">ukkonen</a></td><td class="docblock-short"><p>Bounded version of Ukkonens DP algorithm for approximate pattern matching.
+Complexity: O(n * k) on random texts.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="bio"></div>
+    <script src="../../main.js"></script><script defer src="../../search-index.js"></script></body></html>

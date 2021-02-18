@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["bed","BED format reading and writing."],["fasta","Structs and trait to read and write files in FASTA format."],["fastq","Structs and trait to read and write files in FASTQ format."],["gff","GFF3 format reading and writing."]]});

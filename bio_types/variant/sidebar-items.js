@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Kind","Possible genomic variants."]],"trait":[["AbstractVariant","A trait for providing variant information. This can e.g. be implemented by file readers."]]});

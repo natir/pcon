@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Reader","A BED reader."],["Record","A BED record as defined by BEDtools (http://bedtools.readthedocs.org/en/latest/content/general-usage.html)"],["Records","An iterator over the records of a BED file."],["Writer","A BED writer."]]});

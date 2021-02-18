@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `triple_accel` crate."><meta name="keywords" content="rust, rustlang, rust-lang, triple_accel"><title>triple_accel - Rust</title><link rel="stylesheet" type="text/css" href="../normalize.css"><link rel="stylesheet" type="text/css" href="../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../ayu.css" disabled ><script id="default-settings"></script><script src="../storage.js"></script><noscript><link rel="stylesheet" href="../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../triple_accel/index.html'><div class='logo-container rust-logo'><img src='../rust-logo.png' alt='logo'></div></a><p class="location">Crate triple_accel</p><div class="block version"><p>Version 0.3.4</p></div><div class="sidebar-elems"><a id="all-types" href="all.html"><p>See all triple_accel's items</p></a><div class="block items"><ul><li><a href="#reexports">Re-exports</a></li><li><a href="#modules">Modules</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class="location"></p><div id="sidebar-vars" data-name="triple_accel" data-ty="mod" data-relpath="../"></div></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../settings.html"><img src="../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="in-band">Crate <a class="mod" href="">triple_accel</a></span><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../src/triple_accel/lib.rs.html#1-243" title="goto source code">[src]</a></span></h1><div class="docblock"><h1 id="triple_accel" class="section-header"><a href="#triple_accel">triple_accel</a></h1>
+<p>Rust edit distance routines accelerated using SIMD. Supports fast Hamming, Levenshtein,
+restricted Damerau-Levenshtein, etc. distance calculations and string search.</p>
+<p>Although vectorized SIMD code allows for up to 20-30x speedups over their scalar counterparts,
+the difficulty of handling platform-dependent SIMD code makes SIMD routines less attractive.
+The goal of this library is to provide an easy-to-use abstraction over SIMD edit distance routines
+that fall back to scalar routines if the target CPU architecture is not supported.
+Additionally, all limitations and tradeoffs of the edit distance routines should be provided upfront
+so the user knows exactly what to expect.
+Finally, this library should lead to performance boosts on both short and longer strings, so it
+can be used for a variety of tasks, from bioinformatics to natural language processing.
+<code>triple_accel</code> is very lightweight: it only has dependencies on other crates for benchmarking.
+It can be built on machines without CPUs that have AVX2 or SSE4.1 support. It can also run on
+machines without SIMD support by automatically using scalar alternatives.</p>
+<h2 id="features" class="section-header"><a href="#features">Features</a></h2>
+<p>This library provides routines for both searching for some needle string in a haystack string
+and calculating the edit distance between two strings. Hamming distance (mismatches only),
+Levenshtein distance (mismatches + gaps), and restricted Damerau-Levenshtein distance
+(transpositions + mismatches + gaps) are supported, along with arbitrary edit costs. This
+library provides a simple interface, in addition to powerful lower-level control over the edit
+distance calculations.</p>
+<p>At runtime, the implementation for a certain algorithm is selected based on CPU support, going
+down the list:</p>
+<ol>
+<li>Vectorized implementation with 256-bit AVX vectors, if AVX2 is supported.</li>
+<li>Vectorized implementation with 128-bit SSE vectors, if SSE4.1 is supported.</li>
+<li>Scalar implementation.</li>
+</ol>
+<p>Currently, vectorized SIMD implementations are only available for x86 or x86-64 CPUs. However,
+after compiling this library on a machine that supports those SIMD intrinsics, the library can
+be used on other machines.
+Additionally, the internal data structure for storing vectors and the bit width of the values
+in the vectors are selected at runtime for maximum efficiency and accuracy, given the lengths
+of the input strings.</p>
+<h2 id="limitations" class="section-header"><a href="#limitations">Limitations</a></h2>
+<p>Due to the use of SIMD intrinsics, only binary strings that are represented with <code>u8</code> bytes
+are supported. Unicode strings are not currently supported.</p>
+<h2 id="notation" class="section-header"><a href="#notation">Notation</a></h2>
+<p>Quick notation notes that will often appear in the code/documentation:</p>
+<ul>
+<li><code>k</code> - the number of edits that are allowed</li>
+<li><code>a</code> and <code>b</code> - any two strings; this is usually used for edit distance routines</li>
+<li><code>needle</code> and <code>haystack</code> - any two strings; we want to search for where needle appears in
+haystack</li>
+</ul>
+<h2 id="examples" class="section-header"><a href="#examples">Examples</a></h2>
+<p>Calculating the Hamming distance (number of mismatches) between two strings is extremely simple:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">triple_accel</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="string">b&quot;abcd&quot;</span>;
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="string">b&quot;abcc&quot;</span>;
+
+<span class="kw">let</span> <span class="ident">dist</span> <span class="op">=</span> <span class="ident">hamming</span>(<span class="ident">a</span>, <span class="ident">b</span>);
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">dist</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>);</pre></div>
+<p>By default, SIMD will be used if possible. Similarly, we can easily calculate the Levenshtein
+distance (character mismatches and gaps all have a cost of 1) between two strings with the
+following code:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">triple_accel</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="string">b&quot;abc&quot;</span>;
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="string">b&quot;abcd&quot;</span>;
+
+<span class="kw">let</span> <span class="ident">dist</span> <span class="op">=</span> <span class="ident">levenshtein_exp</span>(<span class="ident">a</span>, <span class="ident">b</span>);
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">dist</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>);</pre></div>
+<p>This uses exponential search to estimate the number of edits between <code>a</code> and <code>b</code>, which makes it
+more efficient than the alternative <code>levenshtein</code> function when the number of edits between <code>a</code>
+and <code>b</code> is low.</p>
+<p>In addition to edit distance routines, <code>triple_accel</code> also provides search routines. These
+routines return an iterator over matches that indicate where the <code>needle</code> string matches the <code>haystack</code>
+string. <code>triple_accel</code> will attempt to maximize the length of matches that end at the same position and
+remove shorter matches when some matches fully overlap.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">triple_accel</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">needle</span> <span class="op">=</span> <span class="string">b&quot;helllo&quot;</span>;
+<span class="kw">let</span> <span class="ident">haystack</span> <span class="op">=</span> <span class="string">b&quot;hello world&quot;</span>;
+
+<span class="kw">let</span> <span class="ident">matches</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">Match</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">levenshtein_search</span>(<span class="ident">needle</span>, <span class="ident">haystack</span>).<span class="ident">collect</span>();
+<span class="comment">// note: start index is inclusive, end index is exclusive!</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">matches</span> <span class="op">=</span><span class="op">=</span> <span class="macro">vec</span><span class="macro">!</span>[<span class="ident">Match</span>{<span class="ident">start</span>: <span class="number">0</span>, <span class="ident">end</span>: <span class="number">5</span>, <span class="ident">k</span>: <span class="number">1</span>}]);</pre></div>
+<p>Sometimes, it is necessary to use the slightly lower level, but also more powerful routines
+that <code>triple_accel</code> provides. For example, it is possible to allow transpositions (character swaps)
+that have a cost of 1, in addition to mismatches and gaps:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered">
+<span class="kw">use</span> <span class="ident">triple_accel</span>::<span class="ident">levenshtein</span>::<span class="kw-2">*</span>;
+
+<span class="kw">let</span> <span class="ident">a</span> <span class="op">=</span> <span class="string">b&quot;abcd&quot;</span>;
+<span class="kw">let</span> <span class="ident">b</span> <span class="op">=</span> <span class="string">b&quot;abdc&quot;</span>;
+<span class="kw">let</span> <span class="ident">k</span> <span class="op">=</span> <span class="number">2</span>; <span class="comment">// upper bound on allowed cost</span>
+<span class="kw">let</span> <span class="ident">trace_on</span> <span class="op">=</span> <span class="bool-val">false</span>; <span class="comment">// return edit traceback?</span>
+
+<span class="kw">let</span> <span class="ident">dist</span> <span class="op">=</span> <span class="ident">levenshtein_simd_k_with_opts</span>(<span class="ident">a</span>, <span class="ident">b</span>, <span class="ident">k</span>, <span class="ident">trace_on</span>, <span class="ident">RDAMERAU_COSTS</span>);
+<span class="comment">// note: dist may be None if a and b do not match within a cost of k</span>
+<span class="macro">assert</span><span class="macro">!</span>(<span class="ident">dist</span>.<span class="ident">unwrap</span>().<span class="number">0</span> <span class="op">=</span><span class="op">=</span> <span class="number">1</span>);</pre></div>
+<p>Don't let the name of the function fool you! <code>levenshtein_simd_k_with_opts</code> will still fall back to
+the scalar implementation if AVX2 or SSE4.1 support is not available. It just prefers to use SIMD
+where possible.</p>
+<p>For most common cases, the re-exported functions are enough, and the low level functions do not
+have to be used directly.</p>
+</div><h2 id="reexports" class="section-header"><a href="#reexports">Re-exports</a></h2>
+<table><tr><td><code>pub use hamming::<a class="fn" href="../triple_accel/hamming/fn.hamming.html" title="fn triple_accel::hamming::hamming">hamming</a>;</code></td></tr><tr><td><code>pub use hamming::<a class="fn" href="../triple_accel/hamming/fn.hamming_search.html" title="fn triple_accel::hamming::hamming_search">hamming_search</a>;</code></td></tr><tr><td><code>pub use levenshtein::<a class="fn" href="../triple_accel/levenshtein/fn.levenshtein.html" title="fn triple_accel::levenshtein::levenshtein">levenshtein</a>;</code></td></tr><tr><td><code>pub use levenshtein::<a class="fn" href="../triple_accel/levenshtein/fn.rdamerau.html" title="fn triple_accel::levenshtein::rdamerau">rdamerau</a>;</code></td></tr><tr><td><code>pub use levenshtein::<a class="fn" href="../triple_accel/levenshtein/fn.levenshtein_exp.html" title="fn triple_accel::levenshtein::levenshtein_exp">levenshtein_exp</a>;</code></td></tr><tr><td><code>pub use levenshtein::<a class="fn" href="../triple_accel/levenshtein/fn.rdamerau_exp.html" title="fn triple_accel::levenshtein::rdamerau_exp">rdamerau_exp</a>;</code></td></tr><tr><td><code>pub use levenshtein::<a class="fn" href="../triple_accel/levenshtein/fn.levenshtein_search.html" title="fn triple_accel::levenshtein::levenshtein_search">levenshtein_search</a>;</code></td></tr></table><h2 id="modules" class="section-header"><a href="#modules">Modules</a></h2>
+<table><tr class="module-item"><td><a class="mod" href="hamming/index.html" title="triple_accel::hamming mod">hamming</a></td><td class="docblock-short"><p>This module provides many Hamming distance routines.</p>
+</td></tr><tr class="module-item"><td><a class="mod" href="levenshtein/index.html" title="triple_accel::levenshtein mod">levenshtein</a></td><td class="docblock-short"><p>This module provides many Levenshtein distance routines.</p>
+</td></tr></table><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.Edit.html" title="triple_accel::Edit struct">Edit</a></td><td class="docblock-short"><p>A struct representing a sequence of edits of the same type.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.Match.html" title="triple_accel::Match struct">Match</a></td><td class="docblock-short"><p>A struct that describes a single matching location.</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.EditType.html" title="triple_accel::EditType enum">EditType</a></td><td class="docblock-short"><p>An enum describing possible edit operations.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.SearchType.html" title="triple_accel::SearchType enum">SearchType</a></td><td class="docblock-short"><p>An enum representing whether to return all matches or just the best matches.</p>
+</td></tr></table><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<table><tr class="module-item"><td><a class="fn" href="fn.alloc_str.html" title="triple_accel::alloc_str fn">alloc_str</a></td><td class="docblock-short"><p>This creates a vector with the alignment and padding for <code>u128</code> values, and
+then convert it to a vector of <code>u8</code> values that is returned.</p>
+</td></tr><tr class="module-item"><td><a class="fn" href="fn.fill_str.html" title="triple_accel::fill_str fn">fill_str</a></td><td class="docblock-short"><p>Directly copy from the a source <code>u8</code> slice to a destination <code>u8</code> slice.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><div id="rustdoc-vars" data-root-path="../" data-current-crate="triple_accel"></div>
+    <script src="../main.js"></script><script defer src="../search-index.js"></script></body></html>

@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["gc","GC counter over an `IntoTextIterator` object. Complexity: O(n), where n is the length of the sequence."],["orf","One-way open reading frame (ORF) finder algorithm."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Pos","Position on a particular, named sequence (e.g. a chromosome)."]],"type":[["SeqPosStranded","Default stranded sequence position on a reference sequence named by a `String`."],["SeqPosUnstranded","Default unstranded sequence position on a reference sequence named by a `String`"]]});

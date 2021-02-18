@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["MIN_SCORE",""]],"enum":[["AlignmentOperation",""]],"struct":[["Aligner","A partially ordered aligner builder"],["Alignment",""],["Poa","A partially ordered alignment graph"],["Traceback",""],["TracebackCell",""]],"type":[["POAGraph",""]]});

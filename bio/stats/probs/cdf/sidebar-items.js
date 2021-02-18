@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["CDF","Implementation of a cumulative distribution function as a vector of `Entry`s."],["Entry","An `Entry` associates a `LogProb` with a value on an ordered axis. It can for example be used to set up probability mass functions or cumulative distribution functions (CDF)."]],"type":[["CDFPMFIter",""]]});

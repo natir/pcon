@@ -1,0 +1,4 @@
+(function() {var implementors = {};
+implementors["bgzip"] = [{"text":"impl <a class=\"trait\" href=\"failure/trait.Fail.html\" title=\"trait failure::Fail\">Fail</a> for <a class=\"enum\" href=\"bgzip/enum.BGZFErrorKind.html\" title=\"enum bgzip::BGZFErrorKind\">BGZFErrorKind</a>","synthetic":false,"types":["bgzip::error::BGZFErrorKind"]},{"text":"impl <a class=\"trait\" href=\"failure/trait.Fail.html\" title=\"trait failure::Fail\">Fail</a> for <a class=\"struct\" href=\"bgzip/struct.BGZFError.html\" title=\"struct bgzip::BGZFError\">BGZFError</a>","synthetic":false,"types":["bgzip::error::BGZFError"]}];
+implementors["failure"] = [];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()

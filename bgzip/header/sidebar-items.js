@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["DEFLATE",""],["FILESYSTEM_FAT",""],["FILESYSTEM_NTFS",""],["FILESYSTEM_UNIX",""],["FILESYSTEM_UNKNOWN",""],["FLAG_FCOMMENT",""],["FLAG_FEXTRA",""],["FLAG_FHCRC",""],["FLAG_FNAME",""],["FLAG_FTEXT",""]],"struct":[["BGZFHeader",""],["ExtraField",""]]});
