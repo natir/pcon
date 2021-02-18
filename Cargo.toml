@@ -21,7 +21,7 @@ cocktail        = { git = "https://github.com/natir/cocktail.git" }
 rayon           = "1"
 
 # serialization
-bitvec		= "0.19"
+bitvec		= "0.21"
 byteorder       = "1"
 
 # input output management
