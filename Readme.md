@@ -1,6 +1,9 @@
 # Prompt COuNter, is a short kmer counter
 
-[![Build Status](https://travis-ci.org/natir/pcon.svg?branch=master)](https://travis-ci.org/natir/pcon) [Documentation](https://natir.github.io/pcon/pcon)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/natir/pcon/blob/master/LICENSE)
+![CI](https://github.com/natir/pcon/workflows/CI/badge.svg)
+[![Documentation](https://github.com/natir/pcon/workflows/Documentation/badge.svg)](https://natir.github.io/pcon/pcon)
+[![CodeCov](https://codecov.io/gh/natir/pcon/branch/master/graph/badge.svg)](https://codecov.io/gh/natir/pcon)
 
 pcon is a fast kmer counter but with some important limitations:
 
@@ -62,3 +65,7 @@ make
 ```
 
 Dynamic and static library is avaible her `target/release/libcocktail.{a|so}` header is her `dist/c/cocktail.h`. To build a C programe you need to add `-lpthread -lm -ldl` durring linking phase.
+
+## Minimum supported Rust version
+
+Currently the minimum supported Rust version is 1.45.0.
