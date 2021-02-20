@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["GffType","`GffType`"]],"struct":[["Reader","A GFF reader."],["Record","A GFF record"],["Records","An iterator over the records of a GFF file."],["Writer","A GFF writer."]]});

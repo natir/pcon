@@ -1,1 +1,0 @@
-initSidebarItems({"mod":[["evidence",""]],"struct":[["BayesFactor","A newtype for Bayes factors."]]});

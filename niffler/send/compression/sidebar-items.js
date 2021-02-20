@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Format","`Format` represent a compression format of a file. Currently Gzip, Bzip, Lzma or No are supported."]]});

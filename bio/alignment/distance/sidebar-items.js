@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["hamming","Compute the Hamming distance between two strings. Complexity: O(n)."],["levenshtein","Compute the Levenshtein (or Edit) distance between two strings. Complexity: O(n * m) with n and m being the length of the given texts."]],"mod":[["simd","String distance routines accelerated with Single Instruction Multiple Data (SIMD) intrinsics."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["BGZFErrorKind","A BGZF error kind."]],"mod":[["header","BGZ header parser"],["tabix","Tabix file parser. (This module is alpha state.)"]],"struct":[["BGZFError","A BGZF error"],["BGZFReader","A BGZF reader"],["BGZFWriter","A BGZF writer"]]});

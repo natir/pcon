@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Iter","Iterator over the elements of a `SmallInts` sequence."],["SmallInts","Data structure for storing a sequence of small integers with few big ones space efficiently while supporting classical vector operations."]]});

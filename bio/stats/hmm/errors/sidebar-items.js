@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["Error",""]],"struct":[["InvalidDimension","SNAFU context selector for the `Error::InvalidDimension` variant"]],"type":[["Result",""]]});

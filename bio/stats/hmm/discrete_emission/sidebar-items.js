@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["Model","Implementation of a `hmm::Model` with emission values from discrete distributions."]]});

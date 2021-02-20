@@ -1,1 +1,0 @@
-initSidebarItems({"enum":[["SplicingError",""]],"struct":[["Spliced","Spliced sequence annotation on a particular, named sequence (e.g. a chromosome)."]],"type":[["SeqSplicedStranded","Default stranded sequence position on a reference sequence named by a `String`."],["SeqSplicedUnstranded","Default unstranded sequence position on a reference sequence named by a `String`"]]});

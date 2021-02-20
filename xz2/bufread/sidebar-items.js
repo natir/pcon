@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["XzDecoder","A xz decoder, or decompressor."],["XzEncoder","An xz encoder, or compressor."]]});

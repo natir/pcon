@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["AnnotMap","Efficient container for querying annotations, using `HashMap` and `IntervalTree`."],["AnnotMapIterator","An iterator over annotation entries (of type `Entry`) in a `AnnotMap`."],["Entry","A view of one annotation in a `AnnotMap` container."]]});

@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["reg2bin",""]],"struct":[["Tabix",""],["TabixBin",""],["TabixChunk",""],["TabixSequence",""]]});

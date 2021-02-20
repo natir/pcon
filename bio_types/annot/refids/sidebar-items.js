@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["RefIDSet","Data structure for interning sequence names efficiently."]]});

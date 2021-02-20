@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["linspace","Return an iterator of evenly spaced floats."]],"mod":[["structs","The concrete iterator structs."]],"trait":[["ItertoolsNum","Extension trait for iterators: extra adaptors and methods for numerical iterators"]]});

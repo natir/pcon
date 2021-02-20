@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["unit_cost","Default cost function (unit costs)."]],"struct":[["Matches","Iterator over pairs of end positions and distance of matches."],["Ukkonen","Ukkonens algorithm."]]});

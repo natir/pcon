@@ -1,1 +1,0 @@
-initSidebarItems({"fn":[["alphabet","Returns the standard protein alphabet, containing the 20 common amino acids."]]});
