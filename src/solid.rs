@@ -138,8 +138,10 @@ impl Solid {
             .with_context(|| Error::IO(ErrorDurringRead))
             .with_context(|| anyhow!("Error durring deserialize solid"))?;
 
+        // >> 3 <-> divide by 8
         let mut tmp =
             vec![0u8; (cocktail::kmer::get_hash_space_size(k) >> 3) as usize].into_boxed_slice();
+
         reader
             .read_exact(&mut tmp)
             .with_context(|| Error::IO(ErrorDurringRead))
