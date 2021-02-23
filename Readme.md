@@ -10,7 +10,7 @@ pcon is a fast kmer counter but with some important limitations:
 - only fasta file
 - k can't be upper than 31 (k is silently reassign to 31)
 - if k is even k is reduced to the nearest lower odd number
-- ssik allocate 2^(k * 2 - 1) / 2 bytes (for k 19 ssik required 69 go)
+- pcon allocate 2^(k * 2 - 1) / 2 bytes (for k 19 pcon required 69 go)
 - max abundance is 15
 - if data contains something other than A C T or G is consider like A C T or G (check the 2nd and the 3rd bit of lettre, N was consider as G for exemple)
 

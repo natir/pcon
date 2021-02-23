@@ -116,12 +116,12 @@ impl Solid {
         writer
             .write_u8(self.k)
             .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("Error durring serialize counter"))?;
+            .with_context(|| anyhow!("Error durring serialize solid"))?;
 
         writer
             .write_all(self.solid.as_slice())
             .with_context(|| Error::IO(ErrorDurringWrite))
-            .with_context(|| anyhow!("Error durring serialize counter"))?;
+            .with_context(|| anyhow!("Error durring serialize solid"))?;
 
         Ok(())
     }
@@ -136,14 +136,14 @@ impl Solid {
         let k = reader
             .read_u8()
             .with_context(|| Error::IO(ErrorDurringRead))
-            .with_context(|| anyhow!("Error durring deserialize counter"))?;
+            .with_context(|| anyhow!("Error durring deserialize solid"))?;
 
         let mut tmp =
             vec![0u8; (cocktail::kmer::get_hash_space_size(k) >> 3) as usize].into_boxed_slice();
         reader
             .read_exact(&mut tmp)
             .with_context(|| Error::IO(ErrorDurringRead))
-            .with_context(|| anyhow!("Error durring deserialize counter"))?;
+            .with_context(|| anyhow!("Error durring deserialize solid"))?;
 
         Ok(Self {
             k,
