@@ -14,44 +14,40 @@ pcon is a fast kmer counter but with some important limitations:
 - max abundance is 15
 - if data contains something other than A C T or G is consider like A C T or G (check the 2nd and the 3rd bit of lettre, N was consider as G for exemple)
 
-## Instalation
+- [Instalation](#instalation)
+- [Usage](#usage)
+- [Minimum supported Rust version](#minimum-supported-rust-version)
+- [Citation](#citation)
 
-### With source
+
+## Instalation
 
 If you haven't a rust environment you can use [rustup](https://rustup.rs/) or your package manager.
 
-When you have a rust environment setup you can run this command:
+### With cargo
+
+Recommended solution.
+
+```
+cargo install --git https://github.com/natir/br.git
+```
+
+### With source
 
 ```
 git clone https://github.com/natir/pcon.git
 cd pcon
-
-cargo build
-cargo test
-cargo install
+cargo install --path .
 ```
 
-## Usage
-
-pcon contains 2 subcommand:
-
-- count: count kmer in fasta input and write result in binary format
-- dump: convert pcon binary format in csv format, presence absence bitfield or kmer spectrum
-
-## Binding
-
-### Python
-
-You need [rust toolchain setup on your system](https://rustup.rs/)
+### Python binding
 
 Give this to pip:
 ```
-git+https://github.com/natir/pcon.git#egg=cocktail&subdirectory=dist/python
+git+https://github.com/natir/pcon.git#subdirectory=dist/python
 ```
 
-### C
-
-You need [rust toolchain setup on your system](https://rustup.rs/)
+### C binding
 
 ```
 git clone https://github.com/natir/pcon.git
@@ -66,6 +62,17 @@ make
 
 Dynamic and static library is avaible her `target/release/libcocktail.{a|so}` header is her `dist/c/cocktail.h`. To build a C programe you need to add `-lpthread -lm -ldl` durring linking phase.
 
+## Usage
+
+pcon contains 2 subcommand:
+
+- count: count kmer in fasta input and write result in binary format
+- dump: convert pcon binary format in csv format, presence absence bitfield or kmer spectrum
+
 ## Minimum supported Rust version
 
 Currently the minimum supported Rust version is 1.45.0.
+
+## Citation
+
+WIP
