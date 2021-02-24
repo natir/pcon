@@ -528,8 +528,6 @@
 <span id="525">525</span>
 <span id="526">526</span>
 <span id="527">527</span>
-<span id="528">528</span>
-<span id="529">529</span>
 </pre><div class="example-wrap"><pre class="rust ">
 <span class="comment">/*
 Copyright (c) 2020 Pierre Marijon &lt;pmarijon@mpi-inf.mpg.de&gt;
@@ -595,7 +593,7 @@ SOFTWARE.
     <span class="ident">solid_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">spectrum_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">abundance</span>: <span class="ident">counter</span>::<span class="ident">Count</span>,
-) <span class="op">-</span><span class="op">&gt;</span> () {
+) {
     <span class="ident">rayon</span>::<span class="ident">scope</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> {
         <span class="ident">s</span>.<span class="ident">spawn</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">output</span>) <span class="op">=</span> <span class="ident">bin_path</span>.<span class="ident">clone</span>() {
@@ -677,8 +675,6 @@ SOFTWARE.
             }
         });
     });
-
-    ()
 }
 
 <span class="doccomment">/// Write in the given instance of io::Write the count in `counter` in binary format.</span>
