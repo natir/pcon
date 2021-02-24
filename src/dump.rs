@@ -50,7 +50,7 @@ pub fn dump(params: cli::SubCommandDump) -> Result<()> {
         params.solid,
         params.spectrum,
         params.abundance,
-    )?;
+    );
 
     Ok(())
 }
@@ -62,7 +62,7 @@ pub(crate) fn dump_worker(
     solid_path: Option<String>,
     spectrum_path: Option<String>,
     abundance: counter::Count,
-) -> Result<()> {
+) {
     rayon::scope(|s| {
         s.spawn(|_| {
             if let Some(output) = bin_path.clone() {
@@ -144,8 +144,6 @@ pub(crate) fn dump_worker(
             }
         });
     });
-
-    Ok(())
 }
 
 /// Write in the given instance of io::Write the count in `counter` in binary format.

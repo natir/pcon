@@ -63,7 +63,7 @@ pub fn count(params: cli::SubCommandCount) -> Result<()> {
         params.solid,
         params.spectrum,
         params.abundance,
-    )?;
+    );
 
     Ok(())
 }
