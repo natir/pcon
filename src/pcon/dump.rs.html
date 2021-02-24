@@ -583,7 +583,7 @@ SOFTWARE.
         <span class="ident">params</span>.<span class="ident">solid</span>,
         <span class="ident">params</span>.<span class="ident">spectrum</span>,
         <span class="ident">params</span>.<span class="ident">abundance</span>,
-    )<span class="question-mark">?</span>;
+    );
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -595,7 +595,7 @@ SOFTWARE.
     <span class="ident">solid_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">spectrum_path</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
     <span class="ident">abundance</span>: <span class="ident">counter</span>::<span class="ident">Count</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+) <span class="op">-</span><span class="op">&gt;</span> () {
     <span class="ident">rayon</span>::<span class="ident">scope</span>(<span class="op">|</span><span class="ident">s</span><span class="op">|</span> {
         <span class="ident">s</span>.<span class="ident">spawn</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> {
             <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">output</span>) <span class="op">=</span> <span class="ident">bin_path</span>.<span class="ident">clone</span>() {
@@ -678,7 +678,7 @@ SOFTWARE.
         });
     });
 
-    <span class="prelude-val">Ok</span>(())
+    ()
 }
 
 <span class="doccomment">/// Write in the given instance of io::Write the count in `counter` in binary format.</span>
