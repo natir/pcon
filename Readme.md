@@ -3,7 +3,7 @@
 [![Documentation](https://github.com/natir/pcon/workflows/Documentation/badge.svg)](https://natir.github.io/pcon/pcon)
 [![CodeCov](https://codecov.io/gh/natir/pcon/branch/master/graph/badge.svg)](https://codecov.io/gh/natir/pcon)
 
-# Prompt COuNter, is a short kmer counter
+# Prompt COuNter, a short kmer counter  🧬 💻
 
 pcon is a fast kmer counter but with some limitations:
 - only fasta file

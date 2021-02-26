@@ -32,6 +32,7 @@ use crate::*;
 /// Based on Kmergenie we assume kmer spectrum is a mixture of Pareto law and some Gaussians law
 /// Erroneous kmer follow Pareto law, Gaussians law represente true and repetitive kmer
 /// We use this property to found the threshold to remove many Erroneous kmer and keep Many True kmer
+#[derive(Debug, PartialEq)]
 pub enum ThresholdMethod {
     /// The first local minimum match with the intersection of Pareto and Gaussians
     FirstMinimum,
