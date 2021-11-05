@@ -20,7 +20,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#[derive(clap::Clap, Debug)]
+#[derive(clap::Parser, Debug)]
 #[clap(
     version = "0.1",
     author = "Pierre Marijon <pmarijon@mpi-inf.mpg.de>",
@@ -46,13 +46,13 @@ pub struct Command {
     pub verbosity: i8,
 }
 
-#[derive(clap::Clap, Debug)]
+#[derive(clap::Parser, Debug)]
 pub enum SubCommand {
     Count(SubCommandCount),
     Dump(SubCommandDump),
 }
 
-#[derive(clap::Clap, Debug)]
+#[derive(clap::Parser, Debug)]
 #[clap(about = "Perform kmer count")]
 pub struct SubCommandCount {
     #[clap(short = 'k', long = "kmer-size", about = "Size of kmer size")]
@@ -101,7 +101,7 @@ pub struct SubCommandCount {
     pub spectrum: Option<String>,
 }
 
-#[derive(clap::Clap, Debug)]
+#[derive(clap::Parser, Debug)]
 #[clap(about = "Convert count in usable format")]
 pub struct SubCommandDump {
     #[clap(short = 'i', long = "input", about = "Path to count file")]
