@@ -1,3 +1,0 @@
-(function() {var implementors = {};
-implementors["pcon"] = [{"text":"impl Clap for Command","synthetic":false,"types":[]},{"text":"impl Clap for SubCommand","synthetic":false,"types":[]},{"text":"impl Clap for SubCommandCount","synthetic":false,"types":[]},{"text":"impl Clap for SubCommandDump","synthetic":false,"types":[]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
