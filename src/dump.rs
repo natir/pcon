@@ -188,7 +188,7 @@ pub fn solid<W>(writer: W, counter: &counter::Counter, abundance: counter::Count
 where
     W: std::io::Write,
 {
-    let solid = solid::Solid::from_counter(&counter, abundance);
+    let solid = solid::Solid::from_counter(counter, abundance);
 
     solid
         .serialize(writer)

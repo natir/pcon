@@ -152,7 +152,7 @@ impl Counter {
                         flate2::write::GzEncoder::new(&mut out_buffer, flate2::Compression::fast());
 
                     writer
-                        .write_all(&in_buffer)
+                        .write_all(in_buffer)
                         .with_context(|| Error::IO(ErrorDurringWrite))
                         .with_context(|| anyhow!("Error durring serialize counter"))?;
                 }
