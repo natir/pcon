@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["SubCommand",""]],"fn":[["check_count_param",""],["check_dump_param",""],["i82level",""]],"struct":[["Command",""],["SubCommandCount",""],["SubCommandDump",""]]});
+initSidebarItems({"enum":[["SubCommand",""]],"fn":[["check_count_param",""],["check_dump_param",""],["i82level",""]],"struct":[["Command","Prompt COuNter is short kmer counter"],["SubCommandCount","Perform kmer count"],["SubCommandDump","Convert count in usable format"]]});

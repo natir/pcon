@@ -141,37 +141,6 @@
 <span id="141">141</span>
 <span id="142">142</span>
 <span id="143">143</span>
-<span id="144">144</span>
-<span id="145">145</span>
-<span id="146">146</span>
-<span id="147">147</span>
-<span id="148">148</span>
-<span id="149">149</span>
-<span id="150">150</span>
-<span id="151">151</span>
-<span id="152">152</span>
-<span id="153">153</span>
-<span id="154">154</span>
-<span id="155">155</span>
-<span id="156">156</span>
-<span id="157">157</span>
-<span id="158">158</span>
-<span id="159">159</span>
-<span id="160">160</span>
-<span id="161">161</span>
-<span id="162">162</span>
-<span id="163">163</span>
-<span id="164">164</span>
-<span id="165">165</span>
-<span id="166">166</span>
-<span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
 </pre><pre class="rust"><code><span class="comment">/*
 Copyright (c) 2020 Pierre Marijon &lt;pmarijon@mpi-inf.mpg.de&gt;
 
@@ -195,28 +164,18 @@ SOFTWARE.
  */</span>
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">clap::Parser</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">clap</span>(
-    <span class="ident">version</span> <span class="op">=</span> <span class="string">&quot;0.1&quot;</span>,
-    <span class="ident">author</span> <span class="op">=</span> <span class="string">&quot;Pierre Marijon &lt;pmarijon@mpi-inf.mpg.de&gt;&quot;</span>,
-    <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Prompt COuNter is short kmer counter&quot;</span>
-)]</span>
+<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">version</span> <span class="op">=</span> <span class="string">&quot;0.1&quot;</span>, <span class="ident">author</span> <span class="op">=</span> <span class="string">&quot;Pierre Marijon &lt;pmarijon@mpi-inf.mpg.de&gt;&quot;</span>)]</span>
+<span class="doccomment">/// Prompt COuNter is short kmer counter</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Command</span> {
     <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">subcommand</span>)]</span>
     <span class="kw">pub</span> <span class="ident">subcmd</span>: <span class="ident">SubCommand</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;t&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;threads&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Number of thread use by pcon to count, 0 use all avaible core, default value 0&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;t&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;threads&quot;</span>)]</span>
+    <span class="doccomment">/// Number of thread use by pcon to count, 0 use all avaible core, default value 0</span>
     <span class="kw">pub</span> <span class="ident">threads</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;v&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;verbosity&quot;</span>,
-        <span class="ident">parse</span>(<span class="ident">from_occurrences</span>),
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;v&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;verbosity&quot;</span>, <span class="ident">parse</span>(<span class="ident">from_occurrences</span>))]</span>
+    <span class="doccomment">/// verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored</span>
     <span class="kw">pub</span> <span class="ident">verbosity</span>: <span class="ident">i8</span>,
 }
 
@@ -227,86 +186,65 @@ SOFTWARE.
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">clap::Parser</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Perform kmer count&quot;</span>)]</span>
+<span class="doccomment">/// Perform kmer count</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SubCommandCount</span> {
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;k&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;kmer-size&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Size of kmer size&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;k&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;kmer-size&quot;</span>)]</span>
+    <span class="doccomment">/// Size of kmer</span>
     <span class="kw">pub</span> <span class="ident">kmer</span>: <span class="ident">u8</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;i&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;inputs&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path to inputs&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;i&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;inputs&quot;</span>)]</span>
+    <span class="doccomment">/// Path to inputs</span>
     <span class="kw">pub</span> <span class="ident">inputs</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;o&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;output&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count are store in binary format&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;o&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;output&quot;</span>)]</span>
+    <span class="doccomment">/// &quot;Path where count are store in binary format&quot;</span>
     <span class="kw">pub</span> <span class="ident">output</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;b&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;record_buffer&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Number of sequence record load in buffer, default 8192&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;b&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;record_buffer&quot;</span>)]</span>
+    <span class="doccomment">/// Number of sequence record load in buffer, default 8192</span>
     <span class="kw">pub</span> <span class="ident">record_buffer</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">usize</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;a&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;abundance&quot;</span>,
-        <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;0&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Minimal abundance&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;a&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;abundance&quot;</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;0&quot;</span>)]</span>
+    <span class="doccomment">/// Minimal abundance</span>
     <span class="kw">pub</span> <span class="ident">abundance</span>: <span class="ident"><span class="kw">crate</span>::counter::Count</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;c&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;csv&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count is write in csv&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;c&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;csv&quot;</span>)]</span>
+    <span class="doccomment">/// Path where count is write in csv</span>
     <span class="kw">pub</span> <span class="ident">csv</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;s&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;solid&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count is write in solid format&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;s&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;solid&quot;</span>)]</span>
+    <span class="doccomment">/// Path where count is write in solid format</span>
     <span class="kw">pub</span> <span class="ident">solid</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;S&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;spectrum&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where kmer spectrum is write&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;S&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;spectrum&quot;</span>)]</span>
+    <span class="doccomment">/// Path where kmer spectrum is write</span>
     <span class="kw">pub</span> <span class="ident">spectrum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">clap::Parser</span>, <span class="ident">Debug</span>)]</span>
-<span class="attribute">#[<span class="ident">clap</span>(<span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Convert count in usable format&quot;</span>)]</span>
+<span class="doccomment">/// Convert count in usable format</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">SubCommandDump</span> {
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;i&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;input&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path to count file&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;i&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;input&quot;</span>, <span class="ident">help</span> <span class="op">=</span> <span class="string">&quot;Path to count file&quot;</span>)]</span>
     <span class="kw">pub</span> <span class="ident">input</span>: <span class="ident">String</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;a&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;abundance&quot;</span>,
-        <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;0&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Minimal abundance&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;a&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;abundance&quot;</span>, <span class="ident">default_value</span> <span class="op">=</span> <span class="string">&quot;0&quot;</span>)]</span>
+    <span class="doccomment">/// Minimal abundance</span>
     <span class="kw">pub</span> <span class="ident">abundance</span>: <span class="ident"><span class="kw">crate</span>::counter::Count</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;c&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;csv&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count is write in csv&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;c&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;csv&quot;</span>)]</span>
+    <span class="doccomment">/// Path where count is write in csv</span>
     <span class="kw">pub</span> <span class="ident">csv</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;s&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;solid&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count is write in solid format&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;s&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;solid&quot;</span>)]</span>
+    <span class="doccomment">/// Path where count is write in solid format</span>
     <span class="kw">pub</span> <span class="ident">solid</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(
-        <span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;S&#39;</span>,
-        <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;spectrum&quot;</span>,
-        <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where kmer spectrum is write&quot;</span>
-    )]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;S&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;spectrum&quot;</span>)]</span>
+    <span class="doccomment">/// Path where kmer spectrum is write</span>
     <span class="kw">pub</span> <span class="ident">spectrum</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 
-    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;b&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;bin&quot;</span>, <span class="ident">about</span> <span class="op">=</span> <span class="string">&quot;Path where count is write in bin&quot;</span>)]</span>
+    <span class="attribute">#[<span class="ident">clap</span>(<span class="ident">short</span> <span class="op">=</span> <span class="string">&#39;b&#39;</span>, <span class="ident">long</span> <span class="op">=</span> <span class="string">&quot;bin&quot;</span>)]</span>
+    <span class="doccomment">/// Path where count is write in bin</span>
     <span class="kw">pub</span> <span class="ident">bin</span>: <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>,
 }
 
