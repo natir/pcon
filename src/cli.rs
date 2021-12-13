@@ -21,28 +21,18 @@ SOFTWARE.
  */
 
 #[derive(clap::Parser, Debug)]
-#[clap(
-    version = "0.1",
-    author = "Pierre Marijon <pmarijon@mpi-inf.mpg.de>",
-    about = "Prompt COuNter is short kmer counter"
-)]
+#[clap(version = "0.1", author = "Pierre Marijon <pmarijon@mpi-inf.mpg.de>")]
+/// Prompt COuNter is short kmer counter
 pub struct Command {
     #[clap(subcommand)]
     pub subcmd: SubCommand,
 
-    #[clap(
-        short = 't',
-        long = "threads",
-        about = "Number of thread use by pcon to count, 0 use all avaible core, default value 0"
-    )]
+    #[clap(short = 't', long = "threads")]
+    /// Number of thread use by pcon to count, 0 use all avaible core, default value 0
     pub threads: Option<usize>,
 
-    #[clap(
-        short = 'v',
-        long = "verbosity",
-        parse(from_occurrences),
-        about = "verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored"
-    )]
+    #[clap(short = 'v', long = "verbosity", parse(from_occurrences))]
+    /// verbosity level also control by environment variable PCON_LOG if flag is set PCON_LOG value is ignored
     pub verbosity: i8,
 }
 
@@ -53,86 +43,65 @@ pub enum SubCommand {
 }
 
 #[derive(clap::Parser, Debug)]
-#[clap(about = "Perform kmer count")]
+/// Perform kmer count
 pub struct SubCommandCount {
-    #[clap(short = 'k', long = "kmer-size", about = "Size of kmer size")]
+    #[clap(short = 'k', long = "kmer-size")]
+    /// Size of kmer
     pub kmer: u8,
 
-    #[clap(short = 'i', long = "inputs", about = "Path to inputs")]
+    #[clap(short = 'i', long = "inputs")]
+    /// Path to inputs
     pub inputs: Vec<String>,
 
-    #[clap(
-        short = 'o',
-        long = "output",
-        about = "Path where count are store in binary format"
-    )]
+    #[clap(short = 'o', long = "output")]
+    /// "Path where count are store in binary format"
     pub output: Option<String>,
 
-    #[clap(
-        short = 'b',
-        long = "record_buffer",
-        about = "Number of sequence record load in buffer, default 8192"
-    )]
+    #[clap(short = 'b', long = "record_buffer")]
+    /// Number of sequence record load in buffer, default 8192
     pub record_buffer: Option<usize>,
 
-    #[clap(
-        short = 'a',
-        long = "abundance",
-        default_value = "0",
-        about = "Minimal abundance"
-    )]
+    #[clap(short = 'a', long = "abundance", default_value = "0")]
+    /// Minimal abundance
     pub abundance: crate::counter::Count,
 
-    #[clap(short = 'c', long = "csv", about = "Path where count is write in csv")]
+    #[clap(short = 'c', long = "csv")]
+    /// Path where count is write in csv
     pub csv: Option<String>,
 
-    #[clap(
-        short = 's',
-        long = "solid",
-        about = "Path where count is write in solid format"
-    )]
+    #[clap(short = 's', long = "solid")]
+    /// Path where count is write in solid format
     pub solid: Option<String>,
 
-    #[clap(
-        short = 'S',
-        long = "spectrum",
-        about = "Path where kmer spectrum is write"
-    )]
+    #[clap(short = 'S', long = "spectrum")]
+    /// Path where kmer spectrum is write
     pub spectrum: Option<String>,
 }
 
 #[derive(clap::Parser, Debug)]
-#[clap(about = "Convert count in usable format")]
+/// Convert count in usable format
 pub struct SubCommandDump {
-    #[clap(short = 'i', long = "input", about = "Path to count file")]
+    #[clap(short = 'i', long = "input", help = "Path to count file")]
     pub input: String,
 
-    #[clap(
-        short = 'a',
-        long = "abundance",
-        default_value = "0",
-        about = "Minimal abundance"
-    )]
+    #[clap(short = 'a', long = "abundance", default_value = "0")]
+    /// Minimal abundance
     pub abundance: crate::counter::Count,
 
-    #[clap(short = 'c', long = "csv", about = "Path where count is write in csv")]
+    #[clap(short = 'c', long = "csv")]
+    /// Path where count is write in csv
     pub csv: Option<String>,
 
-    #[clap(
-        short = 's',
-        long = "solid",
-        about = "Path where count is write in solid format"
-    )]
+    #[clap(short = 's', long = "solid")]
+    /// Path where count is write in solid format
     pub solid: Option<String>,
 
-    #[clap(
-        short = 'S',
-        long = "spectrum",
-        about = "Path where kmer spectrum is write"
-    )]
+    #[clap(short = 'S', long = "spectrum")]
+    /// Path where kmer spectrum is write
     pub spectrum: Option<String>,
 
-    #[clap(short = 'b', long = "bin", about = "Path where count is write in bin")]
+    #[clap(short = 'b', long = "bin")]
+    /// Path where count is write in bin
     pub bin: Option<String>,
 }
 

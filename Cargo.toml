@@ -32,7 +32,7 @@ niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }
 flate2         = "1"
 
 # CLI management
-clap           = "3.0.0-beta.5"
+clap           = { version = "3.0.0-rc.4", features = ["derive"]}
 
 # Logging and error management
 log 	       = "0.4"
