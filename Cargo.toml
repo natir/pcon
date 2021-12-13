@@ -5,9 +5,11 @@ version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2021"
 
+
 [lib]
 name = "pcon"
 crate-type = ["rlib", "cdylib", "staticlib"]
+
 
 [[bin]]
 name = "pcon"
@@ -38,14 +40,19 @@ anyhow         = "1"
 thiserror      = "1"
 env_logger     = "0.9"
 
+
 [dev-dependencies]
 lazy_static	= "1"
 
 
 [profile.release]
-#debug = true # uncomment for profiling
 lto = 'thin'
 opt-level = 3
 overflow-checks = false
 panic = 'abort'
 incremental = false
+
+
+[profile.profiling]
+inherits = "release"
+debug = true
