@@ -97,7 +97,7 @@ SOFTWARE.
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="kw-2">*</span>;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">count</span>(<span class="ident">params</span>: <span class="ident">cli::SubCommandCount</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">count</span>(<span class="ident">params</span>: <span class="ident">cli::SubCommandCount</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">cli::check_count_param</span>(<span class="ident">params</span>)<span class="question-mark">?</span>;
 
     <span class="kw">let</span> <span class="ident">record_buffer</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">len</span>) <span class="op">=</span> <span class="ident">params</span>.<span class="ident">record_buffer</span> {

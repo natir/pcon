@@ -426,23 +426,23 @@ SOFTWARE.
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::solid</span>;
 
 <span class="comment">/* Helper */</span>
-<span class="kw">fn</span> <span class="ident">cstr2string</span>(<span class="ident">c_path</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">std::os::raw::c_char</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">String</span> {
+<span class="kw">fn</span> <span class="ident">cstr2string</span>(<span class="ident">c_path</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">std::os::raw::c_char</span>) -&gt; <span class="ident">String</span> {
     <span class="kw">unsafe</span> { <span class="ident">String::from_utf8_unchecked</span>(<span class="ident">std::ffi::CStr::from_ptr</span>(<span class="ident">c_path</span>).<span class="ident">to_bytes</span>().<span class="ident">to_owned</span>()) }
 }
 
 <span class="kw">fn</span> <span class="ident">reader_from_c_path</span>(
     <span class="ident">c_path</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">std::os::raw::c_char</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std::io::BufReader</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::io::Read</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">error::IO</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std::io::BufReader</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::io::Read</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">error::IO</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">cstr2string</span>(<span class="ident">c_path</span>);
 
     <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">std::fs::File::open</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>,
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::CantOpenFile</span>),
+        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) =&gt; <span class="ident">f</span>,
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::CantOpenFile</span>),
     };
 
     <span class="kw">let</span> <span class="ident">niffler</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">niffler::get_reader</span>(<span class="ident">Box::new</span>(<span class="ident">file</span>)) {
-        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>,
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::ErrorDurringRead</span>),
+        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) =&gt; <span class="ident">f</span>,
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::ErrorDurringRead</span>),
     };
 
     <span class="prelude-val">Ok</span>(<span class="ident">std::io::BufReader::new</span>(<span class="ident">niffler</span>.<span class="number">0</span>))
@@ -450,12 +450,12 @@ SOFTWARE.
 
 <span class="kw">fn</span> <span class="ident">writer_from_c_path</span>(
     <span class="ident">c_path</span>: <span class="kw-2">*</span><span class="kw">const</span> <span class="ident">std::os::raw::c_char</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std::io::BufWriter</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::io::Write</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">error::IO</span><span class="op">&gt;</span> {
+) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">std::io::BufWriter</span><span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span><span class="kw">dyn</span> <span class="ident">std::io::Write</span><span class="op">&gt;</span><span class="op">&gt;</span>, <span class="ident">error::IO</span><span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">path</span> <span class="op">=</span> <span class="ident">cstr2string</span>(<span class="ident">c_path</span>);
 
     <span class="kw">let</span> <span class="ident">file</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">std::fs::File::create</span>(<span class="kw-2">&amp;</span><span class="ident">path</span>) {
-        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">f</span>,
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::CantOpenFile</span>),
+        <span class="prelude-val">Ok</span>(<span class="ident">f</span>) =&gt; <span class="ident">f</span>,
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">IO::CantOpenFile</span>),
     };
 
     <span class="prelude-val">Ok</span>(<span class="ident">std::io::BufWriter::new</span>(<span class="ident">Box::new</span>(<span class="ident">file</span>)))
@@ -464,7 +464,7 @@ SOFTWARE.
 <span class="comment">/* Error section */</span>
 <span class="doccomment">/// Create a new pcon io error it&#39;s init to no error, see [error::IO]. In python corresponding string error is emit.</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_error_new</span>() <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">error::IO</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_error_new</span>() -&gt; <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">error::IO</span> {
     <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">error::IO::NoError</span>))
 }
 
@@ -487,7 +487,7 @@ SOFTWARE.
 <span class="doccomment">/// Create a new Counter. In python binding Counter is an object, new is the default constructor.</span>
 <span class="doccomment">/// See [counter::Counter::new].</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_counter_new</span>(<span class="ident">k</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">counter::Counter</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_counter_new</span>(<span class="ident">k</span>: <span class="ident">u8</span>) -&gt; <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">counter::Counter</span> {
     <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">counter::Counter::new</span>(<span class="ident">k</span>)))
 }
 
@@ -521,8 +521,8 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">reader_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">reader</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="ident">counter</span>.<span class="ident">count_fasta</span>(<span class="ident">r</span>, <span class="ident">read_buffer_len</span>),
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) =&gt; <span class="ident">counter</span>.<span class="ident">count_fasta</span>(<span class="ident">r</span>, <span class="ident">read_buffer_len</span>),
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -549,7 +549,7 @@ SOFTWARE.
 <span class="doccomment">/// In Python it&#39;s get method of Counter object.</span>
 <span class="doccomment">/// See [counter::Counter::get].</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_counter_get</span>(<span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">counter::Count</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_counter_get</span>(<span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) -&gt; <span class="ident">counter::Count</span> {
     <span class="ident">counter</span>.<span class="ident">get</span>(<span class="ident">kmer</span>)
 }
 
@@ -561,7 +561,7 @@ SOFTWARE.
 <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_counter_get_canonic</span>(
     <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>,
     <span class="ident">kmer</span>: <span class="ident">u64</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">counter::Count</span> {
+) -&gt; <span class="ident">counter::Count</span> {
     <span class="ident">counter</span>.<span class="ident">get_canonic</span>(<span class="ident">kmer</span>)
 }
 
@@ -579,11 +579,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">writer_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">writer</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">counter</span>.<span class="ident">serialize</span>(<span class="ident">w</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) =&gt; <span class="kw">match</span> <span class="ident">counter</span>.<span class="ident">serialize</span>(<span class="ident">w</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -601,11 +601,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">reader_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">reader</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">counter::Counter::deserialize</span>(<span class="ident">r</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">c</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">counter</span> <span class="op">=</span> <span class="ident">c</span>,
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringRead</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) =&gt; <span class="kw">match</span> <span class="ident">counter::Counter::deserialize</span>(<span class="ident">r</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">c</span>) =&gt; <span class="kw-2">*</span><span class="ident">counter</span> <span class="op">=</span> <span class="ident">c</span>,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringRead</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -613,7 +613,7 @@ SOFTWARE.
 <span class="doccomment">/// Create a new Solid. In python binding Solid is an object, new is the default constructor.</span>
 <span class="doccomment">/// See [solid::Solid::new]</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_new</span>(<span class="ident">k</span>: <span class="ident">u8</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_new</span>(<span class="ident">k</span>: <span class="ident">u8</span>) -&gt; <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span> {
     <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">solid::Solid::new</span>(<span class="ident">k</span>)))
 }
 
@@ -624,7 +624,7 @@ SOFTWARE.
 <span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_from_counter</span>(
     <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>,
     <span class="ident">abundance</span>: <span class="ident">counter::Count</span>,
-) <span class="op">-</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span> {
+) -&gt; <span class="kw-2">*</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span> {
     <span class="ident">Box::into_raw</span>(<span class="ident">Box::new</span>(<span class="ident">solid::Solid::from_counter</span>(<span class="ident">counter</span>, <span class="ident">abundance</span>)))
 }
 
@@ -666,7 +666,7 @@ SOFTWARE.
 <span class="doccomment">/// In Python it&#39;s get method of Solid object.</span>
 <span class="doccomment">/// See [solid::Solid::get].</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_get</span>(<span class="ident">solid</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_get</span>(<span class="ident">solid</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) -&gt; <span class="ident">bool</span> {
     <span class="ident">solid</span>.<span class="ident">get</span>(<span class="ident">kmer</span>)
 }
 
@@ -675,7 +675,7 @@ SOFTWARE.
 <span class="doccomment">/// In Python it&#39;s get_canonic method of Solid object.</span>
 <span class="doccomment">/// See [solid::Solid::get_canonic].</span>
 <span class="attribute">#[<span class="ident">no_mangle</span>]</span>
-<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_get_canonic</span>(<span class="ident">solid</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="ident">bool</span> {
+<span class="kw">pub</span> <span class="kw">extern</span> <span class="string">&quot;C&quot;</span> <span class="kw">fn</span> <span class="ident">pcon_solid_get_canonic</span>(<span class="ident">solid</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">solid::Solid</span>, <span class="ident">kmer</span>: <span class="ident">u64</span>) -&gt; <span class="ident">bool</span> {
     <span class="ident">solid</span>.<span class="ident">get_canonic</span>(<span class="ident">kmer</span>)
 }
 
@@ -693,11 +693,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">writer_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">writer</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">solid</span>.<span class="ident">serialize</span>(<span class="ident">w</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) =&gt; <span class="kw">match</span> <span class="ident">solid</span>.<span class="ident">serialize</span>(<span class="ident">w</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -715,11 +715,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">reader</span> <span class="op">=</span> <span class="ident">reader_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">reader</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">solid::Solid::deserialize</span>(<span class="ident">r</span>) {
-            <span class="prelude-val">Ok</span>(<span class="ident">s</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">solid</span> <span class="op">=</span> <span class="ident">s</span>,
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringRead</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">r</span>) =&gt; <span class="kw">match</span> <span class="ident">solid::Solid::deserialize</span>(<span class="ident">r</span>) {
+            <span class="prelude-val">Ok</span>(<span class="ident">s</span>) =&gt; <span class="kw-2">*</span><span class="ident">solid</span> <span class="op">=</span> <span class="ident">s</span>,
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringRead</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -738,11 +738,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">writer_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">writer</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">dump::csv</span>(<span class="ident">w</span>, <span class="ident">counter</span>, <span class="ident">abundance</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) =&gt; <span class="kw">match</span> <span class="ident">dump::csv</span>(<span class="ident">w</span>, <span class="ident">counter</span>, <span class="ident">abundance</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -760,11 +760,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">writer_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">writer</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">dump::solid</span>(<span class="ident">w</span>, <span class="ident">counter</span>, <span class="ident">abundance</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) =&gt; <span class="kw">match</span> <span class="ident">dump::solid</span>(<span class="ident">w</span>, <span class="ident">counter</span>, <span class="ident">abundance</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 
@@ -781,11 +781,11 @@ SOFTWARE.
     <span class="kw">let</span> <span class="ident">writer</span> <span class="op">=</span> <span class="ident">writer_from_c_path</span>(<span class="ident">c_path</span>);
 
     <span class="kw">match</span> <span class="ident">writer</span> {
-        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw">match</span> <span class="ident">dump::spectrum</span>(<span class="ident">w</span>, <span class="ident">counter</span>) {
-            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> (),
-            <span class="prelude-val">Err</span>(<span class="kw">_</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
+        <span class="prelude-val">Ok</span>(<span class="ident">w</span>) =&gt; <span class="kw">match</span> <span class="ident">dump::spectrum</span>(<span class="ident">w</span>, <span class="ident">counter</span>) {
+            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; (),
+            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">IO::ErrorDurringWrite</span>,
         },
-        <span class="prelude-val">Err</span>(<span class="ident">e</span>) <span class="op">=</span><span class="op">&gt;</span> <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
+        <span class="prelude-val">Err</span>(<span class="ident">e</span>) =&gt; <span class="kw-2">*</span><span class="ident">io_error</span> <span class="op">=</span> <span class="ident">e</span>,
     }
 }
 

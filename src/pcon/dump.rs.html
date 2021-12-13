@@ -556,7 +556,7 @@ SOFTWARE.
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::error</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="kw">crate</span>::<span class="kw-2">*</span>;
 
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dump</span>(<span class="ident">params</span>: <span class="ident">cli::SubCommandDump</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">dump</span>(<span class="ident">params</span>: <span class="ident">cli::SubCommandDump</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
     <span class="kw">let</span> <span class="ident">params</span> <span class="op">=</span> <span class="ident">cli::check_dump_param</span>(<span class="ident">params</span>)<span class="question-mark">?</span>;
 
     <span class="macro">log::info!</span>(<span class="string">&quot;Start of read of count&quot;</span>);
@@ -674,7 +674,7 @@ SOFTWARE.
 }
 
 <span class="doccomment">/// Write in the given instance of io::Write the count in `counter` in binary format.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">binary</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">binary</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">W</span>: <span class="ident">std::io::Write</span>,
 {
@@ -687,7 +687,7 @@ SOFTWARE.
 
 <span class="doccomment">/// Write in the given instance of io::Write the count in `counter` in csv format.</span>
 <span class="doccomment">/// Only count upper than `abundance` is write.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">csv</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">abundance</span>: <span class="ident">counter::Count</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">csv</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="kw-2">mut</span> <span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">abundance</span>: <span class="ident">counter::Count</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">W</span>: <span class="ident">std::io::Write</span>,
 {
@@ -711,7 +711,7 @@ SOFTWARE.
 }
 
 <span class="doccomment">/// Serialize in the given instance of io::Write an instance of [solid::Solid] build from counts in `counter` upper than `abundance`.</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">solid</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">abundance</span>: <span class="ident">counter::Count</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">solid</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>, <span class="ident">abundance</span>: <span class="ident">counter::Count</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">W</span>: <span class="ident">std::io::Write</span>,
 {
@@ -725,7 +725,7 @@ SOFTWARE.
 }
 
 <span class="doccomment">/// Write in the given instance of io::Write the kmer spectrum from counts in `counter`</span>
-<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spectrum</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>) <span class="op">-</span><span class="op">&gt;</span> <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
+<span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">spectrum</span><span class="op">&lt;</span><span class="ident">W</span><span class="op">&gt;</span>(<span class="ident">writer</span>: <span class="ident">W</span>, <span class="ident">counter</span>: <span class="kw-2">&amp;</span><span class="ident">counter::Counter</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span>
 <span class="kw">where</span>
     <span class="ident">W</span>: <span class="ident">std::io::Write</span>,
 {
