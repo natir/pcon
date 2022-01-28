@@ -33,7 +33,7 @@ use crate::*;
 /// A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid
 pub struct Solid {
     pub k: u8,
-    solid: BitBox<Lsb0, u8>,
+    solid: BitBox<u8, Lsb0>,
 }
 
 impl Solid {
@@ -41,7 +41,7 @@ impl Solid {
     pub fn new(k: u8) -> Self {
         Self {
             k,
-            solid: bitbox![Lsb0, u8; 0; cocktail::kmer::get_hash_space_size(k) as usize],
+            solid: bitbox![u8, Lsb0; 0; cocktail::kmer::get_hash_space_size(k) as usize],
         }
     }
 
@@ -51,7 +51,7 @@ impl Solid {
             &(*(counter.get_raw_count() as *const [counter::AtoCount] as *const [counter::Count]))
         };
 
-        let mut solid = bitbox![Lsb0, u8; 0; counts.len()];
+        let mut solid = bitbox![u8, Lsb0; 0; counts.len()];
 
         unsafe {
             for (index, count) in (*(counter.get_raw_count() as *const [counter::AtoCount]
@@ -98,7 +98,7 @@ impl Solid {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn get_raw_solid(&self) -> &BitBox<Lsb0, u8> {
+    pub(crate) fn get_raw_solid(&self) -> &BitBox<u8, Lsb0> {
         &self.solid
     }
 
@@ -119,7 +119,7 @@ impl Solid {
             .with_context(|| anyhow!("Error durring serialize solid"))?;
 
         writer
-            .write_all(self.solid.as_slice())
+            .write_all(self.solid.as_raw_slice())
             .with_context(|| Error::IO(ErrorDurringWrite))
             .with_context(|| anyhow!("Error durring serialize solid"))?;
 
@@ -182,7 +182,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     fn presence() {
         let solid = get_solid();
 
-        assert_eq!(solid.get_raw_solid().as_slice(), SOLID);
+        assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID);
     }
 
     const SOLID_SET: &[u8] = &[
@@ -200,7 +200,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         solid.set(cocktail::kmer::seq2bit(b"AGGAT"), false);
         solid.set(cocktail::kmer::seq2bit(b"CTCAG"), false);
 
-        assert_eq!(solid.get_raw_solid().as_slice(), SOLID_SET);
+        assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID_SET);
     }
 
     const FASTA_SOLID: &[u8] = &[
@@ -225,6 +225,6 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         let solid = crate::solid::Solid::deserialize(&FASTA_SOLID[..]).unwrap();
 
         assert_eq!(solid.k, 5);
-        assert_eq!(solid.get_raw_solid().as_slice(), SOLID);
+        assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID);
     }
 }
