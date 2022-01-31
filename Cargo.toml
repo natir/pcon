@@ -4,7 +4,7 @@ description = "pcon for Prompt COuNter, is a short kmer counter"
 version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2021"
-
+rust-verison = "1.56"
 
 [lib]
 name = "pcon"
@@ -32,7 +32,7 @@ niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }
 flate2         = "1"
 
 # CLI management
-clap           = { version = "3", features = ["derive"]}
+clap           = { version = "3", features = ["derive"] }
 
 # Logging and error management
 log 	       = "0.4"
@@ -46,13 +46,9 @@ lazy_static	= "1"
 
 
 [profile.release]
+# debug = true ## Uncomment for profile
 lto = 'thin'
 opt-level = 3
 overflow-checks = false
 panic = 'abort'
 incremental = false
-
-
-[profile.profiling]
-inherits = "release"
-debug = true
