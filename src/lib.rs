@@ -29,6 +29,7 @@ pub mod counter;
 pub mod dump;
 pub mod solid;
 pub mod spectrum;
+pub mod static_counter;
 
 pub mod binding;
 

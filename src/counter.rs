@@ -198,6 +198,14 @@ impl Counter {
             count: unsafe { std::mem::transmute::<Box<[Count]>, Box<[AtoCount]>>(tmp) },
         })
     }
+
+    /// Convert a counter in a StaticCounter
+    pub fn into_static(self) -> crate::static_counter::StaticCounter {
+        crate::static_counter::StaticCounter {
+            k: self.k,
+            count: unsafe { std::mem::transmute::<Box<[AtoCount]>, Box<[Count]>>(self.count) },
+        }
+    }
 }
 
 #[cfg(test)]
