@@ -335,6 +335,14 @@
 <span id="334">334</span>
 <span id="335">335</span>
 <span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
 </pre><pre class="rust"><code><span class="comment">/*
 Copyright (c) 2020 Pierre Marijon &lt;pmarijon@mpi-inf.mpg.de&gt;
 
@@ -534,6 +542,14 @@ SOFTWARE.
             <span class="ident">k</span>,
             <span class="ident">count</span>: <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">Count</span>]<span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">AtoCount</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="ident">tmp</span>) },
         })
+    }
+
+    <span class="doccomment">/// Convert a counter in a StaticCounter</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">into_static</span>(<span class="self">self</span>) -&gt; <span class="ident"><span class="kw">crate</span>::static_counter::StaticCounter</span> {
+        <span class="ident"><span class="kw">crate</span>::static_counter::StaticCounter</span> {
+            <span class="ident">k</span>: <span class="self">self</span>.<span class="ident">k</span>,
+            <span class="ident">count</span>: <span class="kw">unsafe</span> { <span class="ident">std::mem::transmute</span>::<span class="op">&lt;</span><span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">AtoCount</span>]<span class="op">&gt;</span>, <span class="ident">Box</span><span class="op">&lt;</span>[<span class="ident">Count</span>]<span class="op">&gt;</span><span class="op">&gt;</span>(<span class="self">self</span>.<span class="ident">count</span>) },
+        }
     }
 }
 

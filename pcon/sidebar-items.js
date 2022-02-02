@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["set_nb_threads","Set the number of threads use by pcon"]],"mod":[["binding",""],["cli",""],["count",""],["counter",""],["dump",""],["error",""],["solid",""],["spectrum",""]]});
+initSidebarItems({"fn":[["set_nb_threads","Set the number of threads use by pcon"]],"mod":[["binding",""],["cli",""],["count",""],["counter",""],["dump",""],["error",""],["solid",""],["spectrum",""],["static_counter",""]]});
