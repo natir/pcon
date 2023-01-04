@@ -1,42 +1,22 @@
-/*
-Copyright (c) 2020 Pierre Marijon <pmarijon@mpi-inf.mpg.de>
+//! Prompt COuNter, a short kmer counter.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+#![warn(missing_docs)]
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+/* std use */
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
+/* crate use */
 
-/* project mod declaration */
+/* project use */
+
+/* mod declaration */
 pub mod cli;
 pub mod error;
 
-pub mod count;
-pub mod counter;
-pub mod dump;
-pub mod solid;
-pub mod spectrum;
-pub mod static_counter;
-
-pub mod binding;
-
-/// Set the number of threads use by pcon
-pub fn set_nb_threads(nb_threads: usize) {
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(nb_threads)
-        .build_global()
-        .unwrap();
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        let result = 2 + 2;
+        assert_eq!(result, 4);
+    }
 }
