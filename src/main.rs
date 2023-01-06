@@ -11,6 +11,8 @@ use clap::Parser as _;
 
 /* project use */
 use pcon::cli;
+use pcon::count;
+use pcon::dump;
 use pcon::error;
 
 fn main() -> error::Result<()> {
@@ -24,9 +26,15 @@ fn main() -> error::Result<()> {
         .verbosity(params.verbosity())
         .timestamp(params.timestamp())
         .init()
-	.context("stderrlog already create a logger")?;
+        .context("stderrlog already create a logger")?;
 
-    log::error!("Hello, word!");
+    #[cfg(feature = "parallel")]
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(params.threads())
+        .build_global()?;
 
-    Ok(())
+    match params.subcommand {
+        cli::SubCommand::Count(params) => count::count(params),
+        cli::SubCommand::Dump(params) => dump::dump(params),
+    }
 }
