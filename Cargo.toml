@@ -17,6 +17,7 @@ license-file = "LICENSE"
 [dependencies]
 cfg-if         = "1.0"
 cocktail       = { git = "https://github.com/natir/cocktail.git" }
+bitvec         = { version = "1" }
 
 # multi-threading management
 rayon          = { version = "1", optional = true }
@@ -35,7 +36,6 @@ stderrlog      = { version = "0.4" }
 # IO management
 niffler        = { version = "2" }
 noodles        = { version = "0.30", features = ["fasta"] }
-
 
 [dev-dependencies]
 criterion      = { version = "0.3" }

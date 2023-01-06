@@ -10,6 +10,7 @@ use rayon::prelude::*;
 
 /// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
 /// Implement only for u8, std::sync::atomic::AtomicU8
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Counter<T> {
     k: u8,
     count: Box<[T]>,
@@ -258,11 +259,8 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         );
 
         assert_eq!(
-            &unsafe {
-                std::mem::transmute::<&Box<[std::sync::atomic::AtomicU8]>, &Box<[u8]>>(
-                    counter.raw(),
-                )
-            }[..],
+            &unsafe { std::mem::transmute::<&[std::sync::atomic::AtomicU8], &[u8]>(counter.raw()) }
+                [..],
             &FASTA_COUNT[..]
         );
     }

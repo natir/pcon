@@ -19,6 +19,10 @@ pub enum Error {
     /// Cost io error
     #[error(transparent)]
     IO(#[from] std::io::Error),
+
+    /// Error if we can't convert a DumpTypeFromStr
+    #[error("Can't convert {0} in DumpType")]
+    DumpTypeFromStr(String),
 }
 
 /// Alias of result

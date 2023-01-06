@@ -72,6 +72,32 @@ pub enum SubCommand {
     Dump(Dump),
 }
 
+/// Choose dump type
+#[derive(Copy, Clone, Eq, Debug, PartialEq, PartialOrd, Ord, clap::ValueEnum)]
+pub enum DumpType {
+    /// Output in bin mode
+    Bin,
+
+    /// Output in csv mode
+    Csv,
+
+    /// Output in solid mode
+    Solid,
+
+    /// Output in spectrum mode
+    Spectrum,
+}
+
+impl std::str::FromStr for DumpType {
+    type Err = error::Error;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            _ => Err(error::Error::DumpTypeFromStr(s.to_string())),
+        }
+    }
+}
+
 /// SubCommand Count
 #[derive(clap::Args, std::fmt::Debug)]
 pub struct Count {
@@ -92,8 +118,8 @@ pub struct Count {
     abundance: Option<u8>,
 
     /// Dump type, default bin
-    #[clap(value_enum)]
-    dump: Option<DumpType>,
+    #[clap(short = 'd', long = "dump")]
+    dump: Option<Vec<DumpType>>,
 
     /// Number of sequence record load in buffer, default 8192
     #[clap(short = 'b', long = "record_buffer")]
@@ -138,8 +164,11 @@ impl Count {
     }
 
     /// Get dump type
-    pub fn dump(&self) -> DumpType {
-        self.dump.unwrap_or(DumpType::Bin)
+    pub fn dump(&self) -> Vec<DumpType> {
+        match &self.dump {
+            Some(a) => a.clone(),
+            None => vec![DumpType::Bin],
+        }
     }
 
     /// Get abundance
@@ -151,22 +180,6 @@ impl Count {
     pub fn record_buffer(&self) -> u64 {
         self.record_buffer.unwrap_or(8192)
     }
-}
-
-/// Choose dump type
-#[derive(Copy, Clone, Eq, Debug, PartialEq, PartialOrd, Ord, clap::ValueEnum)]
-pub enum DumpType {
-    /// Output in bin mode
-    Bin,
-
-    /// Output in csv mode
-    Csv,
-
-    /// Output in solid mode
-    Solid,
-
-    /// Output in spectrum mode
-    Spectrum,
 }
 
 /// SubCommand Dump
@@ -182,7 +195,7 @@ pub struct Dump {
 
     /// Dump type
     #[clap(value_enum)]
-    dump: DumpType,
+    dump: Vec<DumpType>,
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
@@ -216,8 +229,8 @@ impl Dump {
     }
 
     /// Get dump type
-    pub fn dump(&self) -> DumpType {
-        self.dump
+    pub fn dump(&self) -> Vec<DumpType> {
+        self.dump.clone()
     }
 
     /// Get abundance
@@ -297,7 +310,7 @@ mod tests {
             output: None,
             kmer_size: 32,
             abundance: Some(2),
-            dump: Some(DumpType::Solid),
+            dump: Some(vec![DumpType::Solid]),
             record_buffer: Some(512),
         };
 
@@ -307,7 +320,7 @@ mod tests {
 
         assert_eq!(count.kmer_size(), 31);
         assert_eq!(count.abundance(), 2);
-        assert_eq!(count.dump(), DumpType::Solid);
+        assert_eq!(count.dump(), vec![DumpType::Solid]);
         assert_eq!(count.record_buffer(), 512);
 
         Ok(())
@@ -322,7 +335,7 @@ mod tests {
             input: Some(input1.path().to_path_buf()),
             output: None,
             abundance: 2,
-            dump: DumpType::Solid,
+            dump: vec![DumpType::Solid],
         };
 
         let mut content = Vec::new();
@@ -330,7 +343,7 @@ mod tests {
         assert_eq!(content, b">test\nATCG\n");
 
         assert_eq!(dump.abundance(), 2);
-        assert_eq!(dump.dump(), DumpType::Solid);
+        assert_eq!(dump.dump(), vec![DumpType::Solid]);
 
         Ok(())
     }
