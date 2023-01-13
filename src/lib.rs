@@ -14,3 +14,5 @@ pub mod count;
 pub mod counter;
 pub mod dump;
 pub mod error;
+pub mod serialize;
+pub mod solid;

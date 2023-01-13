@@ -2,11 +2,16 @@
 
 /* std use */
 
+use std::io::Read as _;
+
 /* crate use */
+
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
 /* project use */
+use crate::error;
+use crate::serialize;
 
 /// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
 /// Implement only for u8, std::sync::atomic::AtomicU8
@@ -34,6 +39,11 @@ impl<T> Counter<T> {
     pub fn raw(&self) -> &[T] {
         &self.count
     }
+
+    /// Convert counter in serializer
+    pub fn serialize(self) -> serialize::Serialize<T> {
+        serialize::Serialize::new(self)
+    }
 }
 
 macro_rules! impl_sequential (
@@ -47,6 +57,31 @@ macro_rules! impl_sequential (
 		    k,
 		    count: tmp.into_boxed_slice(),
 		}
+	    }
+
+	    /// Create a new kmer by read a file
+	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
+		where R: std::io::Read
+	    {
+		let mut read_buffer = [0u8; 2];
+		input.read_exact(&mut read_buffer)?;
+		let k = read_buffer[0];
+
+		if std::mem::size_of::<$type>() != read_buffer[1] as usize {
+		    return Err(error::Error::TypeNotMatch.into());
+		}
+
+		let mut deflate = flate2::read::MultiGzDecoder::new(input);
+		let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
+
+		deflate
+		    .read_exact(&mut tmp)?;
+
+		#[allow(clippy::useless_transmute)]
+		Ok(Self {
+		    k,
+		    count: unsafe{std::mem::transmute::<Box<[u8]>, Box<[$type]>>(tmp.into_boxed_slice())},
+		})
 	    }
 
 	    /// Perform count on fasta input
@@ -80,6 +115,7 @@ macro_rules! impl_sequential (
 	    fn get_canonic(&self, canonical: u64) -> $type {
 		self.count[(canonical >> 1) as usize]
 	    }
+
 	}
     }
 );
@@ -90,7 +126,7 @@ impl_sequential!(u32, 0u32);
 impl_sequential!(u64, 0u64);
 impl_sequential!(u128, 0u128);
 
-macro_rules! impl_rayon (
+macro_rules! impl_atomic (
     ($type:ty, $fill:expr, $out_type:ty, $max:expr) => {
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
@@ -105,6 +141,26 @@ macro_rules! impl_rayon (
 			)
 		    },
 		}
+	    }
+
+	    /// Create a new kmer by read a file
+	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
+		where R: std::io::Read
+	    {
+		let mut read_buffer = [0];
+		input.read_exact(&mut read_buffer)?;
+		let k = read_buffer[0];
+
+		let mut deflate = flate2::read::MultiGzDecoder::new(input);
+		let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
+
+		deflate
+		    .read_exact(&mut tmp)?;
+
+		Ok(Self {
+		    k,
+		    count: unsafe{std::mem::transmute::<Box<[u8]>, Box<[$type]>>(tmp.into_boxed_slice())},
+		})
 	    }
 
 	    /// Perform count on fasta input
@@ -148,19 +204,24 @@ macro_rules! impl_rayon (
 	    pub fn get_canonic(&self, canonical: u64) -> $out_type {
 		self.count[(canonical >> 1) as usize].load(std::sync::atomic::Ordering::SeqCst)
 	    }
+
+	    /// Get raw data in not atomic type
+	    pub fn raw_noatomic(&self) -> &[$out_type] {
+		unsafe {std::mem::transmute::<&[$type], &[$out_type]>(&self.count)}
+	    }
 	}
 
     }
 );
 
 #[cfg(feature = "parallel")]
-impl_rayon!(std::sync::atomic::AtomicU8, 0u8, u8, u8::MAX);
+impl_atomic!(std::sync::atomic::AtomicU8, 0u8, u8, u8::MAX);
 #[cfg(feature = "parallel")]
-impl_rayon!(std::sync::atomic::AtomicU16, 0u16, u16, u16::MAX);
+impl_atomic!(std::sync::atomic::AtomicU16, 0u16, u16, u16::MAX);
 #[cfg(feature = "parallel")]
-impl_rayon!(std::sync::atomic::AtomicU32, 0u32, u32, u32::MAX);
+impl_atomic!(std::sync::atomic::AtomicU32, 0u32, u32, u32::MAX);
 #[cfg(feature = "parallel")]
-impl_rayon!(std::sync::atomic::AtomicU64, 0u64, u64, u64::MAX);
+impl_atomic!(std::sync::atomic::AtomicU64, 0u64, u64, u64::MAX);
 
 /// Populate record buffer with content of iterator
 fn populate_buffer(

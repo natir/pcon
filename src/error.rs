@@ -23,6 +23,10 @@ pub enum Error {
     /// Error if we can't convert a DumpTypeFromStr
     #[error("Can't convert {0} in DumpType")]
     DumpTypeFromStr(String),
+
+    /// Error durring loading count type not match
+    #[error("Type use in counter not match file count")]
+    TypeNotMatch,
 }
 
 /// Alias of result

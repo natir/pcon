@@ -76,7 +76,7 @@ pub enum SubCommand {
 #[derive(Copy, Clone, Eq, Debug, PartialEq, PartialOrd, Ord, clap::ValueEnum)]
 pub enum DumpType {
     /// Output in bin mode
-    Bin,
+    Pcon,
 
     /// Output in csv mode
     Csv,
@@ -93,6 +93,10 @@ impl std::str::FromStr for DumpType {
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
         match s {
+            "pcon" | "Pcon" => Ok(DumpType::Pcon),
+            "csv" | "Csv" => Ok(DumpType::Csv),
+            "solid" | "Solid" => Ok(DumpType::Solid),
+            "spectrum" | "Spectrum" => Ok(DumpType::Spectrum),
             _ => Err(error::Error::DumpTypeFromStr(s.to_string())),
         }
     }
@@ -119,7 +123,7 @@ pub struct Count {
 
     /// Dump type, default bin
     #[clap(short = 'd', long = "dump")]
-    dump: Option<Vec<DumpType>>,
+    dump: Option<DumpType>,
 
     /// Number of sequence record load in buffer, default 8192
     #[clap(short = 'b', long = "record_buffer")]
@@ -156,7 +160,7 @@ impl Count {
             None => Ok(Box::new(std::io::BufWriter::new(std::io::stdout().lock()))),
             Some(path) => {
                 let handle: Box<dyn std::io::Write> =
-                    Box::new(std::fs::File::open(path).map(std::io::BufWriter::new)?);
+                    Box::new(std::fs::File::create(path).map(std::io::BufWriter::new)?);
 
                 Ok(handle)
             }
@@ -164,10 +168,10 @@ impl Count {
     }
 
     /// Get dump type
-    pub fn dump(&self) -> Vec<DumpType> {
-        match &self.dump {
-            Some(a) => a.clone(),
-            None => vec![DumpType::Bin],
+    pub fn dump(&self) -> DumpType {
+        match self.dump {
+            Some(a) => a,
+            None => DumpType::Pcon,
         }
     }
 
@@ -195,7 +199,7 @@ pub struct Dump {
 
     /// Dump type
     #[clap(value_enum)]
-    dump: Vec<DumpType>,
+    dump: DumpType,
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
@@ -221,7 +225,7 @@ impl Dump {
             None => Ok(Box::new(std::io::BufWriter::new(std::io::stdout().lock()))),
             Some(path) => {
                 let handle: Box<dyn std::io::Write> =
-                    Box::new(std::fs::File::open(path).map(std::io::BufWriter::new)?);
+                    Box::new(std::fs::File::create(path).map(std::io::BufWriter::new)?);
 
                 Ok(handle)
             }
@@ -229,8 +233,8 @@ impl Dump {
     }
 
     /// Get dump type
-    pub fn dump(&self) -> Vec<DumpType> {
-        self.dump.clone()
+    pub fn dump(&self) -> DumpType {
+        self.dump
     }
 
     /// Get abundance
@@ -310,7 +314,7 @@ mod tests {
             output: None,
             kmer_size: 32,
             abundance: Some(2),
-            dump: Some(vec![DumpType::Solid]),
+            dump: Some(DumpType::Solid),
             record_buffer: Some(512),
         };
 
@@ -320,7 +324,7 @@ mod tests {
 
         assert_eq!(count.kmer_size(), 31);
         assert_eq!(count.abundance(), 2);
-        assert_eq!(count.dump(), vec![DumpType::Solid]);
+        assert_eq!(count.dump(), DumpType::Solid);
         assert_eq!(count.record_buffer(), 512);
 
         Ok(())
@@ -335,7 +339,7 @@ mod tests {
             input: Some(input1.path().to_path_buf()),
             output: None,
             abundance: 2,
-            dump: vec![DumpType::Solid],
+            dump: DumpType::Solid,
         };
 
         let mut content = Vec::new();
@@ -343,7 +347,7 @@ mod tests {
         assert_eq!(content, b">test\nATCG\n");
 
         assert_eq!(dump.abundance(), 2);
-        assert_eq!(dump.dump(), vec![DumpType::Solid]);
+        assert_eq!(dump.dump(), DumpType::Solid);
 
         Ok(())
     }

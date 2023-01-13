@@ -36,6 +36,7 @@ stderrlog      = { version = "0.4" }
 # IO management
 niffler        = { version = "2" }
 noodles        = { version = "0.30", features = ["fasta"] }
+flate2         = { version = "1" }
 
 [dev-dependencies]
 criterion      = { version = "0.3" }
