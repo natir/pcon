@@ -15,6 +15,7 @@ use pcon::count;
 use pcon::dump;
 use pcon::error;
 
+#[cfg(not(tarpaulin_include))]
 fn main() -> error::Result<()> {
     // parse cli
     let params = cli::Command::parse();

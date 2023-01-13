@@ -92,11 +92,11 @@ impl std::str::FromStr for DumpType {
     type Err = error::Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s {
-            "pcon" | "Pcon" => Ok(DumpType::Pcon),
-            "csv" | "Csv" => Ok(DumpType::Csv),
-            "solid" | "Solid" => Ok(DumpType::Solid),
-            "spectrum" | "Spectrum" => Ok(DumpType::Spectrum),
+        match s.to_lowercase().as_str() {
+            "pcon" => Ok(DumpType::Pcon),
+            "csv" => Ok(DumpType::Csv),
+            "solid" => Ok(DumpType::Solid),
+            "spectrum" => Ok(DumpType::Spectrum),
             _ => Err(error::Error::DumpTypeFromStr(s.to_string())),
         }
     }
@@ -248,6 +248,30 @@ mod tests {
     use super::*;
 
     use std::io::Write as _;
+    use std::str::FromStr as _;
+
+    #[test]
+    fn dumptype_conversion() -> error::Result<()> {
+        assert_eq!(DumpType::from_str("pcon")?, DumpType::Pcon);
+        assert_eq!(DumpType::from_str("Pcon")?, DumpType::Pcon);
+        assert_eq!(DumpType::from_str("PCON")?, DumpType::Pcon);
+
+        assert_eq!(DumpType::from_str("csv")?, DumpType::Csv);
+        assert_eq!(DumpType::from_str("Csv")?, DumpType::Csv);
+        assert_eq!(DumpType::from_str("CSV")?, DumpType::Csv);
+
+        assert_eq!(DumpType::from_str("solid")?, DumpType::Solid);
+        assert_eq!(DumpType::from_str("Solid")?, DumpType::Solid);
+        assert_eq!(DumpType::from_str("SOLID")?, DumpType::Solid);
+
+        assert_eq!(DumpType::from_str("spectrum")?, DumpType::Spectrum);
+        assert_eq!(DumpType::from_str("Spectrum")?, DumpType::Spectrum);
+        assert_eq!(DumpType::from_str("SPECTRUM")?, DumpType::Spectrum);
+
+        assert!(DumpType::from_str("").is_err());
+
+        Ok(())
+    }
 
     #[cfg(not(feature = "parallel"))]
     #[test]

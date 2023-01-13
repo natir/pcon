@@ -103,6 +103,9 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     fn presence() {
         let solid = get_solid();
 
+        assert_eq!(solid.get(1), false);
+        assert_eq!(solid.get(724), true);
+
         assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID);
     }
 

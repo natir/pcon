@@ -40,6 +40,12 @@ impl<T> Counter<T> {
         &self.count
     }
 
+    #[cfg(test)]
+    /// Get raw data
+    pub(crate) fn raw_mut(&mut self) -> &mut [T] {
+        &mut self.count
+    }
+
     /// Convert counter in serializer
     pub fn serialize(self) -> serialize::Serialize<T> {
         serialize::Serialize::new(self)
@@ -102,7 +108,7 @@ macro_rules! impl_sequential (
 	    }
 
 	    /// Increment value at index
-	    fn inc(count: &mut [$type], index: usize) {
+	    pub(crate) fn inc(count: &mut [$type], index: usize) {
 		count[index] = count[index].saturating_add(1);
 	    }
 
@@ -126,6 +132,7 @@ impl_sequential!(u32, 0u32);
 impl_sequential!(u64, 0u64);
 impl_sequential!(u128, 0u128);
 
+#[cfg(feature = "parallel")]
 macro_rules! impl_atomic (
     ($type:ty, $fill:expr, $out_type:ty, $max:expr) => {
 	impl Counter<$type> {
@@ -189,7 +196,7 @@ macro_rules! impl_atomic (
 	    }
 
 	    /// Increment value at index
-	    fn inc(count: &[$type], index: usize) {
+	    pub(crate) fn inc(count: &[$type], index: usize) {
 		if count[index].load(std::sync::atomic::Ordering::SeqCst) != $max {
 		    count[index].fetch_add(1, std::sync::atomic::Ordering::SeqCst);
 		}
@@ -223,6 +230,7 @@ impl_atomic!(std::sync::atomic::AtomicU32, 0u32, u32, u32::MAX);
 #[cfg(feature = "parallel")]
 impl_atomic!(std::sync::atomic::AtomicU64, 0u64, u64, u64::MAX);
 
+#[cfg(feature = "parallel")]
 /// Populate record buffer with content of iterator
 fn populate_buffer(
     iter: &mut noodles::fasta::reader::Records<'_, Box<dyn std::io::BufRead>>,

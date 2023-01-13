@@ -42,6 +42,7 @@ flate2         = { version = "1" }
 criterion      = { version = "0.3" }
 tempfile       = { version = "3" }
 
+
 [features]
 parallel = ["dep:rayon"]
 
