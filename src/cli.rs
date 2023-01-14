@@ -31,7 +31,7 @@ pub struct Command {
     quiet: bool,
 
     /// Verbose mode (-v, -vv, -vvv, etc)
-    #[clap(short = 'v', long = "verbosity", parse(from_occurrences))]
+    #[clap(short = 'v', long = "verbosity", action = clap::ArgAction::Count)]
     verbosity: usize,
 
     /// Timestamp (sec, ms, ns, none)

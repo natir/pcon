@@ -52,41 +52,32 @@ impl<T> Counter<T> {
     }
 }
 
+/*****************************/
+/* sequential implementation */
+/*****************************/
 macro_rules! impl_sequential (
-    ($type:ty, $fill:expr) => {
+    ($type:ty, $convert:expr) => {
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
 	    pub fn new(k: u8) -> Self {
-		let tmp = vec![$fill; cocktail::kmer::get_hash_space_size(k) as usize];
+		let tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
 
 		Self {
 		    k,
-		    count: tmp.into_boxed_slice(),
+		    count: $convert(tmp.into_boxed_slice()),
 		}
 	    }
 
 	    /// Create a new kmer by read a file
-	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
+	    pub fn from_stream<R>(input: R) -> error::Result<Self>
 		where R: std::io::Read
 	    {
-		let mut read_buffer = [0u8; 2];
-		input.read_exact(&mut read_buffer)?;
-		let k = read_buffer[0];
-
-		if std::mem::size_of::<$type>() != read_buffer[1] as usize {
-		    return Err(error::Error::TypeNotMatch.into());
-		}
-
-		let mut deflate = flate2::read::MultiGzDecoder::new(input);
-		let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
-
-		deflate
-		    .read_exact(&mut tmp)?;
+		let (k, data) = read_pcon_format::<R, $type>(input)?;
 
 		#[allow(clippy::useless_transmute)]
 		Ok(Self {
 		    k,
-		    count: unsafe{std::mem::transmute::<Box<[u8]>, Box<[$type]>>(tmp.into_boxed_slice())},
+		    count: $convert(data.into_boxed_slice()),
 		})
 	    }
 
@@ -126,47 +117,38 @@ macro_rules! impl_sequential (
     }
 );
 
-impl_sequential!(u8, 0u8);
-impl_sequential!(u16, 0u16);
-impl_sequential!(u32, 0u32);
-impl_sequential!(u64, 0u64);
-impl_sequential!(u128, 0u128);
+impl_sequential!(u8, |x| x);
+impl_sequential!(u16, transmute::<u16>);
+impl_sequential!(u32, transmute::<u32>);
+impl_sequential!(u64, transmute::<u64>);
+impl_sequential!(u128, transmute::<u128>);
 
+/***************************/
+/* parallel implementation */
+/***************************/
 #[cfg(feature = "parallel")]
 macro_rules! impl_atomic (
-    ($type:ty, $fill:expr, $out_type:ty, $max:expr) => {
+    ($type:ty, $out_type:ty, $max:expr, $convert:expr) => {
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
 	    pub fn new(k: u8) -> Self {
-		let tmp = vec![$fill; cocktail::kmer::get_hash_space_size(k) as usize];
+		let data = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
 
 		Self {
 		    k,
-		    count: unsafe {
-			std::mem::transmute::<Box<[$out_type]>, Box<[$type]>>(
-			    tmp.into_boxed_slice(),
-			)
-		    },
+		    count: $convert(data.into_boxed_slice()),
 		}
 	    }
 
 	    /// Create a new kmer by read a file
-	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
+	    pub fn from_stream<R>(input: R) -> error::Result<Self>
 		where R: std::io::Read
 	    {
-		let mut read_buffer = [0];
-		input.read_exact(&mut read_buffer)?;
-		let k = read_buffer[0];
-
-		let mut deflate = flate2::read::MultiGzDecoder::new(input);
-		let mut tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
-
-		deflate
-		    .read_exact(&mut tmp)?;
+		let (k, data) = read_pcon_format::<R, $type>(input)?;
 
 		Ok(Self {
 		    k,
-		    count: unsafe{std::mem::transmute::<Box<[u8]>, Box<[$type]>>(tmp.into_boxed_slice())},
+		    count: $convert(data.into_boxed_slice()),
 		})
 	    }
 
@@ -222,13 +204,66 @@ macro_rules! impl_atomic (
 );
 
 #[cfg(feature = "parallel")]
-impl_atomic!(std::sync::atomic::AtomicU8, 0u8, u8, u8::MAX);
+impl_atomic!(
+    std::sync::atomic::AtomicU8,
+    u8,
+    u8::MAX,
+    transmute::<std::sync::atomic::AtomicU8>
+);
 #[cfg(feature = "parallel")]
-impl_atomic!(std::sync::atomic::AtomicU16, 0u16, u16, u16::MAX);
+impl_atomic!(
+    std::sync::atomic::AtomicU16,
+    u16,
+    u16::MAX,
+    transmute::<std::sync::atomic::AtomicU16>
+);
 #[cfg(feature = "parallel")]
-impl_atomic!(std::sync::atomic::AtomicU32, 0u32, u32, u32::MAX);
+impl_atomic!(
+    std::sync::atomic::AtomicU32,
+    u32,
+    u32::MAX,
+    transmute::<std::sync::atomic::AtomicU32>
+);
 #[cfg(feature = "parallel")]
-impl_atomic!(std::sync::atomic::AtomicU64, 0u64, u64, u64::MAX);
+impl_atomic!(
+    std::sync::atomic::AtomicU64,
+    u64,
+    u64::MAX,
+    transmute::<std::sync::atomic::AtomicU64>
+);
+
+/*******************/
+/* utils function */
+/******************/
+/// Read data from pcon file
+fn read_pcon_format<R, T>(mut reader: R) -> error::Result<(u8, Vec<u8>)>
+where
+    R: std::io::Read,
+{
+    let mut read_buffer = [0u8; 2];
+    reader.read_exact(&mut read_buffer)?;
+    let k = read_buffer[0];
+
+    if std::mem::size_of::<T>() != read_buffer[1] as usize {
+        return Err(error::Error::TypeNotMatch.into());
+    }
+
+    let mut deflate = flate2::read::MultiGzDecoder::new(reader);
+    let mut tmp =
+        vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<T>()];
+
+    deflate.read_exact(&mut tmp)?;
+
+    Ok((k, tmp))
+}
+
+/// Transmute from u8
+fn transmute<T>(data: Box<[u8]>) -> Box<[T]>
+where
+    T: std::marker::Sized,
+{
+    unsafe { std::mem::transmute::<Box<[u8]>, Box<[T]>>(data) }
+}
 
 #[cfg(feature = "parallel")]
 /// Populate record buffer with content of iterator
@@ -303,6 +338,23 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         assert_eq!(&counter.raw()[..], &FASTA_COUNT[..]);
     }
 
+    #[test]
+    fn sequential_from_stream() -> error::Result<()> {
+        let mut file = vec![];
+
+        let mut counter = Counter::<u8>::new(5);
+        counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+        let serialize = counter.clone().serialize();
+        serialize.pcon(std::io::Cursor::new(&mut file))?;
+
+        let second_counter = Counter::<u8>::from_stream(&file[..])?;
+
+        assert_eq!(counter.raw(), second_counter.raw());
+
+        Ok(())
+    }
+
     #[cfg(feature = "parallel")]
     #[test]
     fn parallel() {
@@ -332,5 +384,25 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                 [..],
             &FASTA_COUNT[..]
         );
+    }
+
+    #[cfg(feature = "parallel")]
+    #[test]
+    fn parallel_from_stream() -> error::Result<()> {
+        let mut file = vec![];
+
+        let mut counter = Counter::<std::sync::atomic::AtomicU8>::new(5);
+        counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+        let mut truth = counter.raw_noatomic().to_vec();
+
+        let serialize = counter.serialize();
+        serialize.pcon(std::io::Cursor::new(&mut file))?;
+
+        let second_counter = Counter::<std::sync::atomic::AtomicU8>::from_stream(&file[..])?;
+
+        assert_eq!(truth, second_counter.raw_noatomic());
+
+        Ok(())
     }
 }
