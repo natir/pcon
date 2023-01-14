@@ -15,7 +15,7 @@ license-file = "LICENSE"
 
 
 [dependencies]
-cfg-if         = "1.0"
+cfg-if         = "1"
 cocktail       = { git = "https://github.com/natir/cocktail.git" }
 bitvec         = { version = "1" }
 
@@ -23,7 +23,7 @@ bitvec         = { version = "1" }
 rayon          = { version = "1", optional = true }
 
 # CLI management
-clap           = { version = "3", features = ["derive"] }
+clap           = { version = "4", features = ["derive"] }
 
 # Error management
 thiserror      = { version = "1" }
@@ -31,15 +31,15 @@ anyhow         = { version = "1"}
 
 # Logging and error management
 log            = { version = "0.4" }
-stderrlog      = { version = "0.4" }
+stderrlog      = { version = "0.5" }
 
 # IO management
 niffler        = { version = "2" }
-noodles        = { version = "0.30", features = ["fasta"] }
+noodles        = { version = "0.31", features = ["fasta"] }
 flate2         = { version = "1" }
 
 [dev-dependencies]
-criterion      = { version = "0.3" }
+criterion      = { version = "0.4" }
 tempfile       = { version = "3" }
 
 
