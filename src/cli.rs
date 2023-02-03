@@ -32,7 +32,7 @@ pub struct Command {
 
     /// Verbose mode (-v, -vv, -vvv, etc)
     #[clap(short = 'v', long = "verbosity", action = clap::ArgAction::Count)]
-    verbosity: usize,
+    verbosity: u8,
 
     /// Timestamp (sec, ms, ns, none)
     #[clap(short = 'T', long = "timestamp")]
@@ -48,7 +48,7 @@ impl Command {
 
     /// Get verbosity level
     pub fn verbosity(&self) -> usize {
-        self.verbosity
+        self.verbosity as usize
     }
 
     /// Get quiet
@@ -350,6 +350,20 @@ mod tests {
         assert_eq!(count.abundance(), 2);
         assert_eq!(count.dump(), DumpType::Solid);
         assert_eq!(count.record_buffer(), 512);
+
+        let count = Count {
+            inputs: Some(vec![
+                input1.path().to_path_buf(),
+                input2.path().to_path_buf(),
+            ]),
+            output: None,
+            kmer_size: 32,
+            abundance: Some(2),
+            dump: None,
+            record_buffer: Some(512),
+        };
+
+        assert_eq!(count.dump(), DumpType::Pcon);
 
         Ok(())
     }

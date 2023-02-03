@@ -42,6 +42,7 @@ byteorder      = { version = "1" }
 [dev-dependencies]
 criterion      = { version = "0.4" }
 tempfile       = { version = "3" }
+rand           = { version = "0.8" }
 
 
 [features]

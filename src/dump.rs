@@ -8,10 +8,11 @@
 use crate::cli;
 use crate::counter;
 use crate::error;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "parallel")] {
-/// Run dump
-pub fn dump(params: cli::Dump) -> error::Result<()> {
+    /// Run dump
+    pub fn dump(params: cli::Dump) -> error::Result<()> {
     log::info!("Start load count");
     let counter = counter::Counter::<std::sync::atomic::AtomicU8>::from_stream(params.input()?)?;
     log::info!("End load count");
@@ -30,8 +31,8 @@ pub fn dump(params: cli::Dump) -> error::Result<()> {
     Ok(())
 }
     } else {
-/// Run dump
-pub fn dump(params: cli::Dump) -> error::Result<()> {
+    /// Run dump
+    pub fn dump(params: cli::Dump) -> error::Result<()> {
     log::info!("Start load count");
     let counter = counter::Counter::<u8>::from_stream(params.input()?)?;
     log::info!("End load count");
