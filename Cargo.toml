@@ -37,6 +37,7 @@ stderrlog      = { version = "0.5" }
 niffler        = { version = "2" }
 noodles        = { version = "0.31", features = ["fasta"] }
 flate2         = { version = "1" }
+byteorder      = { version = "1" }
 
 [dev-dependencies]
 criterion      = { version = "0.4" }

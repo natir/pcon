@@ -16,3 +16,6 @@ pub mod dump;
 pub mod error;
 pub mod serialize;
 pub mod solid;
+
+/// Define a const
+type ByteOrder = byteorder::LittleEndian; // WARNING IF YOU CHANGE THIS CHECK AND CHANGE SERIALIZE

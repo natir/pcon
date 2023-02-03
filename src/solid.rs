@@ -100,6 +100,17 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     ];
 
     #[test]
+    fn new_solid() {
+        let mut solid = Solid::new(5);
+
+        assert_eq!(solid.get(43), false);
+
+        solid.set(42, true);
+
+        assert_eq!(solid.get(42), true);
+    }
+
+    #[test]
     fn presence() {
         let solid = get_solid();
 

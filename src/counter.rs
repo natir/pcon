@@ -2,8 +2,6 @@
 
 /* std use */
 
-use std::io::Read as _;
-
 /* crate use */
 
 #[cfg(feature = "parallel")]
@@ -56,28 +54,37 @@ impl<T> Counter<T> {
 /* sequential implementation */
 /*****************************/
 macro_rules! impl_sequential (
-    ($type:ty, $convert:expr) => {
+    ($type:ty, $init:expr, $read:expr) => {
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
 	    pub fn new(k: u8) -> Self {
-		let tmp = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
-
+		let data: Box<[$type]> = $init(k);
 		Self {
 		    k,
-		    count: $convert(tmp.into_boxed_slice()),
+		    count: data,
 		}
 	    }
 
 	    /// Create a new kmer by read a file
-	    pub fn from_stream<R>(input: R) -> error::Result<Self>
+	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
 		where R: std::io::Read
 	    {
-		let (k, data) = read_pcon_format::<R, $type>(input)?;
+		let mut read_buffer = [0u8; 2];
+		input.read_exact(&mut read_buffer)?;
+		let k = read_buffer[0];
 
-		#[allow(clippy::useless_transmute)]
+		if std::mem::size_of::<$type>() != read_buffer[1] as usize {
+		    return Err(error::Error::TypeNotMatch.into());
+		}
+
+		let mut deflate = flate2::read::MultiGzDecoder::new(input);
+		let mut data = $init(k);
+
+		$read(&mut deflate, &mut data)?;
+
 		Ok(Self {
 		    k,
-		    count: $convert(data.into_boxed_slice()),
+		    count: data,
 		})
 	    }
 
@@ -117,38 +124,63 @@ macro_rules! impl_sequential (
     }
 );
 
-impl_sequential!(u8, |x| x);
-impl_sequential!(u16, transmute::<u16>);
-impl_sequential!(u32, transmute::<u32>);
-impl_sequential!(u64, transmute::<u64>);
-impl_sequential!(u128, transmute::<u128>);
+impl_sequential!(u8, |k| init_data(k, 0u8), std::io::Read::read_exact);
+impl_sequential!(
+    u16,
+    |k| init_data(k, 0u16),
+    byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
+);
+impl_sequential!(
+    u32,
+    |k| init_data(k, 0u32),
+    byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
+);
+impl_sequential!(
+    u64,
+    |k| init_data(k, 0u64),
+    byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
+);
+impl_sequential!(
+    u128,
+    |k| init_data(k, 0u128),
+    byteorder::ReadBytesExt::read_u128_into::<crate::ByteOrder>
+);
 
 /***************************/
 /* parallel implementation */
 /***************************/
 #[cfg(feature = "parallel")]
 macro_rules! impl_atomic (
-    ($type:ty, $out_type:ty, $max:expr, $convert:expr) => {
+    ($type:ty, $out_type:ty, $max:expr, $init:expr, $read:expr) => {
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
 	    pub fn new(k: u8) -> Self {
-		let data = vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<$type>()];
-
 		Self {
 		    k,
-		    count: $convert(data.into_boxed_slice()),
+		    count: transmute_box($init(k)),
 		}
 	    }
 
 	    /// Create a new kmer by read a file
-	    pub fn from_stream<R>(input: R) -> error::Result<Self>
+	    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
 		where R: std::io::Read
 	    {
-		let (k, data) = read_pcon_format::<R, $type>(input)?;
+		let mut read_buffer = [0u8; 2];
+		input.read_exact(&mut read_buffer)?;
+		let k = read_buffer[0];
+
+		if std::mem::size_of::<$type>() != read_buffer[1] as usize {
+		    return Err(error::Error::TypeNotMatch.into());
+		}
+
+		let mut deflate = flate2::read::MultiGzDecoder::new(input);
+		let mut data = $init(k);
+
+		$read(&mut deflate, &mut data)?;
 
 		Ok(Self {
 		    k,
-		    count: $convert(data.into_boxed_slice()),
+		    count: transmute_box(data),
 		})
 	    }
 
@@ -193,11 +225,6 @@ macro_rules! impl_atomic (
 	    pub fn get_canonic(&self, canonical: u64) -> $out_type {
 		self.count[(canonical >> 1) as usize].load(std::sync::atomic::Ordering::SeqCst)
 	    }
-
-	    /// Get raw data in not atomic type
-	    pub fn raw_noatomic(&self) -> &[$out_type] {
-		unsafe {std::mem::transmute::<&[$type], &[$out_type]>(&self.count)}
-	    }
 	}
 
     }
@@ -208,61 +235,53 @@ impl_atomic!(
     std::sync::atomic::AtomicU8,
     u8,
     u8::MAX,
-    transmute::<std::sync::atomic::AtomicU8>
+    |k| init_data(k, 0u8),
+    std::io::Read::read_exact
 );
 #[cfg(feature = "parallel")]
 impl_atomic!(
     std::sync::atomic::AtomicU16,
     u16,
     u16::MAX,
-    transmute::<std::sync::atomic::AtomicU16>
+    |k| init_data(k, 0u16),
+    byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
 impl_atomic!(
     std::sync::atomic::AtomicU32,
     u32,
     u32::MAX,
-    transmute::<std::sync::atomic::AtomicU32>
+    |k| init_data(k, 0u32),
+    byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
 impl_atomic!(
     std::sync::atomic::AtomicU64,
     u64,
     u64::MAX,
-    transmute::<std::sync::atomic::AtomicU64>
+    |k| init_data(k, 0u64),
+    byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
 );
 
 /*******************/
 /* utils function */
 /******************/
-/// Read data from pcon file
-fn read_pcon_format<R, T>(mut reader: R) -> error::Result<(u8, Vec<u8>)>
+/// Initialize counter
+fn init_data<T>(k: u8, value: T) -> Box<[T]>
 where
-    R: std::io::Read,
+    T: std::marker::Sized + std::clone::Clone,
 {
-    let mut read_buffer = [0u8; 2];
-    reader.read_exact(&mut read_buffer)?;
-    let k = read_buffer[0];
-
-    if std::mem::size_of::<T>() != read_buffer[1] as usize {
-        return Err(error::Error::TypeNotMatch.into());
-    }
-
-    let mut deflate = flate2::read::MultiGzDecoder::new(reader);
-    let mut tmp =
-        vec![0u8; cocktail::kmer::get_hash_space_size(k) as usize * std::mem::size_of::<T>()];
-
-    deflate.read_exact(&mut tmp)?;
-
-    Ok((k, tmp))
+    vec![value; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice()
 }
 
-/// Transmute from u8
-fn transmute<T>(data: Box<[u8]>) -> Box<[T]>
+#[cfg(feature = "parallel")]
+/// Perform transmutation on box
+fn transmute_box<I, O>(data: Box<[I]>) -> Box<[O]>
 where
-    T: std::marker::Sized,
+    I: std::marker::Sized,
+    O: std::marker::Sized,
 {
-    unsafe { std::mem::transmute::<Box<[u8]>, Box<[T]>>(data) }
+    unsafe { std::mem::transmute::<Box<[I]>, Box<[O]>>(data) }
 }
 
 #[cfg(feature = "parallel")]
@@ -290,119 +309,289 @@ fn populate_buffer(
 mod tests {
     use super::*;
 
+    #[cfg(feature = "parallel")]
+    /// Perform transmutation on box
+    fn transmute<I, O>(data: &[I]) -> &[O]
+    where
+        I: std::marker::Sized,
+        O: std::marker::Sized,
+    {
+        unsafe { std::mem::transmute::<&[I], &[O]>(data) }
+    }
+
     const FASTA_FILE: &[u8] = b">random_seq 0
 GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
 >random_seq 1
 AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
 ";
 
-    const FASTA_COUNT: &[u8] = &[
-        0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 2, 1, 0, 1, 1, 1, 2, 0, 0,
-        0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0,
-        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0,
-        0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2,
-        0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0,
-        0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0,
-        1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 1, 0, 0,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 0, 0, 1, 1,
-        0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,
-        0, 0, 0, 1, 0, 2, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0,
-        0, 1, 2, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0,
-        1, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 1,
-        1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 2, 0, 0, 1, 0, 1, 0, 0, 0,
-        0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1,
-        1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 1, 0, 0, 0, 0, 1, 0, 0, 1,
-        0, 2, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0,
-        1, 1,
-    ];
-
-    #[test]
-    fn sequential() {
-        let mut counter = Counter::<u8>::new(5);
-
-        counter.count_fasta(Box::new(FASTA_FILE), 1);
-
-        assert_eq!(*counter.get_raw(14), 2);
-
-        assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
-
-        assert_eq!(
-            counter.get(cocktail::kmer::canonical(
-                cocktail::kmer::seq2bit(b"GTTCT"),
-                5
-            )),
-            2
-        );
-
-        assert_eq!(&counter.raw()[..], &FASTA_COUNT[..]);
+    macro_rules! fasta_count {
+        ($type:ty, $name:ident) => {
+            const $name: &[$type] = &[
+                0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 2, 1, 0, 1, 1, 1, 2,
+                0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 0, 0, 0, 1, 1, 0,
+                1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1, 0, 0, 0, 0, 0, 1, 0,
+                0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 2, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0,
+                0, 1, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+                1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 2, 0, 0,
+                0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0,
+                0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 0, 0,
+                1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 2, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 2, 1, 0, 0,
+                1, 0, 1, 1, 0, 0, 1, 1, 2, 1, 0, 0, 1, 1, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 1, 1, 0, 0,
+                0, 0, 0, 0, 2, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 1, 1, 1,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 2, 0, 0, 1, 0, 1, 0, 0, 0,
+                0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+                1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 2, 1, 0, 0, 0, 0,
+                1, 0, 0, 1, 0, 2, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0,
+                1, 1, 0, 1, 0, 0, 1, 1,
+            ];
+        };
     }
 
-    #[test]
-    fn sequential_from_stream() -> error::Result<()> {
-        let mut file = vec![];
+    fasta_count!(u8, FASTA_COUNT_U8);
+    fasta_count!(u16, FASTA_COUNT_U16);
+    fasta_count!(u32, FASTA_COUNT_U32);
+    fasta_count!(u64, FASTA_COUNT_U64);
+    fasta_count!(u128, FASTA_COUNT_U128);
 
-        let mut counter = Counter::<u8>::new(5);
-        counter.count_fasta(Box::new(FASTA_FILE), 1);
+    macro_rules! sequential {
+        ($type:ty, $name:ident, $truth:ident) => {
+            #[test]
+            fn $name() {
+                let mut counter = Counter::<$type>::new(5);
 
-        let serialize = counter.clone().serialize();
-        serialize.pcon(std::io::Cursor::new(&mut file))?;
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
 
-        let second_counter = Counter::<u8>::from_stream(&file[..])?;
+                assert_eq!(*counter.get_raw(14), 2);
 
-        assert_eq!(counter.raw(), second_counter.raw());
+                assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
 
-        Ok(())
+                assert_eq!(
+                    counter.get(cocktail::kmer::canonical(
+                        cocktail::kmer::seq2bit(b"GTTCT"),
+                        5
+                    )),
+                    2
+                );
+
+                assert_eq!(&counter.raw()[..], &$truth[..]);
+            }
+        };
+    }
+
+    sequential!(u8, sequential_u8, FASTA_COUNT_U8);
+    sequential!(u16, sequential_u16, FASTA_COUNT_U16);
+    sequential!(u32, sequential_u32, FASTA_COUNT_U32);
+    sequential!(u64, sequential_u64, FASTA_COUNT_U64);
+    sequential!(u128, sequential_u128, FASTA_COUNT_U128);
+
+    macro_rules! sequential_serialize {
+        ($type:ty, $failled_type:ty, $name:ident, $failled_name:ident) => {
+            #[test]
+            fn $name() -> error::Result<()> {
+                let mut file = vec![];
+
+                let mut counter = Counter::<$type>::new(5);
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+                let serialize = counter.clone().serialize();
+                serialize.pcon(std::io::Cursor::new(&mut file))?;
+
+                let second_counter = Counter::<$type>::from_stream(&file[..])?;
+
+                assert_eq!(counter.raw(), second_counter.raw());
+
+                Ok(())
+            }
+
+            #[test]
+            fn $failled_name() -> error::Result<()> {
+                let mut file = vec![];
+
+                let mut counter = Counter::<$type>::new(5);
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+                let serialize = counter.serialize();
+                serialize.pcon(std::io::Cursor::new(&mut file))?;
+
+                let second_counter = Counter::<$failled_type>::from_stream(&file[..]);
+
+                assert!(second_counter.is_err());
+
+                Ok(())
+            }
+        };
+    }
+
+    sequential_serialize!(
+        u8,
+        u16,
+        sequential_serialize_u8,
+        failled_sequential_serialize_u8
+    );
+    sequential_serialize!(
+        u16,
+        u8,
+        sequential_serialize_u16,
+        failled_sequential_serialize_u16
+    );
+    sequential_serialize!(
+        u32,
+        u8,
+        sequential_serialize_u32,
+        failled_sequential_serialize_u32
+    );
+    sequential_serialize!(
+        u64,
+        u8,
+        sequential_serialize_u64,
+        failled_sequential_serialize_u64
+    );
+    sequential_serialize!(
+        u128,
+        u8,
+        sequential_serialize_u128,
+        failled_sequential_serialize_u128
+    );
+
+    #[cfg(feature = "parallel")]
+    macro_rules! parallel {
+        ($type:ty, $out_type:ty, $name:ident, $truth:ident) => {
+            #[test]
+            fn $name() {
+                let mut counter = Counter::<$type>::new(5);
+
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+                assert_eq!(
+                    counter
+                        .get_raw(14)
+                        .load(std::sync::atomic::Ordering::Relaxed),
+                    2
+                );
+
+                assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
+
+                assert_eq!(
+                    counter.get(cocktail::kmer::canonical(
+                        cocktail::kmer::seq2bit(b"GTTCT"),
+                        5
+                    )),
+                    2
+                );
+
+                assert_eq!(
+                    &transmute::<$type, $out_type>(counter.raw())[..],
+                    &$truth[..]
+                );
+            }
+        };
     }
 
     #[cfg(feature = "parallel")]
-    #[test]
-    fn parallel() {
-        let mut counter = Counter::<std::sync::atomic::AtomicU8>::new(5);
+    parallel!(std::sync::atomic::AtomicU8, u8, parallel_u8, FASTA_COUNT_U8);
+    #[cfg(feature = "parallel")]
+    parallel!(
+        std::sync::atomic::AtomicU16,
+        u16,
+        parallel_u16,
+        FASTA_COUNT_U16
+    );
+    #[cfg(feature = "parallel")]
+    parallel!(
+        std::sync::atomic::AtomicU32,
+        u32,
+        parallel_u32,
+        FASTA_COUNT_U32
+    );
+    #[cfg(feature = "parallel")]
+    parallel!(
+        std::sync::atomic::AtomicU64,
+        u64,
+        parallel_u64,
+        FASTA_COUNT_U64
+    );
 
-        counter.count_fasta(Box::new(FASTA_FILE), 1);
+    #[cfg(feature = "parallel")]
+    macro_rules! parallel_serialize {
+        ($type:ty, $out_type:ty, $failled_type:ty, $name:ident, $failled_name:ident) => {
+            #[test]
+            fn $name() -> error::Result<()> {
+                let mut file = vec![];
 
-        assert_eq!(
-            counter
-                .get_raw(14)
-                .load(std::sync::atomic::Ordering::Relaxed),
-            2
-        );
+                {
+                    let mut counter = Counter::<$type>::new(5);
+                    counter.count_fasta(Box::new(FASTA_FILE), 1);
 
-        assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
+                    let serialize = counter.serialize();
+                    serialize.pcon(std::io::Cursor::new(&mut file))?;
+                }
 
-        assert_eq!(
-            counter.get(cocktail::kmer::canonical(
-                cocktail::kmer::seq2bit(b"GTTCT"),
-                5
-            )),
-            2
-        );
+                let mut counter = Counter::<$type>::new(5);
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
 
-        assert_eq!(
-            &unsafe { std::mem::transmute::<&[std::sync::atomic::AtomicU8], &[u8]>(counter.raw()) }
-                [..],
-            &FASTA_COUNT[..]
-        );
+                let second_counter = Counter::<$type>::from_stream(&file[..])?;
+
+                assert_eq!(
+                    &transmute::<$type, $out_type>(counter.raw())[..],
+                    &transmute::<$type, $out_type>(second_counter.raw())[..],
+                );
+
+                Ok(())
+            }
+
+            #[test]
+            fn $failled_name() -> error::Result<()> {
+                let mut file = vec![];
+
+                let mut counter = Counter::<$type>::new(5);
+                counter.count_fasta(Box::new(FASTA_FILE), 1);
+
+                let serialize = counter.serialize();
+                serialize.pcon(std::io::Cursor::new(&mut file))?;
+
+                let second_counter = Counter::<$failled_type>::from_stream(&file[..]);
+
+                assert!(second_counter.is_err());
+
+                Ok(())
+            }
+        };
     }
 
     #[cfg(feature = "parallel")]
-    #[test]
-    fn parallel_from_stream() -> error::Result<()> {
-        let mut file = vec![];
-
-        let mut counter = Counter::<std::sync::atomic::AtomicU8>::new(5);
-        counter.count_fasta(Box::new(FASTA_FILE), 1);
-
-        let mut truth = counter.raw_noatomic().to_vec();
-
-        let serialize = counter.serialize();
-        serialize.pcon(std::io::Cursor::new(&mut file))?;
-
-        let second_counter = Counter::<std::sync::atomic::AtomicU8>::from_stream(&file[..])?;
-
-        assert_eq!(truth, second_counter.raw_noatomic());
-
-        Ok(())
-    }
+    parallel_serialize!(
+        std::sync::atomic::AtomicU8,
+        u8,
+        std::sync::atomic::AtomicU16,
+        parallel_serialize_u8,
+        failled_parallel_serialize_u8
+    );
+    #[cfg(feature = "parallel")]
+    parallel_serialize!(
+        std::sync::atomic::AtomicU16,
+        u16,
+        std::sync::atomic::AtomicU8,
+        parallel_serialize_u16,
+        failled_parallel_serialize_u16
+    );
+    #[cfg(feature = "parallel")]
+    parallel_serialize!(
+        std::sync::atomic::AtomicU32,
+        u32,
+        std::sync::atomic::AtomicU8,
+        parallel_serialize_u32,
+        failled_parallel_serialize_u32
+    );
+    #[cfg(feature = "parallel")]
+    parallel_serialize!(
+        std::sync::atomic::AtomicU64,
+        u64,
+        std::sync::atomic::AtomicU8,
+        parallel_serialize_u64,
+        failled_parallel_serialize_u64
+    );
 }
