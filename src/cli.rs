@@ -83,23 +83,6 @@ pub enum DumpType {
 
     /// Output in solid mode
     Solid,
-
-    /// Output in spectrum mode
-    Spectrum,
-}
-
-impl std::str::FromStr for DumpType {
-    type Err = error::Error;
-
-    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "pcon" => Ok(DumpType::Pcon),
-            "csv" => Ok(DumpType::Csv),
-            "solid" => Ok(DumpType::Solid),
-            "spectrum" => Ok(DumpType::Spectrum),
-            _ => Err(error::Error::DumpTypeFromStr(s.to_string())),
-        }
-    }
 }
 
 /// SubCommand Count
@@ -114,16 +97,20 @@ pub struct Count {
     inputs: Option<Vec<std::path::PathBuf>>,
 
     /// Path where count are store, default write in stdout
-    #[clap(short = 'o', long = "output")]
-    output: Option<std::path::PathBuf>,
+    #[clap(short = 'p', long = "pcon")]
+    pcon: Option<Vec<std::path::PathBuf>>,
+
+    /// Path where count are store
+    #[clap(short = 'c', long = "csv")]
+    csv: Option<Vec<std::path::PathBuf>>,
+
+    /// Path where count are store
+    #[clap(short = 's', long = "solid")]
+    solid: Option<Vec<std::path::PathBuf>>,
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
     abundance: Option<u8>,
-
-    /// Dump type, default bin
-    #[clap(short = 'd', long = "dump")]
-    dump: Option<DumpType>,
 
     /// Number of sequence record load in buffer, default 8192
     #[clap(short = 'b', long = "record_buffer")]
@@ -155,24 +142,52 @@ impl Count {
     }
 
     /// Get output
-    pub fn output(&self) -> error::Result<Box<dyn std::io::Write>> {
-        match &self.output {
-            None => Ok(Box::new(std::io::BufWriter::new(std::io::stdout().lock()))),
-            Some(path) => {
-                let handle: Box<dyn std::io::Write> =
-                    Box::new(std::fs::File::create(path).map(std::io::BufWriter::new)?);
+    pub fn outputs(
+        &self,
+    ) -> Vec<(
+        DumpType,
+        error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+    )> {
+        let mut outputs: Vec<(
+            DumpType,
+            error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+        )> = vec![];
 
-                Ok(handle)
+        match &self.csv {
+            None => (),
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Csv, create(path)));
+                }
             }
         }
-    }
 
-    /// Get dump type
-    pub fn dump(&self) -> DumpType {
-        match self.dump {
-            Some(a) => a,
-            None => DumpType::Pcon,
+        match &self.solid {
+            None => (),
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Solid, create(path)));
+                }
+            }
         }
+
+        match &self.pcon {
+            None => {
+                if outputs.is_empty() {
+                    outputs.push((
+                        DumpType::Pcon,
+                        Ok(Box::new(std::io::BufWriter::new(std::io::stdout()))),
+                    ))
+                }
+            }
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Pcon, create(path)));
+                }
+            }
+        }
+
+        outputs
     }
 
     /// Get abundance
@@ -194,12 +209,16 @@ pub struct Dump {
     input: Option<std::path::PathBuf>,
 
     /// Path where count are store, default write in stdout
-    #[clap(short = 'o', long = "output")]
-    output: Option<std::path::PathBuf>,
+    #[clap(short = 'c', long = "csv")]
+    csv: Option<Vec<std::path::PathBuf>>,
 
-    /// Dump type
-    #[clap(value_enum)]
-    dump: DumpType,
+    /// Path where count are store
+    #[clap(short = 'p', long = "pcon")]
+    pcon: Option<Vec<std::path::PathBuf>>,
+
+    /// Path where count are store
+    #[clap(short = 's', long = "solid")]
+    solid: Option<Vec<std::path::PathBuf>>,
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
@@ -220,21 +239,52 @@ impl Dump {
     }
 
     /// Get output
-    pub fn output(&self) -> error::Result<Box<dyn std::io::Write>> {
-        match &self.output {
-            None => Ok(Box::new(std::io::BufWriter::new(std::io::stdout().lock()))),
-            Some(path) => {
-                let handle: Box<dyn std::io::Write> =
-                    Box::new(std::fs::File::create(path).map(std::io::BufWriter::new)?);
+    pub fn outputs(
+        &self,
+    ) -> Vec<(
+        DumpType,
+        error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+    )> {
+        let mut outputs: Vec<(
+            DumpType,
+            error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+        )> = vec![];
 
-                Ok(handle)
+        match &self.pcon {
+            None => (),
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Pcon, create(path)));
+                }
             }
         }
-    }
 
-    /// Get dump type
-    pub fn dump(&self) -> DumpType {
-        self.dump
+        match &self.solid {
+            None => (),
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Solid, create(path)));
+                }
+            }
+        }
+
+        match &self.csv {
+            None => {
+                if outputs.is_empty() {
+                    outputs.push((
+                        DumpType::Csv,
+                        Ok(Box::new(std::io::BufWriter::new(std::io::stdout()))),
+                    ))
+                }
+            }
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Csv, create(path)));
+                }
+            }
+        }
+
+        outputs
     }
 
     /// Get abundance
@@ -243,45 +293,33 @@ impl Dump {
     }
 }
 
+fn create<P>(path: P) -> error::Result<Box<dyn std::io::Write + std::marker::Send>>
+where
+    P: std::convert::AsRef<std::path::Path>,
+{
+    let file = std::fs::File::create(path)?;
+    let buffer = std::io::BufWriter::new(file);
+    let boxed = Box::new(buffer);
+
+    Ok(boxed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     use std::io::Write as _;
-    use std::str::FromStr as _;
-
-    #[test]
-    fn dumptype_conversion() -> error::Result<()> {
-        assert_eq!(DumpType::from_str("pcon")?, DumpType::Pcon);
-        assert_eq!(DumpType::from_str("Pcon")?, DumpType::Pcon);
-        assert_eq!(DumpType::from_str("PCON")?, DumpType::Pcon);
-
-        assert_eq!(DumpType::from_str("csv")?, DumpType::Csv);
-        assert_eq!(DumpType::from_str("Csv")?, DumpType::Csv);
-        assert_eq!(DumpType::from_str("CSV")?, DumpType::Csv);
-
-        assert_eq!(DumpType::from_str("solid")?, DumpType::Solid);
-        assert_eq!(DumpType::from_str("Solid")?, DumpType::Solid);
-        assert_eq!(DumpType::from_str("SOLID")?, DumpType::Solid);
-
-        assert_eq!(DumpType::from_str("spectrum")?, DumpType::Spectrum);
-        assert_eq!(DumpType::from_str("Spectrum")?, DumpType::Spectrum);
-        assert_eq!(DumpType::from_str("SPECTRUM")?, DumpType::Spectrum);
-
-        assert!(DumpType::from_str("").is_err());
-
-        Ok(())
-    }
 
     #[cfg(not(feature = "parallel"))]
     #[test]
     fn basic() {
         let subcmd = Count {
             inputs: None,
-            output: None,
+            pcon: None,
+            csv: None,
+            solid: None,
             kmer_size: 32,
             abundance: Some(0),
-            dump: None,
             record_buffer: None,
         };
 
@@ -302,10 +340,11 @@ mod tests {
     fn basic_parallel() {
         let subcmd = Count {
             inputs: None,
-            output: None,
+            pcon: None,
+            csv: None,
+            solid: None,
             kmer_size: 32,
             abundance: None,
-            dump: None,
             record_buffer: None,
         };
 
@@ -330,15 +369,18 @@ mod tests {
         let mut input2 = tempfile::NamedTempFile::new()?;
         input2.write_all(b"TACG\n")?;
 
+        let output = tempfile::NamedTempFile::new()?;
+
         let count = Count {
             inputs: Some(vec![
                 input1.path().to_path_buf(),
                 input2.path().to_path_buf(),
             ]),
-            output: None,
+            pcon: None,
+            csv: None,
+            solid: Some(vec![output.path().to_path_buf()]),
             kmer_size: 32,
             abundance: Some(2),
-            dump: Some(DumpType::Solid),
             record_buffer: Some(512),
         };
 
@@ -348,7 +390,7 @@ mod tests {
 
         assert_eq!(count.kmer_size(), 31);
         assert_eq!(count.abundance(), 2);
-        assert_eq!(count.dump(), DumpType::Solid);
+        assert_eq!(count.outputs()[0].0, DumpType::Solid);
         assert_eq!(count.record_buffer(), 512);
 
         let count = Count {
@@ -356,14 +398,15 @@ mod tests {
                 input1.path().to_path_buf(),
                 input2.path().to_path_buf(),
             ]),
-            output: None,
+            pcon: None,
+            csv: None,
+            solid: None,
             kmer_size: 32,
             abundance: Some(2),
-            dump: None,
             record_buffer: Some(512),
         };
 
-        assert_eq!(count.dump(), DumpType::Pcon);
+        assert_eq!(count.outputs()[0].0, DumpType::Pcon);
 
         Ok(())
     }
@@ -373,11 +416,14 @@ mod tests {
         let mut input1 = tempfile::NamedTempFile::new()?;
         input1.write_all(b">test\nATCG\n")?;
 
+        let output = tempfile::NamedTempFile::new()?;
+
         let dump = Dump {
             input: Some(input1.path().to_path_buf()),
-            output: None,
+            pcon: None,
+            csv: None,
+            solid: Some(vec![output.path().to_path_buf()]),
             abundance: 2,
-            dump: DumpType::Solid,
         };
 
         let mut content = Vec::new();
@@ -385,7 +431,7 @@ mod tests {
         assert_eq!(content, b">test\nATCG\n");
 
         assert_eq!(dump.abundance(), 2);
-        assert_eq!(dump.dump(), DumpType::Solid);
+        assert_eq!(dump.outputs()[0].0, DumpType::Solid);
 
         Ok(())
     }

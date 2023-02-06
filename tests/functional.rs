@@ -56,7 +56,7 @@ mod tests {
             assert
                 .success()
                 .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_COUNT);
+                .stdout(constant::TRUTH_PCON);
             Ok(())
         }
 
@@ -83,7 +83,7 @@ mod tests {
             assert
                 .success()
                 .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_COUNT);
+                .stdout(constant::TRUTH_PCON);
 
             Ok(())
         }
@@ -105,7 +105,7 @@ mod tests {
                 "5",
                 "-i",
                 &format!("{}", input_path.display()),
-                "-o",
+                "-p",
                 &format!("{}", output_path.display()),
             ]);
 
@@ -115,7 +115,7 @@ mod tests {
 
             let mut output = vec![];
             output_temp.read_to_end(&mut output)?;
-            assert_eq!(output, constant::TRUTH_COUNT);
+            assert_eq!(output, constant::TRUTH_PCON);
 
             Ok(())
         }
@@ -127,8 +127,8 @@ mod tests {
         #[test]
         fn from_stdin_to_stdout() -> std::io::Result<()> {
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
-            cmd.args(["dump", "-a", "1", "csv"])
-                .write_stdin(constant::TRUTH_COUNT);
+            cmd.args(["dump", "-a", "1"])
+                .write_stdin(constant::TRUTH_PCON);
 
             let assert = cmd.assert();
 
@@ -143,7 +143,7 @@ mod tests {
         fn from_file_to_stdout() -> std::io::Result<()> {
             let mut input_temp = tempfile::NamedTempFile::new()?;
             {
-                input_temp.write_all(constant::TRUTH_COUNT)?;
+                input_temp.write_all(constant::TRUTH_PCON)?;
             }
             let input_path = input_temp.path();
 
@@ -154,7 +154,6 @@ mod tests {
                 "1",
                 "-i",
                 &format!("{}", input_path.display()),
-                "csv",
             ]);
 
             let assert = cmd.assert();
@@ -171,7 +170,7 @@ mod tests {
         fn from_file_to_file() -> std::io::Result<()> {
             let mut input_temp = tempfile::NamedTempFile::new()?;
             {
-                input_temp.write_all(constant::TRUTH_COUNT)?;
+                input_temp.write_all(constant::TRUTH_PCON)?;
             }
             let input_path = input_temp.path();
 
@@ -185,9 +184,8 @@ mod tests {
                 "1",
                 "-i",
                 &format!("{}", input_path.display()),
-                "-o",
+                "-c",
                 &format!("{}", output_path.display()),
-                "csv",
             ]);
 
             let assert = cmd.assert();
@@ -207,63 +205,107 @@ mod tests {
 
         #[test]
         fn count_csv() -> std::io::Result<()> {
+            let mut output_temp = tempfile::NamedTempFile::new()?;
+            let output_path = output_temp.path();
+
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
-            cmd.args(["count", "-k", "5", "-d", "csv"])
-                .write_stdin(fasta_buffer(100, 150));
+            cmd.args([
+                "count",
+                "-k",
+                "5",
+                "-c",
+                &format!("{}", output_path.display()),
+            ])
+            .write_stdin(fasta_buffer(100, 150));
 
             let assert = cmd.assert();
 
-            assert
-                .success()
-                .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_CSV);
+            assert.success().stderr(b"" as &[u8]).stdout(b"" as &[u8]);
+
+            let mut output = vec![];
+            output_temp.read_to_end(&mut output)?;
+            assert_eq!(output, constant::TRUTH_CSV);
+
             Ok(())
         }
 
         #[test]
         fn count_solid() -> std::io::Result<()> {
+            let mut output_temp = tempfile::NamedTempFile::new()?;
+            let output_path = output_temp.path();
+
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
-            cmd.args(["count", "-k", "5", "-d", "solid"])
-                .write_stdin(fasta_buffer(100, 150));
+            cmd.args([
+                "count",
+                "-k",
+                "5",
+                "-s",
+                &format!("{}", output_path.display()),
+            ])
+            .write_stdin(fasta_buffer(100, 150));
 
             let assert = cmd.assert();
 
             println!("{:?}", assert.get_output().stdout);
 
-            assert
-                .success()
-                .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_SOLID);
+            assert.success().stderr(b"" as &[u8]).stdout(b"" as &[u8]);
+
+            let mut output = vec![];
+            output_temp.read_to_end(&mut output)?;
+            assert_eq!(output, constant::TRUTH_SOLID);
+
             Ok(())
         }
 
         #[test]
         fn dump_pcon() -> std::io::Result<()> {
+            let mut output_temp = tempfile::NamedTempFile::new()?;
+            let output_path = output_temp.path();
+
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
-            cmd.args(["dump", "-a", "1", "pcon"])
-                .write_stdin(constant::TRUTH_COUNT);
+            cmd.args([
+                "dump",
+                "-a",
+                "1",
+                "-p",
+                &format!("{}", output_path.display()),
+            ])
+            .write_stdin(constant::TRUTH_PCON);
 
             let assert = cmd.assert();
 
-            assert
-                .success()
-                .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_COUNT);
+            assert.success().stderr(b"" as &[u8]).stdout(b"" as &[u8]);
+
+            let mut output = vec![];
+            output_temp.read_to_end(&mut output)?;
+            assert_eq!(output, constant::TRUTH_PCON);
+
             Ok(())
         }
 
         #[test]
         fn dump_solid() -> std::io::Result<()> {
+            let mut output_temp = tempfile::NamedTempFile::new()?;
+            let output_path = output_temp.path();
+
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
-            cmd.args(["dump", "-a", "1", "solid"])
-                .write_stdin(constant::TRUTH_COUNT);
+            cmd.args([
+                "dump",
+                "-a",
+                "1",
+                "-s",
+                &format!("{}", output_path.display()),
+            ])
+            .write_stdin(constant::TRUTH_PCON);
 
             let assert = cmd.assert();
 
-            assert
-                .success()
-                .stderr(b"" as &[u8])
-                .stdout(constant::TRUTH_SOLID);
+            assert.success().stderr(b"" as &[u8]).stdout(b"" as &[u8]);
+
+            let mut output = vec![];
+            output_temp.read_to_end(&mut output)?;
+            assert_eq!(output, constant::TRUTH_SOLID);
+
             Ok(())
         }
     }

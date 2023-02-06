@@ -19,20 +19,32 @@ cfg_if::cfg_if! {
 
             log::info!("Start count kmer");
             counter.count_fasta(params.inputs()?, params.record_buffer());
-        log::info!("End count kmer");
+            log::info!("End count kmer");
 
-    log::info!("Start write count");
-    let serialize = counter.serialize();
+        let serialize = counter.serialize();
 
-    match params.dump() {
-        cli::DumpType::Pcon => serialize.pcon(params.output()?)?,
-        cli::DumpType::Csv => serialize.csv(params.abundance(), params.output()?)?,
-        cli::DumpType::Solid => serialize.solid(params.abundance(), params.output()?)?,
-        cli::DumpType::Spectrum => todo!(),
-    }
-    log::info!("End write count");
+    for (out_type, output) in params.outputs().into_iter() {
+            match out_type {
+            cli::DumpType::Pcon => {
+            log::info!("Start write count in pcon format");
+            serialize.pcon(output?)?;
+            log::info!("End write count in pcon format");
+            }
+            cli::DumpType::Csv =>{
+            log::info!("Start write count in csv format");
+            serialize.csv(params.abundance(), output?)?;
+            log::info!("End write count in csv format");
+            }
+            cli::DumpType::Solid => {
+            log::info!("Start write count in solid format");
+            serialize.solid(params.abundance(), output?)?;
+            log::info!("End write count in solid format");
+            }
+        }
 
-        Ok(())
+        }
+
+            Ok(())
     }
     } else {
     /// Run count
@@ -45,16 +57,27 @@ cfg_if::cfg_if! {
         counter.count_fasta(params.inputs()?, params.record_buffer());
         log::info!("End count kmer");
 
-    log::info!("Start write count");
         let serialize = counter.serialize();
 
-    match params.dump() {
-        cli::DumpType::Pcon => serialize.pcon(params.output()?)?,
-        cli::DumpType::Csv => serialize.csv(params.abundance(), params.output()?)?,
-        cli::DumpType::Solid => serialize.solid(params.abundance(), params.output()?)?,
-        cli::DumpType::Spectrum => todo!(),
+    for (out_type, output) in params.outputs().into_iter() {
+            match out_type {
+        cli::DumpType::Pcon => {
+            log::info!("Start write count in pcon format");
+            serialize.pcon(output?)?;
+            log::info!("End write count in pcon format");
+        }
+        cli::DumpType::Csv =>{
+            log::info!("Start write count in csv format");
+            serialize.csv(params.abundance(), output?)?;
+            log::info!("End write count in csv format");
+        }
+        cli::DumpType::Solid => {
+            log::info!("Start write count in solid format");
+            serialize.solid(params.abundance(), output?)?;
+            log::info!("End write count in solid format");
+        }
+        }
     }
-    log::info!("End write count");
 
         Ok(())
     }

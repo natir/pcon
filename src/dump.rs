@@ -17,16 +17,28 @@ cfg_if::cfg_if! {
     let counter = counter::Counter::<std::sync::atomic::AtomicU8>::from_stream(params.input()?)?;
     log::info!("End load count");
 
-    log::info!("Start write count");
     let serialize = counter.serialize();
 
-    match params.dump() {
-        cli::DumpType::Pcon => serialize.pcon(params.output()?)?,
-        cli::DumpType::Csv => serialize.csv(params.abundance(), params.output()?)?,
-        cli::DumpType::Solid => serialize.solid(params.abundance(), params.output()?)?,
-        cli::DumpType::Spectrum => todo!(),
+    for (out_type, output) in params.outputs().into_iter() {
+            match out_type {
+        cli::DumpType::Pcon => {
+            log::info!("Start write count in pcon format");
+            serialize.pcon(output?)?;
+            log::info!("End write count in pcon format");
+        }
+        cli::DumpType::Csv =>{
+            log::info!("Start write count in csv format");
+            serialize.csv(params.abundance(), output?)?;
+            log::info!("End write count in csv format");
+        }
+        cli::DumpType::Solid => {
+            log::info!("Start write count in solid format");
+            serialize.solid(params.abundance(), output?)?;
+            log::info!("End write count in solid format");
+        }
+            }
     }
-    log::info!("End write count");
+
 
     Ok(())
 }
@@ -37,16 +49,28 @@ cfg_if::cfg_if! {
     let counter = counter::Counter::<u8>::from_stream(params.input()?)?;
     log::info!("End load count");
 
-    log::info!("Start write count");
-    let serialize = counter.serialize();
 
-    match params.dump() {
-        cli::DumpType::Pcon => serialize.pcon(params.output()?)?,
-        cli::DumpType::Csv => serialize.csv(params.abundance(), params.output()?)?,
-        cli::DumpType::Solid => serialize.solid(params.abundance(), params.output()?)?,
-        cli::DumpType::Spectrum => todo!(),
+        let serialize = counter.serialize();
+
+    for (out_type, output) in params.outputs().into_iter() {
+            match out_type {
+        cli::DumpType::Pcon => {
+            log::info!("Start write count in pcon format");
+            serialize.pcon(output?)?;
+            log::info!("End write count in pcon format");
+        }
+        cli::DumpType::Csv =>{
+            log::info!("Start write count in csv format");
+            serialize.csv(params.abundance(), output?)?;
+            log::info!("End write count in csv format");
+        }
+        cli::DumpType::Solid => {
+            log::info!("Start write count in solid format");
+            serialize.solid(params.abundance(), output?)?;
+            log::info!("End write count in solid format");
+        }
+        }
     }
-    log::info!("End write count");
 
     Ok(())
 
