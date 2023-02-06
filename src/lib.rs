@@ -19,4 +19,4 @@ pub mod solid;
 
 #[cfg(not(tarpaulin_include))]
 /// Define a const
-type ByteOrder = byteorder::LittleEndian; // WARNING IF YOU CHANGE THIS CHECK AND CHANGE SERIALIZE
+type ByteOrder = byteorder::LittleEndian; // WARNING IF YOU CHANGE THIS CHECK AND CHANGE SERIALIZE.RS

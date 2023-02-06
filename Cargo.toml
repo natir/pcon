@@ -43,7 +43,7 @@ byteorder      = { version = "1" }
 criterion      = { version = "0.4" }
 tempfile       = { version = "3" }
 rand           = { version = "0.8" }
-
+assert_cmd     = { version = "2" }
 
 [features]
 parallel = ["dep:rayon"]
