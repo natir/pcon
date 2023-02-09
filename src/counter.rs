@@ -1,4 +1,4 @@
-//! Run count command
+//! Generic struct of counter and implementation for many type
 
 /* std use */
 

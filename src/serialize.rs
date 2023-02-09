@@ -1,4 +1,4 @@
-//! Serialize function
+//! Tools to serialize a Counter
 
 /* std use */
 
@@ -17,7 +17,7 @@ pub struct Serialize<T> {
 }
 
 impl<T> Serialize<T> {
-    /// Create a new Serialize
+    /// Create a new Serialize from a Counter
     pub fn new(counter: counter::Counter<T>) -> Self {
         Self { counter }
     }
