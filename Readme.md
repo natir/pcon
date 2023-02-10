@@ -57,6 +57,52 @@ cargo install https://github.com/natir/pcon --features {features1},{features2}
 
 ## Usage
 
+### Count
+
+By default `pcon count` read input fasta file from stdin and write count in stdout in pcon internal format.
+
+```
+-k, --kmer-size <KMER_SIZE>          Size of kmer
+-i, --inputs <INPUTS>                Path to inputs, default read stdin
+-p, --pcon <PCON>                    Path where count are store, default write in stdout
+-c, --csv <CSV>                      Path where count are store
+-s, --solid <SOLID>                  Path where count are store
+-a, --abundance <ABUNDANCE>          Minimal abundance, default value 0
+-b, --record_buffer <RECORD_BUFFER>  Number of sequence record load in buffer, default 8192
+```
+
+Count 7-mer in `example.fasta` file and write result in pcon format in `example.pcon` file:
+```bash
+pcon count -k 7 -i example.fasta -p example.pcon
+```
+
+### Dump
+
+By default `pcon dump` read input pcon file from stdin and write count in csv format in stdout.
+
+```
+-i, --inputs <INPUT>         Path to inputs, default read stdin
+-c, --csv <CSV>              Path where count are store, default write in stdout
+-p, --pcon <PCON>            Path where count are store
+-s, --solid <SOLID>          Path where count are store
+-a, --abundance <ABUNDANCE>  Minimal abundance, default value 0
+```
+
+Convert 7-mer count in `example.pcon` in csv file `example.csv`:
+```bash
+pcon dump -i example.pcon -c example.csv
+```
+
+### Not subcommand parameter
+
+```
+-q, --quiet           Silence all output
+-v, --verbosity...    Verbose mode (-v, -vv, -vvv, etc)
+-T, --timestamp <TS>  Timestamp (sec, ms, ns, none)
+-h, --help            Print help
+-V, --version         Print version
+```
+
 ## Minimum supported Rust version
 
 Currently the minimum supported Rust version is 1.65.
