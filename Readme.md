@@ -10,14 +10,49 @@
 
 Prompt COuNter, a short kmer counter.
 
+- only fasta file
+- if k is even k is reduced to the nearest lower odd number
+- pcon allocate 2^(k * 2 - 1) times number bytes used by counter value (for k 19 pcon and one bytes counts required 69 go)
+
+If data contains something other than A C T or G is consider like A C T or G (check the 2nd and the 3rd bit of lettre, N was consider as G for exemple)
+
 ## Installation
+
+### Features
+
+Pcon use rust feature to control some behavior at build time.
+
+#### Maximum of count
+
+Size of variable used to store kmer count is control by *count_\** features.
+
+1. *count\_u16*: count on 2 bytes max value 65535
+2. *count\_u32*: count on 4 bytes max value 4294967295
+3. *count\_u64*: count on 8 bytes max value 18446744073709551615
+4. *count\_u8*:  count on 1 bytes max value 255
+
+If you set multiple count\_\* feature priority of feature follow previous list order.
+
+#### Parallel
+
+If you set feature parallel you activate pcon parallel feature, based on [rayon](https://docs.rs/rayon/latest/rayon/) and [rust atomic](https://doc.rust-lang.org/core/sync/atomic/index.html) type.
+
+#### Default
+
+*count\_u8* is the only default features.
 
 ### From source
 
 ```bash
 git clone https://github.com/natir/pcon.git
 cd pcon
-cargo install --path .
+cargo install --path . --features {features1},{features2}
+```
+
+### With cargo
+
+```bash
+cargo install https://github.com/natir/pcon --features {features1},{features2}
 ```
 
 ## Usage

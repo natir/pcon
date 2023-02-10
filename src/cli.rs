@@ -68,7 +68,7 @@ pub enum SubCommand {
     /// Perform count of kmer
     Count(Count),
 
-    /// Convert pcon native output in other type
+    /// Convert pcon native output in other format
     Dump(Dump),
 }
 
@@ -110,7 +110,7 @@ pub struct Count {
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
-    abundance: Option<u8>,
+    abundance: Option<crate::CountTypeNoAtomic>,
 
     /// Number of sequence record load in buffer, default 8192
     #[clap(short = 'b', long = "record_buffer")]
@@ -191,7 +191,7 @@ impl Count {
     }
 
     /// Get abundance
-    pub fn abundance(&self) -> u8 {
+    pub fn abundance(&self) -> crate::CountTypeNoAtomic {
         self.abundance.unwrap_or(0)
     }
 
@@ -222,7 +222,7 @@ pub struct Dump {
 
     /// Minimal abundance, default value 0
     #[clap(short = 'a', long = "abundance")]
-    abundance: u8,
+    abundance: crate::CountTypeNoAtomic,
 }
 
 impl Dump {
@@ -288,7 +288,7 @@ impl Dump {
     }
 
     /// Get abundance
-    pub fn abundance(&self) -> u8 {
+    pub fn abundance(&self) -> crate::CountTypeNoAtomic {
         self.abundance
     }
 }

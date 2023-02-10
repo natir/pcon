@@ -39,14 +39,21 @@ noodles        = { version = "0.31", features = ["fasta"] }
 flate2         = { version = "1" }
 byteorder      = { version = "1" }
 
+
 [dev-dependencies]
 criterion      = { version = "0.4" }
 tempfile       = { version = "3" }
 rand           = { version = "0.8" }
 assert_cmd     = { version = "2" }
 
+
 [features]
-parallel = ["dep:rayon"]
+default   = ["count_u8"]
+parallel  = ["dep:rayon"]
+count_u8  = []
+count_u16 = []
+count_u32 = []
+count_u64 = []
 
 
 [profile.release]
