@@ -1,3 +1,4 @@
-var N = null;var sourcesIndex = {};
-sourcesIndex["pcon"] = {"name":"","files":["binding.rs","cli.rs","count.rs","counter.rs","dump.rs","error.rs","lib.rs","solid.rs","spectrum.rs","static_counter.rs"]};
+var sourcesIndex = JSON.parse('{\
+"pcon":["",[],["cli.rs","count.rs","counter.rs","dump.rs","error.rs","lib.rs","serialize.rs","solid.rs","spectrum.rs"]]\
+}');
 createSourceSidebar();

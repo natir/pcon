@@ -1,1 +1,1 @@
-initSidebarItems({"fn":[["binary","Write in the given instance of io::Write the count in `counter` in binary format."],["csv","Write in the given instance of io::Write the count in `counter` in csv format. Only count upper than `abundance` is write."],["dump",""],["solid","Serialize in the given instance of io::Write an instance of [solid::Solid] build from counts in `counter` upper than `abundance`."],["spectrum","Write in the given instance of io::Write the kmer spectrum from counts in `counter`"]]});
+window.SIDEBAR_ITEMS = {"fn":[["dump","Run dump"]]};

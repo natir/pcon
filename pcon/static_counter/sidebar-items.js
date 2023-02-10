@@ -1,1 +1,0 @@
-initSidebarItems({"struct":[["StaticCounter","A struct to get a fast access to count"]]});

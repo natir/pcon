@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Counter","A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing. If kmer occure more than 256 other occurence are ignored"]],"type":[["AtoCount",""],["Count",""]]});
+window.SIDEBAR_ITEMS = {"struct":[["Counter","A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing. Implement only for u8, std::sync::atomic::AtomicU8"]]};

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Solid","A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid"]]});
+window.SIDEBAR_ITEMS = {"struct":[["Solid","A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid"]]};

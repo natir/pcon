@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["SubCommand",""]],"fn":[["check_count_param",""],["check_dump_param",""],["i82level",""]],"struct":[["Command","Prompt COuNter is short kmer counter"],["SubCommandCount","Perform kmer count"],["SubCommandDump","Convert count in usable format"]]});
+window.SIDEBAR_ITEMS = {"enum":[["DumpType","Choose dump type"],["SubCommand","Enumeration of subcommand"]],"struct":[["Command","Prompt COuNter, a short kmer counter."],["Count","SubCommand Count"],["Dump","SubCommand Dump"]]};

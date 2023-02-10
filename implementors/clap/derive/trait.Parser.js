@@ -1,3 +1,3 @@
-(function() {var implementors = {};
-implementors["pcon"] = [{"text":"impl Parser for <a class=\"struct\" href=\"pcon/cli/struct.Command.html\" title=\"struct pcon::cli::Command\">Command</a>","synthetic":false,"types":["pcon::cli::Command"]},{"text":"impl Parser for <a class=\"enum\" href=\"pcon/cli/enum.SubCommand.html\" title=\"enum pcon::cli::SubCommand\">SubCommand</a>","synthetic":false,"types":["pcon::cli::SubCommand"]},{"text":"impl Parser for <a class=\"struct\" href=\"pcon/cli/struct.SubCommandCount.html\" title=\"struct pcon::cli::SubCommandCount\">SubCommandCount</a>","synthetic":false,"types":["pcon::cli::SubCommandCount"]},{"text":"impl Parser for <a class=\"struct\" href=\"pcon/cli/struct.SubCommandDump.html\" title=\"struct pcon::cli::SubCommandDump\">SubCommandDump</a>","synthetic":false,"types":["pcon::cli::SubCommandDump"]}];
-if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
+(function() {var implementors = {
+"pcon":[["impl Parser for <a class=\"struct\" href=\"pcon/cli/struct.Command.html\" title=\"struct pcon::cli::Command\">Command</a>"]]
+};if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
