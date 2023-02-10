@@ -1,54 +1,69 @@
 [package]
 name = "pcon"
-description = "pcon for Prompt COuNter, is a short kmer counter"
 version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2021"
-rust-version = "1.56"
+description = "Prompt COuNter, a short kmer counter."
+rust-version = "1.65"
 
-[lib]
-name = "pcon"
-crate-type = ["rlib", "cdylib", "staticlib"]
+homepage = "https://github.com/natir/pcon"
+repository = "https://github.com/natir/pcon"
+documentation = "https://natir.github.io/pcon/pcon"
 
+readme = "Readme.md"
+license-file = "LICENSE"
 
-[[bin]]
-name = "pcon"
-path = "src/main.rs"
 
 [dependencies]
-noodles         = { version = "0.18", features = ["fasta"] }
-cocktail        = { git = "https://github.com/natir/cocktail.git" }
+cfg-if         = "1"
+cocktail       = { git = "https://github.com/natir/cocktail.git" }
+bitvec         = { version = "1" }
 
-# parallel
-rayon           = "1"
-
-# serialization
-bitvec		= "1"
-byteorder       = "1"
-
-# input output management
-term_size      = "0.3"
-niffler	       = { version = "2", features = ["bz2", "lzma", "gz"] }
-flate2         = "1"
+# multi-threading management
+rayon          = { version = "1", optional = true }
 
 # CLI management
-clap           = { version = "3", features = ["derive"] }
+clap           = { version = "4", features = ["derive"] }
+
+# Error management
+thiserror      = { version = "1" }
+anyhow         = { version = "1"}
 
 # Logging and error management
-log 	       = "0.4"
-anyhow         = "1"
-thiserror      = "1"
-env_logger     = "0.9"
+log            = { version = "0.4" }
+stderrlog      = { version = "0.5" }
+
+# IO management
+niffler        = { version = "2" }
+noodles        = { version = "0.31", features = ["fasta"] }
+flate2         = { version = "1" }
+byteorder      = { version = "1" }
 
 
 [dev-dependencies]
-lazy_static	= "1"
+criterion      = { version = "0.4" }
+tempfile       = { version = "3" }
+rand           = { version = "0.8" }
+assert_cmd     = { version = "2" }
+
+
+[features]
+default   = ["count_u8"]
+parallel  = ["dep:rayon"]
+count_u8  = []
+count_u16 = []
+count_u32 = []
+count_u64 = []
 
 
 [profile.release]
-# debug = true ## Uncomment for profile
 lto = 'thin'
 opt-level = 3
 overflow-checks = false
 panic = 'abort'
 incremental = false
+
+
+[profile.profiling]
+inherits = "release"
+debug = true

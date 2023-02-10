@@ -1,2 +1,0 @@
-[test-config]
-exclude-files = ["src/binding.rs"]

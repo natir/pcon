@@ -1,43 +1,20 @@
-/*
-Copyright (c) 2020 Pierre Marijon <pierre.marijon@hhu.de>
+//! Define Spectrum struct
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
+/* std use */
 
 /* crate use */
-use anyhow::{Context, Result};
-use rayon::prelude::*;
 
 /* local use */
-use crate::error::IO::*;
-use crate::error::*;
-use crate::*;
 
 /// Based on Kmergenie we assume kmer spectrum is a mixture of Pareto law and some Gaussians law
 /// Erroneous kmer follow Pareto law, Gaussians law represente true and repetitive kmer
-/// We use this property to found the threshold to remove many Erroneous kmer and keep Many True kmer
+/// We use this property to found the threshold to remove most Erroneous kmer and keep Many True kmer
 #[derive(Debug, PartialEq)]
 pub enum ThresholdMethod {
     /// The first local minimum match with the intersection of Pareto and Gaussians
     FirstMinimum,
 
-    /// More we remove kmer less we remove Erroneous kmer when remove less than n percent view before    
+    /// More we remove kmer less we remove Erroneous kmer when remove less than n percent view before
     Rarefaction,
 
     /// Remove at most n percent of total kmer
@@ -48,43 +25,29 @@ pub enum ThresholdMethod {
 }
 
 /// A struct to represent kmer spectrum and usefull corresponding function
+
 pub struct Spectrum {
     data: Box<[u64]>,
 }
 
 impl Spectrum {
-    pub fn from_counter(counter: &counter::Counter) -> Self {
-        let counts = unsafe {
-            &(*(counter.get_raw_count() as *const [counter::AtoCount] as *const [counter::Count]))
-        };
+    /// Create a new Spectrum with count in `counter`
+    pub fn from_count<T>(counts: &[T]) -> Self
+    where
+        T: std::convert::Into<usize> + std::marker::Copy,
+    {
+        let mut data =
+            vec![0u64; 2_usize.pow(8 * std::mem::size_of::<T>() as u32)].into_boxed_slice();
 
-        let data = counts
-            .par_chunks(counts.len() / rayon::current_num_threads())
-            .map(|chunk| {
-                let mut d: Box<[u64]> = vec![0u64; 256].into_boxed_slice();
-
-                for count in chunk.iter() {
-                    d[*count as usize] = d[*count as usize].saturating_add(1);
-                }
-
-                d
-            })
-            .reduce(
-                || vec![0u64; 256].into_boxed_slice(),
-                |a, b| {
-                    let mut d = Vec::with_capacity(256);
-
-                    for x in a.iter().zip(b.iter()) {
-                        d.push(x.0.saturating_add(*x.1));
-                    }
-
-                    d.into_boxed_slice()
-                },
-            );
+        for count in counts {
+            data[<T as std::convert::Into<usize>>::into(*count)] =
+                data[<T as std::convert::Into<usize>>::into(*count)].saturating_add(1);
+        }
 
         Self { data }
     }
 
+    /// Found threshold matching with method
     pub fn get_threshold(&self, method: ThresholdMethod, params: f64) -> Option<u8> {
         match method {
             ThresholdMethod::FirstMinimum => self.first_minimum(),
@@ -142,124 +105,37 @@ impl Spectrum {
         None
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub(crate) fn get_raw_histogram(&self) -> &[u64] {
         &self.data
     }
-
-    pub fn write_csv<W>(&self, mut writer: W) -> Result<()>
-    where
-        W: std::io::Write,
-    {
-        for (i, nb) in self.data.iter().enumerate() {
-            writeln!(writer, "{},{}", i, nb).with_context(|| Error::IO(ErrorDurringWrite))?;
-        }
-
-        Ok(())
-    }
-
-    pub fn write_histogram<W>(&self, mut out: W, point: Option<u8>) -> std::io::Result<()>
-    where
-        W: std::io::Write,
-    {
-        // Draw kmer spectrum in console
-        let shape = get_shape();
-
-        let factor = (*self.data.iter().max().unwrap() as f64).log(10.0) / shape.1 as f64;
-
-        let normalized: Box<[f64]> = self
-            .data
-            .iter()
-            .map(|y| {
-                if *y == 0 {
-                    0.0
-                } else {
-                    (*y as f64).log(10.0) / factor
-                }
-            })
-            .collect();
-
-        for h in (1..=shape.1).rev() {
-            for w in 0..shape.0 {
-                if normalized[w] >= h as f64 {
-                    let delta = normalized[w] - h as f64;
-                    if delta > 1.0 {
-                        write!(out, "\u{258c}")?;
-                    } else if delta > 0.5 {
-                        write!(out, "\u{2596}")?;
-                    } else {
-                        write!(out, " ")?;
-                    }
-                } else {
-                    write!(out, " ")?;
-                }
-            }
-
-            writeln!(out)?;
-        }
-
-        let mut last_line = vec![b' '; shape.0];
-        for x in (0..shape.0).step_by(5) {
-            last_line[x] = b'5'
-        }
-        last_line[0] = b'0';
-        if let Some(pos) = point {
-            if (pos as usize) < last_line.len() {
-                last_line[pos as usize] = b'*';
-            }
-        }
-
-        writeln!(out, "{}", std::str::from_utf8(&last_line).unwrap())?;
-
-        Ok(())
-    }
-}
-
-#[allow(dead_code)]
-fn term_size() -> (usize, usize) {
-    match term_size::dimensions() {
-        Some((w, h)) => (w, h),
-        None => (80, 24),
-    }
-}
-
-#[cfg(test)]
-fn get_shape() -> (usize, usize) {
-    (256, 48)
-}
-
-#[cfg(not(test))]
-fn get_shape() -> (usize, usize) {
-    let term_size = term_size();
-
-    (
-        core::cmp::min(256, term_size.0),
-        core::cmp::min(48, term_size.1),
-    )
 }
 
 #[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::counter;
 
-    lazy_static::lazy_static! {
-    static ref COUNTER: crate::counter::Counter = {
-            let mut counter = crate::counter::Counter::new(5);
+    fn generate_counter() -> counter::Counter<u8> {
+        let mut counter: counter::Counter<u8> = counter::Counter::<u8>::new(5);
 
         for i in 0..cocktail::kmer::get_kmer_space_size(5) {
-        counter.inc(i);
-            }
+            counter::Counter::<u8>::inc(
+                counter.raw_mut(),
+                (cocktail::kmer::canonical(i, 5) >> 1) as usize,
+            );
+        }
 
-            counter.inc(0);
+        counter::Counter::<u8>::inc(counter.raw_mut(), 0);
 
-            counter
-    };
+        counter
     }
 
     #[test]
     fn from_counter() {
-        let spectrum = Spectrum::from_counter(&COUNTER);
+        let counter = generate_counter();
+        let spectrum = Spectrum::from_count(counter.raw());
 
         assert_eq!(
             spectrum.get_raw_histogram(),
@@ -337,71 +213,56 @@ mod tests {
         let spectrum = Spectrum { data: tmp };
 
         assert_eq!(
-            spectrum.get_threshold(ThresholdMethod::FirstMinimum, 0.00001),
+            spectrum.get_threshold(ThresholdMethod::Rarefaction, 0.00001),
             None
         );
     }
 
     #[test]
-    fn test_draw_hist() {
+    fn percent_at_most() {
         let spectrum = Spectrum {
             data: Box::new(SPECTRUM),
         };
 
-        let mut output = vec![];
-        spectrum.write_histogram(&mut output, Some(6)).unwrap();
+        assert_eq!(
+            spectrum.get_threshold(ThresholdMethod::PercentAtMost, 0.3),
+            Some(1)
+        );
+    }
 
-        let good_output = "                                                                                                                                                                                                                                                                
-▖                                                                                                                                                                                                                                                               
-▌                                                                                                                                                                                                                                                               
-▌                                                                                                                                                                                                                                                               
-▌                                                                                                                                                                                                                                                               
-▌                                                                                                                                                                                                                                                               
-▌                                                                                                                                                                                                                                                               
-▌▖                                                                                                                                                                                                                                                              
-▌▌                                                                                                                                                                                                                                                              
-▌▌                                                                                                                                                                                                                                                              
-▌▌                                                                                                                                                                                                                                                              
-▌▌                                                                                                                                                                                                                                                              
-▌▌                                                                                                                                                                                                                                                              
-▌▌▌                                                                                                                                                                                                                                                             
-▌▌▌                                                                                                                                                                                                                                                             
-▌▌▌                                                                                                                                                                                                                                                             
-▌▌▌                                                                                                                                                                                                                                                             
-▌▌▌▌          ▖▖▖▖                                                                                                                                                                                                                                              
-▌▌▌▌        ▖▌▌▌▌▌▌▖▖                                                                                                                                                                                                                                           
-▌▌▌▌       ▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                                          
-▌▌▌▌▖     ▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                                        
-▌▌▌▌▌    ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                                       
-▌▌▌▌▌   ▖▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌                                                                                                                                                                                                                                      
-▌▌▌▌▌▖  ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌                                                                                                                                                                                                                                     
-▌▌▌▌▌▌ ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                                    
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                                   
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌                                                                                                                                                                                                                                  
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▖▖                                                                                                                                                                                                                              
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▖                                                                                                                                                                                                                         
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▖                                                                                                                                                                                                                      
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                    
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                  
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                                
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                              
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖ ▖                                                                                                                                                                                                         
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖                                                                                                                                                                                                      
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▖ ▖                                                                                                                                                                                                ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▖▌▖▖   ▖▖                                                                                                                                                                                      ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▌▖▌▌ ▌▖▖▖                                                                                                                                                                            ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖  ▖  ▖                                                                                                                                                                     ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▖▖ ▖▖   ▖                                                                                                                                                          ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▌▌▖▌▌▌▌▌▌▖▌▖ ▌ ▖▖▖▖▌   ▖ ▖  ▖ ▌▌▖▖ ▖ ▌   ▖                                                                                                                         ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▌▖▌▌▌▌▌▌  ▌ ▌  ▌ ▌▌▌▌ ▌▖▌▖▌▌▌  ▖▖▖     ▖   ▖                                                                                                          ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▌ ▌▌▌▌ ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▖▌▖ ▌▌▌▖▌ ▌ ▖                                                                                                      ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▌▌▌▌ ▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▌ ▌▖                                                                                                     ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▌▌▌▌ ▌         ▌▌         ▌                                                                              ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌ ▌▌▌▌ ▌ ▌    ▌  ▌▌     ▌   ▌                      ▌                       ▌  ▌▌           ▌        ▌  ▌   ▌
-▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▌▖▌▌▌▌ ▌▖▌▖  ▖▌▖▖▌▌  ▖ ▖▌ ▖▖▌▖   ▖▖▖▖▖ ▖▖ ▖▖ ▖▖▖  ▖▌▖ ▖ ▖▖▖ ▖▖▖▖▖   ▖  ▖▖▖▖▌ ▖▌▌ ▖  ▖▖     ▌▖ ▖   ▖ ▌▖ ▌▖  ▌
-0    5*   5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5
-";
+    #[test]
+    fn failled_percent_at_most() {
+        let tmp = (0..256).map(|_| 1).collect::<Box<[u64]>>();
 
-        assert_eq!(good_output, std::str::from_utf8(&output).unwrap());
+        let spectrum = Spectrum { data: tmp };
+
+        assert_eq!(
+            spectrum.get_threshold(ThresholdMethod::PercentAtMost, 1.2),
+            None
+        );
+    }
+
+    #[test]
+    fn percent_at_least() {
+        let spectrum = Spectrum {
+            data: Box::new(SPECTRUM),
+        };
+
+        assert_eq!(
+            spectrum.get_threshold(ThresholdMethod::PercentAtLeast, 0.3),
+            Some(2)
+        );
+    }
+
+    #[test]
+    fn failled_percent_at_least() {
+        let tmp = (0..256).map(|_| 1).collect::<Box<[u64]>>();
+
+        let spectrum = Spectrum { data: tmp };
+
+        assert_eq!(
+            spectrum.get_threshold(ThresholdMethod::PercentAtLeast, 1.2),
+            None
+        );
     }
 }

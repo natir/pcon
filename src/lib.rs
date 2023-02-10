@@ -1,42 +1,66 @@
-/*
-Copyright (c) 2020 Pierre Marijon <pmarijon@mpi-inf.mpg.de>
+//! Prompt COuNter, a short kmer counter.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+#![warn(missing_docs)]
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+/* std use */
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
- */
+/* crate use */
 
-/* project mod declaration */
+/* project use */
+
+/* mod declaration */
 pub mod cli;
-pub mod error;
-
 pub mod count;
 pub mod counter;
 pub mod dump;
+pub mod error;
+pub mod serialize;
 pub mod solid;
 pub mod spectrum;
-pub mod static_counter;
 
-pub mod binding;
+/// Define a const
+type ByteOrder = byteorder::LittleEndian; // WARNING IF YOU CHANGE THIS CHECK AND CHANGE SERIALIZE.RS
 
-/// Set the number of threads use by pcon
-pub fn set_nb_threads(nb_threads: usize) {
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(nb_threads)
-        .build_global()
-        .unwrap();
+cfg_if::cfg_if! {
+    if #[cfg(all(feature = "count_u16", feature = "parallel"))] {
+    /// Define count type
+    pub(crate) type CountType = std::sync::atomic::AtomicU16;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u16;
+    } else if #[cfg(all(feature = "count_u16", not(feature = "parallel")))] {
+    /// Define count type
+    pub(crate) type CountType = u16;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u16;
+    } else if #[cfg(all(feature = "count_u32", feature = "parallel"))] {
+    /// Define count type
+    pub(crate) type CountType = std::sync::atomic::AtomicU32;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u32;
+    } else if #[cfg(all(feature = "count_u32", not(feature = "parallel")))] {
+    /// Define count type
+    pub(crate) type CountType = u32;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u32;
+    } else if #[cfg(all(feature = "count_u64", feature = "parallel"))] {
+    /// Define count type
+    pub(crate) type CountType = std::sync::atomic::AtomicU64;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u64;
+    } else if #[cfg(all(feature = "count_u64", not(feature = "parallel")))] {
+    /// Define count type
+    pub(crate) type CountType = u64;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u64;
+    } else if #[cfg(feature = "parallel")] {
+    /// Define count type
+    pub(crate) type CountType = std::sync::atomic::AtomicU8;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u8;
+    } else {
+    /// Define count type
+    pub(crate) type CountType = u8;
+    /// Define count type for all never atomic thing
+    pub(crate) type CountTypeNoAtomic = u8;
+    }
 }
