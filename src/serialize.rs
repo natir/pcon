@@ -5,6 +5,8 @@
 use std::io::Write as _;
 
 /* crate use */
+#[cfg(feature = "parallel")]
+use rayon::prelude::*;
 
 /* project use */
 use crate::counter;
@@ -142,7 +144,7 @@ macro_rules! impl_atomic {
                     unsafe { std::mem::transmute::<&[$type], &[$out_type]>(self.counter.raw()) };
 
                 let compress_block: Vec<error::Result<Vec<u8>>> = count
-                    .chunks(chunk_size)
+                    .par_chunks(chunk_size)
                     .map(|input_buffer| {
                         input_buffer
                             .iter()
