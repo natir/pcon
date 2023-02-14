@@ -595,6 +595,18 @@
 <a href="#595" id="595">595</a>
 <a href="#596" id="596">596</a>
 <a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Generic struct of counter and implementation for many type
 
 </span><span class="comment">/* std use */
@@ -822,6 +834,11 @@
 	    </span><span class="kw">pub fn </span>get_canonic(<span class="kw-2">&amp;</span><span class="self">self</span>, canonical: u64) -&gt; <span class="macro-nonterminal">$out_type </span>{
 		<span class="self">self</span>.count[(canonical &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize].load(std::sync::atomic::Ordering::SeqCst)
 	    }
+
+	    <span class="doccomment">/// Get raw data in no atomic type
+	    </span><span class="kw">pub fn </span>raw_noatomic(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$out_type</span>] {
+		transmute(<span class="kw-2">&amp;</span><span class="self">self</span>.count)
+	    }
 	}
 
     }
@@ -869,6 +886,16 @@
     </span>T: std::marker::Sized + std::clone::Clone,
 {
     <span class="macro">vec!</span>[value; cocktail::kmer::get_hash_space_size(k) <span class="kw">as </span>usize].into_boxed_slice()
+}
+
+<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+</span><span class="doccomment">/// Perform transmutation on box
+</span><span class="kw">fn </span>transmute&lt;I, O&gt;(data: <span class="kw-2">&amp;</span>[I]) -&gt; <span class="kw-2">&amp;</span>[O]
+<span class="kw">where
+    </span>I: std::marker::Sized,
+    O: std::marker::Sized,
+{
+    <span class="kw">unsafe </span>{ std::mem::transmute::&lt;<span class="kw-2">&amp;</span>[I], <span class="kw-2">&amp;</span>[O]&gt;(data) }
 }
 
 <span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
@@ -1080,10 +1107,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                     <span class="number">2
                 </span>);
 
-                <span class="macro">assert_eq!</span>(
-                    <span class="kw-2">&amp;</span>transmute::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="macro-nonterminal">$out_type</span>&gt;(counter.raw())[..],
-                    <span class="kw-2">&amp;</span><span class="macro-nonterminal">$truth</span>[..]
-                );
+                <span class="macro">assert_eq!</span>(counter.raw_noatomic(), <span class="kw-2">&amp;</span><span class="macro-nonterminal">$truth</span>[..]);
             }
         };
     }
