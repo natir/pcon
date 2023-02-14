@@ -90,44 +90,44 @@
 </span><span class="macro">cfg_if::cfg_if! </span>{
     <span class="kw">if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u16&quot;</span>, feature = <span class="string">&quot;parallel&quot;</span>))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = std::sync::atomic::AtomicU16;
+    </span><span class="kw">pub type </span>CountType = std::sync::atomic::AtomicU16;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u16;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u16;
     } <span class="kw">else if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u16&quot;</span>, not(feature = <span class="string">&quot;parallel&quot;</span>)))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = u16;
+    </span><span class="kw">pub type </span>CountType = u16;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u16;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u16;
     } <span class="kw">else if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u32&quot;</span>, feature = <span class="string">&quot;parallel&quot;</span>))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = std::sync::atomic::AtomicU32;
+    </span><span class="kw">pub type </span>CountType = std::sync::atomic::AtomicU32;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u32;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u32;
     } <span class="kw">else if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u32&quot;</span>, not(feature = <span class="string">&quot;parallel&quot;</span>)))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = u32;
+    </span><span class="kw">pub type </span>CountType = u32;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u32;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u32;
     } <span class="kw">else if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u64&quot;</span>, feature = <span class="string">&quot;parallel&quot;</span>))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = std::sync::atomic::AtomicU64;
+    </span><span class="kw">pub type </span>CountType = std::sync::atomic::AtomicU64;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u64;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u64;
     } <span class="kw">else if </span><span class="attr">#[cfg(all(feature = <span class="string">&quot;count_u64&quot;</span>, not(feature = <span class="string">&quot;parallel&quot;</span>)))] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = u64;
+    </span><span class="kw">pub type </span>CountType = u64;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u64;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u64;
     } <span class="kw">else if </span><span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)] </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = std::sync::atomic::AtomicU8;
+    </span><span class="kw">pub type </span>CountType = std::sync::atomic::AtomicU8;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u8;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u8;
     } <span class="kw">else </span>{
     <span class="doccomment">/// Define count type
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountType = u8;
+    </span><span class="kw">pub type </span>CountType = u8;
     <span class="doccomment">/// Define count type for all never atomic thing
-    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">type </span>CountTypeNoAtomic = u8;
+    </span><span class="kw">pub type </span>CountTypeNoAtomic = u8;
     }
 }
 </code></pre></div>

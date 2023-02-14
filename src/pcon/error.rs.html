@@ -31,13 +31,21 @@
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Error struct of project pcon
 
-</span><span class="comment">/* crate use */
+</span><span class="comment">/* std use */
+
+/* crate use */
 </span><span class="kw">use </span>anyhow;
 <span class="kw">use </span>thiserror;
 
-<span class="doccomment">/// Enum to manage error
+<span class="comment">/* project use */
+
+</span><span class="doccomment">/// Enum to manage error
 </span><span class="attr">#[derive(std::fmt::Debug, thiserror::Error)]
 </span><span class="kw">pub enum </span>Error {
     <span class="doccomment">/// Error in logging system configuration
