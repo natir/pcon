@@ -225,6 +225,11 @@ macro_rules! impl_atomic (
 	    pub fn get_canonic(&self, canonical: u64) -> $out_type {
 		self.count[(canonical >> 1) as usize].load(std::sync::atomic::Ordering::SeqCst)
 	    }
+
+	    /// Get raw data in no atomic type
+	    pub fn raw_noatomic(&self) -> &[$out_type] {
+		transmute(&self.count)
+	    }
 	}
 
     }
@@ -272,6 +277,16 @@ where
     T: std::marker::Sized + std::clone::Clone,
 {
     vec![value; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice()
+}
+
+#[cfg(feature = "parallel")]
+/// Perform transmutation on box
+fn transmute<I, O>(data: &[I]) -> &[O]
+where
+    I: std::marker::Sized,
+    O: std::marker::Sized,
+{
+    unsafe { std::mem::transmute::<&[I], &[O]>(data) }
 }
 
 #[cfg(feature = "parallel")]
@@ -483,10 +498,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                     2
                 );
 
-                assert_eq!(
-                    &transmute::<$type, $out_type>(counter.raw())[..],
-                    &$truth[..]
-                );
+                assert_eq!(counter.raw_noatomic(), &$truth[..]);
             }
         };
     }
