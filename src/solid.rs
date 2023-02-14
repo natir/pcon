@@ -4,8 +4,10 @@
 
 /* crate use */
 use bitvec::prelude::*;
+use byteorder::ReadBytesExt as _;
 
 /* local use */
+use crate::error;
 
 /// A struct to store if a kmer is Solid or not. Only kmer with abundance upper than a threshold is solid
 pub struct Solid {
@@ -36,6 +38,34 @@ impl Solid {
         }
 
         Self { k, solid }
+    }
+
+    /// Create a new Solid by read
+    pub fn from_stream<R>(mut input: R) -> error::Result<Self>
+    where
+        R: std::io::Read,
+    {
+        let k = input.read_u8()?;
+
+        let mut solid = bitbox![u8, Lsb0; 0; cocktail::kmer::get_hash_space_size(k) as usize];
+
+        input.read_exact(solid.as_raw_mut_slice())?;
+
+        Ok(Self { k, solid })
+    }
+
+    /// Create a new Solid from path
+    pub fn from_path<P>(path: P) -> error::Result<Self>
+    where
+        P: std::convert::AsRef<std::path::Path>,
+    {
+        let (readable, _compression) = niffler::get_reader(
+            std::fs::File::open(path)
+                .map(std::io::BufReader::new)
+                .map(Box::new)?,
+        )?;
+
+        Self::from_stream(readable)
     }
 
     /// Get value of k
@@ -69,7 +99,6 @@ impl Solid {
         self.solid[hash]
     }
 
-    #[allow(dead_code)]
     pub(crate) fn get_raw_solid(&self) -> &BitBox<u8, Lsb0> {
         &self.solid
     }
@@ -85,12 +114,18 @@ GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAG
 AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
 ";
 
-    fn get_solid() -> Solid {
+    fn get_counter() -> crate::counter::Counter<u8> {
         let mut counter = crate::counter::Counter::<u8>::new(5);
 
         counter.count_fasta(Box::new(FASTA_FILE), 1);
 
-        Solid::from_count(counter.k(), &counter.raw(), 0)
+        counter
+    }
+
+    fn get_solid() -> Solid {
+        let counter = get_counter();
+
+        Solid::from_count(counter.k(), counter.raw(), 0)
     }
 
     const SOLID: &[u8] = &[
@@ -136,5 +171,24 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         solid.set(cocktail::kmer::seq2bit(b"CTCAG"), false);
 
         assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID_SET);
+    }
+
+    #[test]
+    fn deserilize() -> error::Result<()> {
+        let counter = get_counter();
+        assert_eq!(counter.k(), 5);
+        let serializer = counter.serialize();
+
+        let temp = tempfile::NamedTempFile::new()?;
+        serializer.solid(0, &temp)?;
+
+        let path = temp.into_temp_path();
+
+        let solid = Solid::from_path(path)?;
+
+        assert_eq!(solid.k(), 5);
+        assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID);
+
+        Ok(())
     }
 }

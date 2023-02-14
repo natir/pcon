@@ -5,6 +5,8 @@
 use std::io::Write as _;
 
 /* crate use */
+use byteorder::WriteBytesExt as _;
+
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
@@ -110,7 +112,7 @@ macro_rules! impl_sequential {
                     niffler::compression::Level::One,
                 )?;
 
-                writer.write_all(&[solid.k()])?;
+                writer.write_u8(solid.k())?;
 
                 writer.write_all(solid.get_raw_solid().as_raw_slice())?;
 
