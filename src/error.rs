@@ -1,8 +1,12 @@
 //! Error struct of project pcon
 
+/* std use */
+
 /* crate use */
 use anyhow;
 use thiserror;
+
+/* project use */
 
 /// Enum to manage error
 #[derive(std::fmt::Debug, thiserror::Error)]
