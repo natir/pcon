@@ -128,20 +128,26 @@ macro_rules! impl_sequential {
             where
                 W: std::io::Write,
             {
-                let header =
-                    kff::section::Header::new(1, 0, 0b00011110, true, true, b"producer: pcon");
-                let writer = kff::Kff::write(output, header);
+                let header = kff::section::Header::new(
+                    1,
+                    0,
+                    0b00011110,
+                    true,
+                    true,
+                    b"producer: pcon".to_vec(),
+                )?;
+                let writer = kff::Kff::write(output, header)?;
                 let values = kff::section::Values::default();
-                values.insert("k".to_string(), self.counter.k());
-                values.insert("ordered".to_string(), true);
-                values.insert("max".to_string(), <$type>::MAX);
-                values.insert("data_size".to_string(), std::mem::size_of::<$type>());
+                values.insert("k".to_string(), self.counter.k() as u64);
+                values.insert("ordered".to_string(), true as u64);
+                values.insert("max".to_string(), <$type>::MAX as u64);
+                values.insert("data_size".to_string(), std::mem::size_of::<$type>() as u64);
 
                 writer.write_values(values)?;
 
                 let mut kmers = vec![];
 
-                for (hash, value) in counts.iter().enumerate() {}
+                for (hash, value) in self.counter.raw().iter().enumerate() {}
 
                 writer.finalize()?;
 
