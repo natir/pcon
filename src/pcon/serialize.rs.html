@@ -419,6 +419,12 @@
 <a href="#417" id="417">417</a>
 <a href="#418" id="418">418</a>
 <a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Tools to serialize a Counter
 
 </span><span class="comment">/* std use */
@@ -549,20 +555,26 @@
             <span class="kw">where
                 </span>W: std::io::Write,
             {
-                <span class="kw">let </span>header =
-                    kff::section::Header::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0b00011110</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="string">b"producer: pcon"</span>);
-                <span class="kw">let </span>writer = kff::Kff::write(output, header);
+                <span class="kw">let </span>header = kff::section::Header::new(
+                    <span class="number">1</span>,
+                    <span class="number">0</span>,
+                    <span class="number">0b00011110</span>,
+                    <span class="bool-val">true</span>,
+                    <span class="bool-val">true</span>,
+                    <span class="string">b"producer: pcon"</span>.to_vec(),
+                )<span class="question-mark">?</span>;
+                <span class="kw">let </span>writer = kff::Kff::write(output, header)<span class="question-mark">?</span>;
                 <span class="kw">let </span>values = kff::section::Values::default();
-                values.insert(<span class="string">"k"</span>.to_string(), <span class="self">self</span>.counter.k());
-                values.insert(<span class="string">"ordered"</span>.to_string(), <span class="bool-val">true</span>);
-                values.insert(<span class="string">"max"</span>.to_string(), &lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::MAX</span>);
-                values.insert(<span class="string">"data_size"</span>.to_string(), std::mem::size_of::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;());
+                values.insert(<span class="string">"k"</span>.to_string(), <span class="self">self</span>.counter.k() <span class="kw">as </span>u64);
+                values.insert(<span class="string">"ordered"</span>.to_string(), <span class="bool-val">true </span><span class="kw">as </span>u64);
+                values.insert(<span class="string">"max"</span>.to_string(), &lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::MAX </span><span class="kw">as </span>u64);
+                values.insert(<span class="string">"data_size"</span>.to_string(), std::mem::size_of::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;() <span class="kw">as </span><span class="macro-nonterminal">u64</span>);
 
-                <span class="macro-nonterminal">writer</span>.write_values(values)<span class="question-mark">?</span>;
+                writer.write_values(values)<span class="question-mark">?</span>;
 
                 <span class="kw">let </span><span class="kw-2">mut </span>kmers = <span class="macro">vec!</span>[];
 
-                <span class="kw">for </span>(hash, value) <span class="kw">in </span>counts.iter().enumerate() {}
+                <span class="kw">for </span>(hash, value) <span class="kw">in </span><span class="self">self</span>.counter.raw().iter().enumerate() {}
 
                 writer.finalize()<span class="question-mark">?</span>;
 
