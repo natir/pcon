@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Pierre Marijon <pierre@marijon.fr>"]
 edition = "2021"
 description = "Prompt COuNter, a short kmer counter."
-rust-version = "1.65"
+rust-version = "1.74"
 
 homepage = "https://github.com/natir/pcon"
 repository = "https://github.com/natir/pcon"
@@ -31,17 +31,17 @@ anyhow         = { version = "1"}
 
 # Logging and error management
 log            = { version = "0.4" }
-stderrlog      = { version = "0.5" }
+stderrlog      = { version = "0.6" }
 
 # IO management
 niffler        = { version = "2" }
-noodles        = { version = "0.31", features = ["fasta"] }
+noodles        = { version = "0.73", features = ["fasta"] }
 flate2         = { version = "1" }
 byteorder      = { version = "1" }
-
+kff            = { version = "0.9", optional = true }
 
 [dev-dependencies]
-criterion      = { version = "0.4" }
+criterion      = { version = "0.5" }
 tempfile       = { version = "3" }
 rand           = { version = "0.8" }
 assert_cmd     = { version = "2" }
@@ -50,6 +50,7 @@ assert_cmd     = { version = "2" }
 [features]
 default   = ["count_u8"]
 parallel  = ["dep:rayon"]
+kff       = ["dep:kff"]
 count_u8  = []
 count_u16 = []
 count_u32 = []

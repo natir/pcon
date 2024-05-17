@@ -10,6 +10,9 @@ use byteorder::WriteBytesExt as _;
 #[cfg(feature = "parallel")]
 use rayon::prelude::*;
 
+#[cfg(feature = "kff")]
+use kff;
+
 /* project use */
 use crate::counter;
 use crate::error;
@@ -73,7 +76,7 @@ macro_rules! impl_sequential {
                 Ok(())
             }
 
-            /// Write kmer in csv format
+            /// Write kmer count in csv format
             pub fn csv<W>(&self, abundance: $type, mut output: W) -> error::Result<()>
             where
                 W: std::io::Write,
@@ -97,7 +100,7 @@ macro_rules! impl_sequential {
 
             /// Convert counter in solid and write it
             ///
-            /// The first bytes contains the size of k the rest of the file and a
+            /// The first bytes contains the size of k the rest of the file are a
             /// bitfield of absence for each kmer
             pub fn solid<W>(&self, abundance: $type, output: W) -> error::Result<()>
             where
@@ -115,6 +118,32 @@ macro_rules! impl_sequential {
                 writer.write_u8(solid.k())?;
 
                 writer.write_all(solid.get_raw_solid().as_raw_slice())?;
+
+                Ok(())
+            }
+
+            #[cfg(feature = "kff")]
+            /// Write kmer count in kff format
+            pub fn kff<W>(&self, abundance: $type, output: W) -> error::Result<()>
+            where
+                W: std::io::Write,
+            {
+                let header =
+                    kff::section::Header::new(1, 0, 0b00011110, true, true, b"producer: pcon");
+                let writer = kff::Kff::write(output, header);
+                let values = kff::section::Values::default();
+                values.insert("k".to_string(), self.counter.k());
+                values.insert("ordered".to_string(), true);
+                values.insert("max".to_string(), <$type>::MAX);
+                values.insert("data_size".to_string(), std::mem::size_of::<$type>());
+
+                writer.write_values(values)?;
+
+                let mut kmers = vec![];
+
+                for (hash, value) in counts.iter().enumerate() {}
+
+                writer.finalize()?;
 
                 Ok(())
             }

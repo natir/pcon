@@ -105,4 +105,4 @@ pcon dump -i example.pcon -c example.csv
 
 ## Minimum supported Rust version
 
-Currently the minimum supported Rust version is 1.65.
+Currently the minimum supported Rust version is 1.74.
