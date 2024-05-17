@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/serialize.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>serialize.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../../static.files/source-script-5cf2e01a42cc9858.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><div class="width-limiter"><nav class="sub"><a class="sub-logo-container" href="../../pcon/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/serialize.rs`."><title>serialize.rs - source</title><script> if (window.location.protocol !== "file:") document.write(`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2">`)</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-e935ef01ae1c1829.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pcon" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0 (9b00956e5 2024-04-29)" data-channel="1.78.0" data-search-js="search-42d8da7a6b9792c2.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-12cf3b4f4f9dc36d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../pcon/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -388,7 +390,36 @@
 <a href="#388" id="388">388</a>
 <a href="#389" id="389">389</a>
 <a href="#390" id="390">390</a>
-</pre><pre class="rust"><code><span class="doccomment">//! Tools to serialize a Counter
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
+<a href="#410" id="410">410</a>
+<a href="#411" id="411">411</a>
+<a href="#412" id="412">412</a>
+<a href="#413" id="413">413</a>
+<a href="#414" id="414">414</a>
+<a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Tools to serialize a Counter
 
 </span><span class="comment">/* std use */
 
@@ -397,8 +428,11 @@
 <span class="comment">/* crate use */
 </span><span class="kw">use </span>byteorder::WriteBytesExt <span class="kw">as _</span>;
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 </span><span class="kw">use </span>rayon::prelude::<span class="kw-2">*</span>;
+
+<span class="attr">#[cfg(feature = <span class="string">"kff"</span>)]
+</span><span class="kw">use </span>kff;
 
 <span class="comment">/* project use */
 </span><span class="kw">use </span><span class="kw">crate</span>::counter;
@@ -417,7 +451,7 @@
     }
 }
 
-<span class="macro">macro_rules! </span>impl_sequential {
+<span class="macro">macro_rules!</span> impl_sequential {
     (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>) =&gt; {
         <span class="kw">impl </span>Serialize&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt; {
             <span class="doccomment">/// Write counter in pcon format
@@ -463,7 +497,7 @@
                 <span class="prelude-val">Ok</span>(())
             }
 
-            <span class="doccomment">/// Write kmer in csv format
+            <span class="doccomment">/// Write kmer count in csv format
             </span><span class="kw">pub fn </span>csv&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: <span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="kw-2">mut </span><span class="macro-nonterminal">output</span>: W) -&gt; error::Result&lt;()&gt;
             <span class="kw">where
                 </span>W: std::io::Write,
@@ -478,7 +512,7 @@
                     };
 
                     <span class="kw">if </span>value &gt; <span class="kw-2">&amp;</span>abundance {
-                        <span class="macro">writeln!</span>(output, <span class="string">&quot;{},{}&quot;</span>, kmer, value)<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(output, <span class="string">"{},{}"</span>, kmer, value)<span class="question-mark">?</span>;
                     }
                 }
 
@@ -487,7 +521,7 @@
 
             <span class="doccomment">/// Convert counter in solid and write it
             ///
-            /// The first bytes contains the size of k the rest of the file and a
+            /// The first bytes contains the size of k the rest of the file are a
             /// bitfield of absence for each kmer
             </span><span class="kw">pub fn </span>solid&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: <span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="macro-nonterminal">output</span>: W) -&gt; error::Result&lt;()&gt;
             <span class="kw">where
@@ -508,6 +542,32 @@
 
                 <span class="prelude-val">Ok</span>(())
             }
+
+            <span class="attr">#[cfg(feature = <span class="string">"kff"</span>)]
+            </span><span class="doccomment">/// Write kmer count in kff format
+            </span><span class="kw">pub fn </span>kff&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: <span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="macro-nonterminal">output</span>: W) -&gt; error::Result&lt;()&gt;
+            <span class="kw">where
+                </span>W: std::io::Write,
+            {
+                <span class="kw">let </span>header =
+                    kff::section::Header::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0b00011110</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="string">b"producer: pcon"</span>);
+                <span class="kw">let </span>writer = kff::Kff::write(output, header);
+                <span class="kw">let </span>values = kff::section::Values::default();
+                values.insert(<span class="string">"k"</span>.to_string(), <span class="self">self</span>.counter.k());
+                values.insert(<span class="string">"ordered"</span>.to_string(), <span class="bool-val">true</span>);
+                values.insert(<span class="string">"max"</span>.to_string(), &lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::MAX</span>);
+                values.insert(<span class="string">"data_size"</span>.to_string(), std::mem::size_of::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;());
+
+                <span class="macro-nonterminal">writer</span>.write_values(values)<span class="question-mark">?</span>;
+
+                <span class="kw">let </span><span class="kw-2">mut </span>kmers = <span class="macro">vec!</span>[];
+
+                <span class="kw">for </span>(hash, value) <span class="kw">in </span>counts.iter().enumerate() {}
+
+                writer.finalize()<span class="question-mark">?</span>;
+
+                <span class="prelude-val">Ok</span>(())
+            }
         }
     };
 }
@@ -518,8 +578,8 @@
 <span class="macro">impl_sequential!</span>(u64);
 <span class="macro">impl_sequential!</span>(u128);
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
-</span><span class="macro">macro_rules! </span>impl_atomic {
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
+</span><span class="macro">macro_rules!</span> impl_atomic {
     (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$out_type</span>:ty) =&gt; {
         <span class="kw">impl </span>Serialize&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt; {
             <span class="doccomment">/// Write counter in pcon format
@@ -582,7 +642,7 @@
                     };
 
                     <span class="kw">if </span>value &gt; <span class="kw-2">&amp;</span>abundance {
-                        <span class="macro">writeln!</span>(output, <span class="string">&quot;{},{}&quot;</span>, kmer, value)<span class="question-mark">?</span>;
+                        <span class="macro">writeln!</span>(output, <span class="string">"{},{}"</span>, kmer, value)<span class="question-mark">?</span>;
                     }
                 }
 
@@ -619,13 +679,13 @@
     };
 }
 
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 </span><span class="macro">impl_atomic!</span>(std::sync::atomic::AtomicU8, u8);
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 </span><span class="macro">impl_atomic!</span>(std::sync::atomic::AtomicU16, u16);
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 </span><span class="macro">impl_atomic!</span>(std::sync::atomic::AtomicU32, u32);
-<span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 </span><span class="macro">impl_atomic!</span>(std::sync::atomic::AtomicU64, u64);
 
 <span class="attr">#[cfg(test)]
@@ -647,7 +707,7 @@
         counter
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
     </span><span class="kw">fn </span>generate_atomic_counter() -&gt; counter::Counter&lt;std::sync::atomic::AtomicU8&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>counter: counter::Counter&lt;std::sync::atomic::AtomicU8&gt; =
             counter::Counter::&lt;std::sync::atomic::AtomicU8&gt;::new(<span class="number">5</span>);
@@ -681,7 +741,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
     #[test]
     </span><span class="kw">fn </span>atomic_pcon() -&gt; error::Result&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>outfile = Vec::new();
@@ -694,7 +754,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">const </span>CSV_ABUNDANCE_MIN_1: <span class="kw-2">&amp;</span>[u8] = <span class="string">b&quot;AAAAA,3\nAAAAG,2\nAAACC,2\nAAACT,2\nAAATC,2\nAAATT,2\nAAAGA,2\nAAAGG,2\nAACAC,2\nAACAT,2\nAACCA,2\nAACCG,2\nAACTA,2\nAACTG,2\nAACGC,2\nAACGT,2\nAATAC,2\nAATAT,2\nAATCA,2\nAATCG,2\nAATTA,2\nAATTG,2\nAATGC,2\nAATGT,2\nAAGAA,2\nAAGAG,2\nAAGCC,2\nAAGCT,2\nAAGTC,2\nAAGTT,2\nAAGGA,2\nAAGGG,2\nACAAC,2\nACAAT,2\nACACA,2\nACACG,2\nACATA,2\nACATG,2\nACAGC,2\nACAGT,2\nACCAA,2\nACCAG,2\nACCCC,2\nACCCT,2\nACCTC,2\nACCTT,2\nACCGA,2\nACCGG,2\nACTAA,2\nACTAG,2\nACTCC,2\nACTCT,2\nACTTC,2\nACTTT,2\nACTGA,2\nACTGG,2\nACGAC,2\nACGAT,2\nACGCA,2\nACGCG,2\nACGTA,2\nACGTG,2\nACGGC,2\nACGGT,2\nATAAC,2\nATAAT,2\nATACA,2\nATACG,2\nATATA,2\nATATG,2\nATAGC,2\nATAGT,2\nATCAA,2\nATCAG,2\nATCCC,2\nATCCT,2\nATCTC,2\nATCTT,2\nATCGA,2\nATCGG,2\nATTAA,2\nATTAG,2\nATTCC,2\nATTCT,2\nATTTC,2\nATTTT,2\nATTGA,2\nATTGG,2\nATGAC,2\nATGAT,2\nATGCA,2\nATGCG,2\nATGTA,2\nATGTG,2\nATGGC,2\nATGGT,2\nAGAAA,2\nAGAAG,2\nAGACC,2\nAGACT,2\nAGATC,2\nAGATT,2\nAGAGA,2\nAGAGG,2\nAGCAC,2\nAGCAT,2\nAGCCA,2\nAGCCG,2\nAGCTA,2\nAGCTG,2\nAGCGC,2\nAGCGT,2\nAGTAC,2\nAGTAT,2\nAGTCA,2\nAGTCG,2\nAGTTA,2\nAGTTG,2\nAGTGC,2\nAGTGT,2\nAGGAA,2\nAGGAG,2\nAGGCC,2\nAGGCT,2\nAGGTC,2\nAGGTT,2\nAGGGA,2\nAGGGG,2\nCAAAC,2\nCAAAT,2\nCAACA,2\nCAACG,2\nCAATA,2\nCAATG,2\nCAAGC,2\nCAAGT,2\nCACAA,2\nCACAG,2\nCACCC,2\nCACCT,2\nCACTC,2\nCACTT,2\nCACGA,2\nCACGG,2\nCATAA,2\nCATAG,2\nCATCC,2\nCATCT,2\nCATTC,2\nCATTT,2\nCATGA,2\nCATGG,2\nCAGAC,2\nCAGAT,2\nCAGCA,2\nCAGCG,2\nCAGTA,2\nCAGTG,2\nCAGGC,2\nCAGGT,2\nCCAAA,2\nCCAAG,2\nCCACC,2\nCCACT,2\nCCATC,2\nCCATT,2\nCCAGA,2\nCCAGG,2\nCCCAC,2\nCCCAT,2\nCCCCA,2\nCCCCG,2\nCCCTA,2\nCCCTG,2\nCCCGC,2\nCCCGT,2\nCCTAC,2\nCCTAT,2\nCCTCA,2\nCCTCG,2\nCCTTA,2\nCCTTG,2\nCCTGC,2\nCCTGT,2\nCCGAA,2\nCCGAG,2\nCCGCC,2\nCCGCT,2\nCCGTC,2\nCCGTT,2\nCCGGA,2\nCCGGG,2\nCTAAA,2\nCTAAG,2\nCTACC,2\nCTACT,2\nCTATC,2\nCTATT,2\nCTAGA,2\nCTAGG,2\nCTCAC,2\nCTCAT,2\nCTCCA,2\nCTCCG,2\nCTCTA,2\nCTCTG,2\nCTCGC,2\nCTCGT,2\nCTTAC,2\nCTTAT,2\nCTTCA,2\nCTTCG,2\nCTTTA,2\nCTTTG,2\nCTTGC,2\nCTTGT,2\nCTGAA,2\nCTGAG,2\nCTGCC,2\nCTGCT,2\nCTGTC,2\nCTGTT,2\nCTGGA,2\nCTGGG,2\nCGAAC,2\nCGAAT,2\nCGACA,2\nCGACG,2\nCGATA,2\nCGATG,2\nCGAGC,2\nCGAGT,2\nCGCAA,2\nCGCAG,2\nCGCCC,2\nCGCCT,2\nCGCTC,2\nCGCTT,2\nCGCGA,2\nCGCGG,2\nCGTAA,2\nCGTAG,2\nCGTCC,2\nCGTCT,2\nCGTTC,2\nCGTTT,2\nCGTGA,2\nCGTGG,2\nCGGAC,2\nCGGAT,2\nCGGCA,2\nCGGCG,2\nCGGTA,2\nCGGTG,2\nCGGGC,2\nCGGGT,2\nTAAAC,2\nTAAAT,2\nTAACA,2\nTAACG,2\nTAATA,2\nTAATG,2\nTAAGC,2\nTAAGT,2\nTACAA,2\nTACAG,2\nTACCC,2\nTACCT,2\nTACTC,2\nTACTT,2\nTACGA,2\nTACGG,2\nTATAA,2\nTATAG,2\nTATCC,2\nTATCT,2\nTATTC,2\nTATTT,2\nTATGA,2\nTATGG,2\nTAGAC,2\nTAGAT,2\nTAGCA,2\nTAGCG,2\nTAGTA,2\nTAGTG,2\nTAGGC,2\nTAGGT,2\nTCAAA,2\nTCAAG,2\nTCACC,2\nTCACT,2\nTCATC,2\nTCATT,2\nTCAGA,2\nTCAGG,2\nTCCAC,2\nTCCAT,2\nTCCCA,2\nTCCCG,2\nTCCTA,2\nTCCTG,2\nTCCGC,2\nTCCGT,2\nTCTAC,2\nTCTAT,2\nTCTCA,2\nTCTCG,2\nTCTTA,2\nTCTTG,2\nTCTGC,2\nTCTGT,2\nTCGAA,2\nTCGAG,2\nTCGCC,2\nTCGCT,2\nTCGTC,2\nTCGTT,2\nTCGGA,2\nTCGGG,2\nTTAAA,2\nTTAAG,2\nTTACC,2\nTTACT,2\nTTATC,2\nTTATT,2\nTTAGA,2\nTTAGG,2\nTTCAC,2\nTTCAT,2\nTTCCA,2\nTTCCG,2\nTTCTA,2\nTTCTG,2\nTTCGC,2\nTTCGT,2\nTTTAC,2\nTTTAT,2\nTTTCA,2\nTTTCG,2\nTTTTA,2\nTTTTG,2\nTTTGC,2\nTTTGT,2\nTTGAA,2\nTTGAG,2\nTTGCC,2\nTTGCT,2\nTTGTC,2\nTTGTT,2\nTTGGA,2\nTTGGG,2\nTGAAC,2\nTGAAT,2\nTGACA,2\nTGACG,2\nTGATA,2\nTGATG,2\nTGAGC,2\nTGAGT,2\nTGCAA,2\nTGCAG,2\nTGCCC,2\nTGCCT,2\nTGCTC,2\nTGCTT,2\nTGCGA,2\nTGCGG,2\nTGTAA,2\nTGTAG,2\nTGTCC,2\nTGTCT,2\nTGTTC,2\nTGTTT,2\nTGTGA,2\nTGTGG,2\nTGGAC,2\nTGGAT,2\nTGGCA,2\nTGGCG,2\nTGGTA,2\nTGGTG,2\nTGGGC,2\nTGGGT,2\nGAAAA,2\nGAAAG,2\nGAACC,2\nGAACT,2\nGAATC,2\nGAATT,2\nGAAGA,2\nGAAGG,2\nGACAC,2\nGACAT,2\nGACCA,2\nGACCG,2\nGACTA,2\nGACTG,2\nGACGC,2\nGACGT,2\nGATAC,2\nGATAT,2\nGATCA,2\nGATCG,2\nGATTA,2\nGATTG,2\nGATGC,2\nGATGT,2\nGAGAA,2\nGAGAG,2\nGAGCC,2\nGAGCT,2\nGAGTC,2\nGAGTT,2\nGAGGA,2\nGAGGG,2\nGCAAC,2\nGCAAT,2\nGCACA,2\nGCACG,2\nGCATA,2\nGCATG,2\nGCAGC,2\nGCAGT,2\nGCCAA,2\nGCCAG,2\nGCCCC,2\nGCCCT,2\nGCCTC,2\nGCCTT,2\nGCCGA,2\nGCCGG,2\nGCTAA,2\nGCTAG,2\nGCTCC,2\nGCTCT,2\nGCTTC,2\nGCTTT,2\nGCTGA,2\nGCTGG,2\nGCGAC,2\nGCGAT,2\nGCGCA,2\nGCGCG,2\nGCGTA,2\nGCGTG,2\nGCGGC,2\nGCGGT,2\nGTAAC,2\nGTAAT,2\nGTACA,2\nGTACG,2\nGTATA,2\nGTATG,2\nGTAGC,2\nGTAGT,2\nGTCAA,2\nGTCAG,2\nGTCCC,2\nGTCCT,2\nGTCTC,2\nGTCTT,2\nGTCGA,2\nGTCGG,2\nGTTAA,2\nGTTAG,2\nGTTCC,2\nGTTCT,2\nGTTTC,2\nGTTTT,2\nGTTGA,2\nGTTGG,2\nGTGAC,2\nGTGAT,2\nGTGCA,2\nGTGCG,2\nGTGTA,2\nGTGTG,2\nGTGGC,2\nGTGGT,2\nGGAAA,2\nGGAAG,2\nGGACC,2\nGGACT,2\nGGATC,2\nGGATT,2\nGGAGA,2\nGGAGG,2\nGGCAC,2\nGGCAT,2\nGGCCA,2\nGGCCG,2\nGGCTA,2\nGGCTG,2\nGGCGC,2\nGGCGT,2\nGGTAC,2\nGGTAT,2\nGGTCA,2\nGGTCG,2\nGGTTA,2\nGGTTG,2\nGGTGC,2\nGGTGT,2\nGGGAA,2\nGGGAG,2\nGGGCC,2\nGGGCT,2\nGGGTC,2\nGGGTT,2\nGGGGA,2\nGGGGG,2\n&quot;</span>;
+    <span class="kw">const </span>CSV_ABUNDANCE_MIN_1: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"AAAAA,3\nAAAAG,2\nAAACC,2\nAAACT,2\nAAATC,2\nAAATT,2\nAAAGA,2\nAAAGG,2\nAACAC,2\nAACAT,2\nAACCA,2\nAACCG,2\nAACTA,2\nAACTG,2\nAACGC,2\nAACGT,2\nAATAC,2\nAATAT,2\nAATCA,2\nAATCG,2\nAATTA,2\nAATTG,2\nAATGC,2\nAATGT,2\nAAGAA,2\nAAGAG,2\nAAGCC,2\nAAGCT,2\nAAGTC,2\nAAGTT,2\nAAGGA,2\nAAGGG,2\nACAAC,2\nACAAT,2\nACACA,2\nACACG,2\nACATA,2\nACATG,2\nACAGC,2\nACAGT,2\nACCAA,2\nACCAG,2\nACCCC,2\nACCCT,2\nACCTC,2\nACCTT,2\nACCGA,2\nACCGG,2\nACTAA,2\nACTAG,2\nACTCC,2\nACTCT,2\nACTTC,2\nACTTT,2\nACTGA,2\nACTGG,2\nACGAC,2\nACGAT,2\nACGCA,2\nACGCG,2\nACGTA,2\nACGTG,2\nACGGC,2\nACGGT,2\nATAAC,2\nATAAT,2\nATACA,2\nATACG,2\nATATA,2\nATATG,2\nATAGC,2\nATAGT,2\nATCAA,2\nATCAG,2\nATCCC,2\nATCCT,2\nATCTC,2\nATCTT,2\nATCGA,2\nATCGG,2\nATTAA,2\nATTAG,2\nATTCC,2\nATTCT,2\nATTTC,2\nATTTT,2\nATTGA,2\nATTGG,2\nATGAC,2\nATGAT,2\nATGCA,2\nATGCG,2\nATGTA,2\nATGTG,2\nATGGC,2\nATGGT,2\nAGAAA,2\nAGAAG,2\nAGACC,2\nAGACT,2\nAGATC,2\nAGATT,2\nAGAGA,2\nAGAGG,2\nAGCAC,2\nAGCAT,2\nAGCCA,2\nAGCCG,2\nAGCTA,2\nAGCTG,2\nAGCGC,2\nAGCGT,2\nAGTAC,2\nAGTAT,2\nAGTCA,2\nAGTCG,2\nAGTTA,2\nAGTTG,2\nAGTGC,2\nAGTGT,2\nAGGAA,2\nAGGAG,2\nAGGCC,2\nAGGCT,2\nAGGTC,2\nAGGTT,2\nAGGGA,2\nAGGGG,2\nCAAAC,2\nCAAAT,2\nCAACA,2\nCAACG,2\nCAATA,2\nCAATG,2\nCAAGC,2\nCAAGT,2\nCACAA,2\nCACAG,2\nCACCC,2\nCACCT,2\nCACTC,2\nCACTT,2\nCACGA,2\nCACGG,2\nCATAA,2\nCATAG,2\nCATCC,2\nCATCT,2\nCATTC,2\nCATTT,2\nCATGA,2\nCATGG,2\nCAGAC,2\nCAGAT,2\nCAGCA,2\nCAGCG,2\nCAGTA,2\nCAGTG,2\nCAGGC,2\nCAGGT,2\nCCAAA,2\nCCAAG,2\nCCACC,2\nCCACT,2\nCCATC,2\nCCATT,2\nCCAGA,2\nCCAGG,2\nCCCAC,2\nCCCAT,2\nCCCCA,2\nCCCCG,2\nCCCTA,2\nCCCTG,2\nCCCGC,2\nCCCGT,2\nCCTAC,2\nCCTAT,2\nCCTCA,2\nCCTCG,2\nCCTTA,2\nCCTTG,2\nCCTGC,2\nCCTGT,2\nCCGAA,2\nCCGAG,2\nCCGCC,2\nCCGCT,2\nCCGTC,2\nCCGTT,2\nCCGGA,2\nCCGGG,2\nCTAAA,2\nCTAAG,2\nCTACC,2\nCTACT,2\nCTATC,2\nCTATT,2\nCTAGA,2\nCTAGG,2\nCTCAC,2\nCTCAT,2\nCTCCA,2\nCTCCG,2\nCTCTA,2\nCTCTG,2\nCTCGC,2\nCTCGT,2\nCTTAC,2\nCTTAT,2\nCTTCA,2\nCTTCG,2\nCTTTA,2\nCTTTG,2\nCTTGC,2\nCTTGT,2\nCTGAA,2\nCTGAG,2\nCTGCC,2\nCTGCT,2\nCTGTC,2\nCTGTT,2\nCTGGA,2\nCTGGG,2\nCGAAC,2\nCGAAT,2\nCGACA,2\nCGACG,2\nCGATA,2\nCGATG,2\nCGAGC,2\nCGAGT,2\nCGCAA,2\nCGCAG,2\nCGCCC,2\nCGCCT,2\nCGCTC,2\nCGCTT,2\nCGCGA,2\nCGCGG,2\nCGTAA,2\nCGTAG,2\nCGTCC,2\nCGTCT,2\nCGTTC,2\nCGTTT,2\nCGTGA,2\nCGTGG,2\nCGGAC,2\nCGGAT,2\nCGGCA,2\nCGGCG,2\nCGGTA,2\nCGGTG,2\nCGGGC,2\nCGGGT,2\nTAAAC,2\nTAAAT,2\nTAACA,2\nTAACG,2\nTAATA,2\nTAATG,2\nTAAGC,2\nTAAGT,2\nTACAA,2\nTACAG,2\nTACCC,2\nTACCT,2\nTACTC,2\nTACTT,2\nTACGA,2\nTACGG,2\nTATAA,2\nTATAG,2\nTATCC,2\nTATCT,2\nTATTC,2\nTATTT,2\nTATGA,2\nTATGG,2\nTAGAC,2\nTAGAT,2\nTAGCA,2\nTAGCG,2\nTAGTA,2\nTAGTG,2\nTAGGC,2\nTAGGT,2\nTCAAA,2\nTCAAG,2\nTCACC,2\nTCACT,2\nTCATC,2\nTCATT,2\nTCAGA,2\nTCAGG,2\nTCCAC,2\nTCCAT,2\nTCCCA,2\nTCCCG,2\nTCCTA,2\nTCCTG,2\nTCCGC,2\nTCCGT,2\nTCTAC,2\nTCTAT,2\nTCTCA,2\nTCTCG,2\nTCTTA,2\nTCTTG,2\nTCTGC,2\nTCTGT,2\nTCGAA,2\nTCGAG,2\nTCGCC,2\nTCGCT,2\nTCGTC,2\nTCGTT,2\nTCGGA,2\nTCGGG,2\nTTAAA,2\nTTAAG,2\nTTACC,2\nTTACT,2\nTTATC,2\nTTATT,2\nTTAGA,2\nTTAGG,2\nTTCAC,2\nTTCAT,2\nTTCCA,2\nTTCCG,2\nTTCTA,2\nTTCTG,2\nTTCGC,2\nTTCGT,2\nTTTAC,2\nTTTAT,2\nTTTCA,2\nTTTCG,2\nTTTTA,2\nTTTTG,2\nTTTGC,2\nTTTGT,2\nTTGAA,2\nTTGAG,2\nTTGCC,2\nTTGCT,2\nTTGTC,2\nTTGTT,2\nTTGGA,2\nTTGGG,2\nTGAAC,2\nTGAAT,2\nTGACA,2\nTGACG,2\nTGATA,2\nTGATG,2\nTGAGC,2\nTGAGT,2\nTGCAA,2\nTGCAG,2\nTGCCC,2\nTGCCT,2\nTGCTC,2\nTGCTT,2\nTGCGA,2\nTGCGG,2\nTGTAA,2\nTGTAG,2\nTGTCC,2\nTGTCT,2\nTGTTC,2\nTGTTT,2\nTGTGA,2\nTGTGG,2\nTGGAC,2\nTGGAT,2\nTGGCA,2\nTGGCG,2\nTGGTA,2\nTGGTG,2\nTGGGC,2\nTGGGT,2\nGAAAA,2\nGAAAG,2\nGAACC,2\nGAACT,2\nGAATC,2\nGAATT,2\nGAAGA,2\nGAAGG,2\nGACAC,2\nGACAT,2\nGACCA,2\nGACCG,2\nGACTA,2\nGACTG,2\nGACGC,2\nGACGT,2\nGATAC,2\nGATAT,2\nGATCA,2\nGATCG,2\nGATTA,2\nGATTG,2\nGATGC,2\nGATGT,2\nGAGAA,2\nGAGAG,2\nGAGCC,2\nGAGCT,2\nGAGTC,2\nGAGTT,2\nGAGGA,2\nGAGGG,2\nGCAAC,2\nGCAAT,2\nGCACA,2\nGCACG,2\nGCATA,2\nGCATG,2\nGCAGC,2\nGCAGT,2\nGCCAA,2\nGCCAG,2\nGCCCC,2\nGCCCT,2\nGCCTC,2\nGCCTT,2\nGCCGA,2\nGCCGG,2\nGCTAA,2\nGCTAG,2\nGCTCC,2\nGCTCT,2\nGCTTC,2\nGCTTT,2\nGCTGA,2\nGCTGG,2\nGCGAC,2\nGCGAT,2\nGCGCA,2\nGCGCG,2\nGCGTA,2\nGCGTG,2\nGCGGC,2\nGCGGT,2\nGTAAC,2\nGTAAT,2\nGTACA,2\nGTACG,2\nGTATA,2\nGTATG,2\nGTAGC,2\nGTAGT,2\nGTCAA,2\nGTCAG,2\nGTCCC,2\nGTCCT,2\nGTCTC,2\nGTCTT,2\nGTCGA,2\nGTCGG,2\nGTTAA,2\nGTTAG,2\nGTTCC,2\nGTTCT,2\nGTTTC,2\nGTTTT,2\nGTTGA,2\nGTTGG,2\nGTGAC,2\nGTGAT,2\nGTGCA,2\nGTGCG,2\nGTGTA,2\nGTGTG,2\nGTGGC,2\nGTGGT,2\nGGAAA,2\nGGAAG,2\nGGACC,2\nGGACT,2\nGGATC,2\nGGATT,2\nGGAGA,2\nGGAGG,2\nGGCAC,2\nGGCAT,2\nGGCCA,2\nGGCCG,2\nGGCTA,2\nGGCTG,2\nGGCGC,2\nGGCGT,2\nGGTAC,2\nGGTAT,2\nGGTCA,2\nGGTCG,2\nGGTTA,2\nGGTTG,2\nGGTGC,2\nGGTGT,2\nGGGAA,2\nGGGAG,2\nGGGCC,2\nGGGCT,2\nGGGTC,2\nGGGTT,2\nGGGGA,2\nGGGGG,2\n"</span>;
 
     <span class="kw">const </span>CSV_ABUNDANCE_MIN_2: <span class="kw-2">&amp;</span>[u8] = <span class="kw-2">&amp;</span>[<span class="number">65</span>, <span class="number">65</span>, <span class="number">65</span>, <span class="number">65</span>, <span class="number">65</span>, <span class="number">44</span>, <span class="number">51</span>, <span class="number">10</span>];
 
@@ -715,7 +775,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
     #[test]
     </span><span class="kw">fn </span>atomic_csv() -&gt; error::Result&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>outfile = Vec::new();
@@ -760,7 +820,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">&quot;parallel&quot;</span>)]
+    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
     #[test]
     </span><span class="kw">fn </span>atomic_solid() -&gt; error::Result&lt;()&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>outfile = Vec::new();
@@ -778,5 +838,4 @@
         <span class="prelude-val">Ok</span>(())
     }
 }
-</code></pre></div>
-</section></div></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pcon" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>
+</code></pre></div></section></main></body></html>

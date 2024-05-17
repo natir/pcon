@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["dump","Run dump"]]};
+window.SIDEBAR_ITEMS = {"fn":["dump"]};

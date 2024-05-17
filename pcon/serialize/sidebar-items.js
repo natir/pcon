@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Serialize","Struct to serialize counter"]]};
+window.SIDEBAR_ITEMS = {"struct":["Serialize"]};

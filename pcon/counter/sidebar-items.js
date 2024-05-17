@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Counter","A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing. Implement only for u8, std::sync::atomic::AtomicU8"]]};
+window.SIDEBAR_ITEMS = {"struct":["Counter"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["count","Run count"]]};
+window.SIDEBAR_ITEMS = {"fn":["count"]};

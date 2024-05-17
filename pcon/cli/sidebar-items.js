@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["DumpType","Choose dump type"],["SubCommand","Enumeration of subcommand"]],"struct":[["Command","Prompt COuNter, a short kmer counter."],["Count","SubCommand Count"],["Dump","SubCommand Dump"]]};
+window.SIDEBAR_ITEMS = {"enum":["DumpType","SubCommand"],"struct":["Command","Count","Dump"]};
