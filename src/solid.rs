@@ -99,6 +99,11 @@ impl Solid {
         self.solid[hash]
     }
 
+    /// Extend
+    pub fn extend(&mut self, rhs: Solid) {
+        self.solid |= rhs.get_raw_solid()
+    }
+
     pub(crate) fn get_raw_solid(&self) -> &BitBox<u8, Lsb0> {
         &self.solid
     }
@@ -171,6 +176,26 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         solid.set(cocktail::kmer::seq2bit(b"CTCAG"), false);
 
         assert_eq!(solid.get_raw_solid().as_raw_slice(), SOLID_SET);
+    }
+
+    #[test]
+    fn extend() {
+        let mut solid = get_solid();
+        let mut other = Solid::new(5);
+
+        assert_eq!(solid.get(42), true);
+        assert_eq!(solid.get(44), false);
+        assert_eq!(other.get(44), false);
+
+        other.set(44, true);
+        assert_eq!(other.get(44), true);
+
+        assert_eq!(solid.get_raw_solid().count_ones(), 158);
+        assert_eq!(solid.get_raw_solid().count_zeros(), 354);
+        solid.extend(other);
+        assert_eq!(solid.get_raw_solid().count_ones(), 159);
+        assert_eq!(solid.get_raw_solid().count_zeros(), 353);
+        assert_eq!(solid.get(44), true);
     }
 
     #[test]
