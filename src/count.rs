@@ -16,7 +16,10 @@ pub fn count(params: cli::Count) -> error::Result<()> {
     log::info!("End init counter");
 
     log::info!("Start count kmer");
-    counter.count_fasta(params.inputs()?, params.record_buffer());
+    match params.format() {
+        cli::Format::Fasta => counter.count_fasta(params.inputs()?, params.record_buffer()),
+        cli::Format::Fastq => todo!(),
+    }
     log::info!("End count kmer");
 
     let serialize = counter.serialize();

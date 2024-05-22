@@ -58,7 +58,7 @@ macro_rules! impl_sequential (
 	impl Counter<$type> {
 	    /// Create a new kmer Counter with kmer size equal to k
 	    pub fn new(k: u8) -> Self {
-		let data: Box<[$type]> = $init(k);
+		let data: Box<[$type]> = $init(k, 0 as $type);
 		Self {
 		    k,
 		    count: data,
@@ -78,7 +78,7 @@ macro_rules! impl_sequential (
 		}
 
 		let mut deflate = flate2::read::MultiGzDecoder::new(input);
-		let mut data = $init(k);
+		let mut data = $init(k, 0 as $type);
 
 		$read(&mut deflate, &mut data)?;
 
@@ -91,6 +91,23 @@ macro_rules! impl_sequential (
 	    /// Perform count on fasta input
 	    pub fn count_fasta(&mut self, fasta: Box<dyn std::io::BufRead>, _record_buffer: u64) {
 		let mut reader = noodles::fasta::Reader::new(fasta);
+		let mut records = reader.records();
+
+		while let Some(Ok(record)) = records.next() {
+		    if record.sequence().len() >= self.k() as usize {
+			let kmerizer =
+			    cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k());
+
+			for canonical in kmerizer {
+			    Self::inc(&mut self.count, (canonical >> 1) as usize);
+			}
+		    }
+		}
+	    }
+
+	    /// Perform count on fastq input
+	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, _record_buffer: u64) {
+		let mut reader = noodles::fastq::Reader::new(fastq);
 		let mut records = reader.records();
 
 		while let Some(Ok(record)) = records.next() {
@@ -124,25 +141,25 @@ macro_rules! impl_sequential (
     }
 );
 
-impl_sequential!(u8, |k| init_data(k, 0u8), std::io::Read::read_exact);
+impl_sequential!(u8, init_data, std::io::Read::read_exact);
 impl_sequential!(
     u16,
-    |k| init_data(k, 0u16),
+    init_data,
     byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u32,
-    |k| init_data(k, 0u32),
+    init_data,
     byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u64,
-    |k| init_data(k, 0u64),
+    init_data,
     byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u128,
-    |k| init_data(k, 0u128),
+    init_data,
     byteorder::ReadBytesExt::read_u128_into::<crate::ByteOrder>
 );
 
@@ -157,7 +174,7 @@ macro_rules! impl_atomic (
 	    pub fn new(k: u8) -> Self {
 		Self {
 		    k,
-		    count: transmute_box($init(k)),
+		    count: transmute_box($init(k, 0 as $out_type)),
 		}
 	    }
 
@@ -174,7 +191,7 @@ macro_rules! impl_atomic (
 		}
 
 		let mut deflate = flate2::read::MultiGzDecoder::new(input);
-		let mut data = $init(k);
+		let mut data = $init(k, 0 as $out_type);
 
 		$read(&mut deflate, &mut data)?;
 
@@ -194,6 +211,32 @@ macro_rules! impl_atomic (
 		while end {
 		    log::info!("Start populate buffer");
 		    end = populate_buffer(&mut iter, &mut records, record_buffer);
+		    log::info!("End populate buffer {}", records.len());
+
+		    records.par_iter().for_each(|record| {
+			if record.sequence().len() >= self.k as usize {
+			    let tokenizer =
+				cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k);
+
+			    for canonical in tokenizer {
+				Self::inc(&self.count, (canonical >> 1) as usize);
+			    }
+			}
+		    });
+		}
+	    }
+
+
+	    /// Perform count on fastq input
+	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, record_buffer: u64) {
+		let mut reader = noodles::fastq::Reader::new(fastq);
+		let mut iter = reader.records();
+		let mut records = Vec::with_capacity(record_buffer as usize);
+
+		let mut end = true;
+		while end {
+		    log::info!("Start populate buffer");
+		    end = populate_bufferq(&mut iter, &mut records, record_buffer);
 		    log::info!("End populate buffer {}", records.len());
 
 		    records.par_iter().for_each(|record| {
@@ -240,7 +283,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU8,
     u8,
     u8::MAX,
-    |k| init_data(k, 0u8),
+    init_data,
     std::io::Read::read_exact
 );
 #[cfg(feature = "parallel")]
@@ -248,7 +291,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU16,
     u16,
     u16::MAX,
-    |k| init_data(k, 0u16),
+    init_data,
     byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
@@ -256,7 +299,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU32,
     u32,
     u32::MAX,
-    |k| init_data(k, 0u32),
+    init_data,
     byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
@@ -264,7 +307,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU64,
     u64,
     u64::MAX,
-    |k| init_data(k, 0u64),
+    init_data,
     byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
 );
 
@@ -304,6 +347,27 @@ where
 fn populate_buffer(
     iter: &mut noodles::fasta::reader::Records<'_, Box<dyn std::io::BufRead>>,
     records: &mut Vec<noodles::fasta::Record>,
+    record_buffer: u64,
+) -> bool {
+    records.clear();
+
+    for i in 0..record_buffer {
+        if let Some(Ok(record)) = iter.next() {
+            records.push(record);
+        } else {
+            records.truncate(i as usize);
+            return false;
+        }
+    }
+
+    true
+}
+
+#[cfg(feature = "parallel")]
+/// Populate record buffer with content of iterator
+fn populate_bufferq(
+    iter: &mut noodles::fastq::reader::Records<'_, Box<dyn std::io::BufRead>>,
+    records: &mut Vec<noodles::fastq::Record>,
     record_buffer: u64,
 ) -> bool {
     records.clear();

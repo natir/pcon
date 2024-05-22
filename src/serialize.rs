@@ -136,18 +136,41 @@ macro_rules! impl_sequential {
                     true,
                     b"producer: pcon".to_vec(),
                 )?;
-                let writer = kff::Kff::write(output, header)?;
-                let values = kff::section::Values::default();
+                let mut writer = kff::Kff::write(output, header)?;
+                let mut values = kff::section::Values::default();
                 values.insert("k".to_string(), self.counter.k() as u64);
                 values.insert("ordered".to_string(), true as u64);
                 values.insert("max".to_string(), <$type>::MAX as u64);
                 values.insert("data_size".to_string(), std::mem::size_of::<$type>() as u64);
 
-                writer.write_values(values)?;
+                writer.write_values(values.clone())?;
 
                 let mut kmers = vec![];
 
-                for (hash, value) in self.counter.raw().iter().enumerate() {}
+                for (hash, value) in self.counter.raw().iter().enumerate() {
+                    if value < &abundance {
+                        continue;
+                    }
+                    let kmer = if cocktail::kmer::parity_even(hash as u64) {
+                        ((hash << 1) | 0b0) as u64
+                    } else {
+                        ((hash << 1) | 0b1) as u64
+                    };
+
+                    kmers.push(kff::section::Block::new(
+                        self.counter.k() as u64,
+                        std::mem::size_of::<crate::CountType>(),
+                        kff::Kmer::new(
+                            bitvec::boxed::BitBox::<u8, bitvec::order::Msb0>::from_boxed_slice(
+                                Box::new(kmer.to_be_bytes()),
+                            ),
+                            value.to_be_bytes().to_vec(),
+                        ),
+                        0,
+                    ));
+                }
+
+                writer.write_raw(kff::section::Raw::new(&values)?, kmers)?;
 
                 writer.finalize()?;
 

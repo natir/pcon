@@ -85,6 +85,16 @@ pub enum DumpType {
     Solid,
 }
 
+/// Choose input format
+#[derive(Copy, Clone, Eq, Debug, PartialEq, PartialOrd, Ord, clap::ValueEnum)]
+pub enum Format {
+    /// Input in format fasta
+    Fasta,
+
+    /// Input in format fastq
+    Fastq,
+}
+
 /// SubCommand Count
 #[derive(clap::Args, std::fmt::Debug)]
 pub struct Count {
@@ -95,6 +105,10 @@ pub struct Count {
     /// Path to inputs, default read stdin
     #[clap(short = 'i', long = "inputs")]
     inputs: Option<Vec<std::path::PathBuf>>,
+
+    /// Format of input, default fasta
+    #[clap(short = 'f', long = "formats")]
+    format: Option<Format>,
 
     /// Path where count are store, default write in stdout
     #[clap(short = 'p', long = "pcon")]
@@ -139,6 +153,11 @@ impl Count {
                 Ok(Box::new(std::io::BufReader::new(handle)))
             }
         }
+    }
+
+    /// Get format inputs
+    pub fn format(&self) -> Format {
+        self.format.unwrap_or(Format::Fasta)
     }
 
     /// Get output
@@ -315,6 +334,7 @@ mod tests {
     fn basic() {
         let subcmd = Count {
             inputs: None,
+            format: None,
             pcon: None,
             csv: None,
             solid: None,
@@ -340,6 +360,7 @@ mod tests {
     fn basic_parallel() {
         let subcmd = Count {
             inputs: None,
+            format: None,
             pcon: None,
             csv: None,
             solid: None,
@@ -376,6 +397,7 @@ mod tests {
                 input1.path().to_path_buf(),
                 input2.path().to_path_buf(),
             ]),
+            format: None,
             pcon: None,
             csv: None,
             solid: Some(vec![output.path().to_path_buf()]),
@@ -398,6 +420,7 @@ mod tests {
                 input1.path().to_path_buf(),
                 input2.path().to_path_buf(),
             ]),
+            format: None,
             pcon: None,
             csv: None,
             solid: None,

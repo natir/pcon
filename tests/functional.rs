@@ -45,6 +45,7 @@ mod tests {
     mod count {
         use super::*;
 
+        #[cfg(not(any(feature = "count_u16", feature = "count_u32", feature = "count_u64")))]
         #[test]
         fn from_stdin_to_stdout() -> std::io::Result<()> {
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
@@ -60,6 +61,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn from_file_to_stdout() -> std::io::Result<()> {
             let input_temp = tempfile::NamedTempFile::new()?;
@@ -88,6 +90,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn from_file_to_file() -> std::io::Result<()> {
             let input_temp = tempfile::NamedTempFile::new()?;
@@ -124,6 +127,7 @@ mod tests {
     mod dump {
         use super::*;
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn from_stdin_to_stdout() -> std::io::Result<()> {
             let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
@@ -139,6 +143,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn from_file_to_stdout() -> std::io::Result<()> {
             let mut input_temp = tempfile::NamedTempFile::new()?;
@@ -166,6 +171,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn from_file_to_file() -> std::io::Result<()> {
             let mut input_temp = tempfile::NamedTempFile::new()?;
@@ -203,6 +209,7 @@ mod tests {
     mod other_output {
         use super::*;
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn count_csv() -> std::io::Result<()> {
             let mut output_temp = tempfile::NamedTempFile::new()?;
@@ -229,6 +236,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn count_solid() -> std::io::Result<()> {
             let mut output_temp = tempfile::NamedTempFile::new()?;
@@ -257,6 +265,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn dump_pcon() -> std::io::Result<()> {
             let mut output_temp = tempfile::NamedTempFile::new()?;
@@ -283,6 +292,7 @@ mod tests {
             Ok(())
         }
 
+        #[cfg(feature = "count_u8")]
         #[test]
         fn dump_solid() -> std::io::Result<()> {
             let mut output_temp = tempfile::NamedTempFile::new()?;

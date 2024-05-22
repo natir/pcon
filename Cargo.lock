@@ -645,6 +645,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e23ca72bd6a19e744f7f887434e2adc1d3eccdedbe619b4a45e8743656fd08c"
 dependencies = [
  "noodles-fasta",
+ "noodles-fastq",
 ]
 
 [[package]]
@@ -678,6 +679,15 @@ dependencies = [
  "memchr",
  "noodles-bgzf",
  "noodles-core",
+]
+
+[[package]]
+name = "noodles-fastq"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "03559005dc319f23454e0ae6804f72d27da2d4293c2dcc01ff7b0d8c5d59ab9f"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
