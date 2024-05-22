@@ -194,6 +194,31 @@
 <a href="#192" id="192">192</a>
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Define Solid struct
 
 </span><span class="comment">/* std use */
@@ -295,6 +320,11 @@
         <span class="self">self</span>.solid[hash]
     }
 
+    <span class="doccomment">/// Extend
+    </span><span class="kw">pub fn </span>extend(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: Solid) {
+        <span class="self">self</span>.solid |= rhs.get_raw_solid()
+    }
+
     <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>get_raw_solid(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BitBox&lt;u8, Lsb0&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.solid
     }
@@ -367,6 +397,26 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         solid.set(cocktail::kmer::seq2bit(<span class="string">b"CTCAG"</span>), <span class="bool-val">false</span>);
 
         <span class="macro">assert_eq!</span>(solid.get_raw_solid().as_raw_slice(), SOLID_SET);
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>extend() {
+        <span class="kw">let </span><span class="kw-2">mut </span>solid = get_solid();
+        <span class="kw">let </span><span class="kw-2">mut </span>other = Solid::new(<span class="number">5</span>);
+
+        <span class="macro">assert_eq!</span>(solid.get(<span class="number">42</span>), <span class="bool-val">true</span>);
+        <span class="macro">assert_eq!</span>(solid.get(<span class="number">44</span>), <span class="bool-val">false</span>);
+        <span class="macro">assert_eq!</span>(other.get(<span class="number">44</span>), <span class="bool-val">false</span>);
+
+        other.set(<span class="number">44</span>, <span class="bool-val">true</span>);
+        <span class="macro">assert_eq!</span>(other.get(<span class="number">44</span>), <span class="bool-val">true</span>);
+
+        <span class="macro">assert_eq!</span>(solid.get_raw_solid().count_ones(), <span class="number">158</span>);
+        <span class="macro">assert_eq!</span>(solid.get_raw_solid().count_zeros(), <span class="number">354</span>);
+        solid.extend(other);
+        <span class="macro">assert_eq!</span>(solid.get_raw_solid().count_ones(), <span class="number">159</span>);
+        <span class="macro">assert_eq!</span>(solid.get_raw_solid().count_zeros(), <span class="number">353</span>);
+        <span class="macro">assert_eq!</span>(solid.get(<span class="number">44</span>), <span class="bool-val">true</span>);
     }
 
     <span class="attr">#[test]
