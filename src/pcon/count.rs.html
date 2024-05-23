@@ -70,7 +70,7 @@
     <span class="kw">match </span>params.format() {
         cli::Format::Fasta =&gt; counter.count_fasta(params.inputs()<span class="question-mark">?</span>, params.record_buffer()),
         <span class="attr">#[cfg(feature = <span class="string">"fastq"</span>)]
-        </span>cli::Format::Fastq =&gt; <span class="macro">todo!</span>(),
+        </span>cli::Format::Fastq =&gt; counter.count_fastq(params.inputs()<span class="question-mark">?</span>, params.record_buffer()),
     }
     <span class="macro">log::info!</span>(<span class="string">"End count kmer"</span>);
 
