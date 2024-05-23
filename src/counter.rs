@@ -38,8 +38,7 @@ impl<T> Counter<T> {
         &self.count
     }
 
-    #[cfg(test)]
-    /// Get raw data
+    /// Get raw data mut
     pub(crate) fn raw_mut(&mut self) -> &mut [T] {
         &mut self.count
     }

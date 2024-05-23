@@ -68,6 +68,9 @@ pub enum SubCommand {
     /// Perform count of kmer
     Count(Count),
 
+    /// Perform count of large kmer if associate minimizer is present more than abundance
+    MiniCount(MiniCount),
+
     /// Convert pcon native output in other format
     Dump(Dump),
 }
@@ -213,6 +216,119 @@ impl Count {
     /// Get abundance
     pub fn abundance(&self) -> crate::CountTypeNoAtomic {
         self.abundance.unwrap_or(0)
+    }
+
+    /// Get record_buffer
+    pub fn record_buffer(&self) -> u64 {
+        self.record_buffer.unwrap_or(8192)
+    }
+}
+
+/// SubCommand MiniCount
+#[derive(clap::Args, std::fmt::Debug)]
+pub struct MiniCount {
+    /// Size of kmer
+    #[clap(short = 'k', long = "kmer-size")]
+    kmer_size: u64,
+
+    /// Size of minimizer
+    #[clap(short = 'm', long = "minimizer-size")]
+    minimizer_size: u8,
+
+    /// Path to inputs, default read stdin
+    #[clap(short = 'i', long = "inputs")]
+    inputs: Option<Vec<std::path::PathBuf>>,
+
+    /// Format of input, default fasta
+    #[clap(short = 'f', long = "formats")]
+    format: Option<Format>,
+
+    /// Path where count are store
+    #[clap(short = 'c', long = "csv")]
+    csv: Option<Vec<std::path::PathBuf>>,
+
+    /// Minimal abundance, default value 0
+    #[clap(short = 'a', long = "abundance")]
+    abundance: Option<crate::CountTypeNoAtomic>,
+
+    /// Minimal minimizer abundance, default value 2
+    #[clap(short = 'A', long = "mini-abundance")]
+    mini_abundance: Option<crate::CountTypeNoAtomic>,
+
+    /// Number of sequence record load in buffer, default 8192
+    #[clap(short = 'b', long = "record_buffer")]
+    record_buffer: Option<u64>,
+}
+
+impl MiniCount {
+    /// Get size of kmer
+    pub fn kmer_size(&self) -> u64 {
+        self.kmer_size
+    }
+
+    /// Get size of minimizer
+    pub fn minimizer_size(&self) -> u8 {
+        self.minimizer_size - (!(self.minimizer_size & 0b1) & 0b1)
+    }
+
+    /// Get inputs
+    pub fn inputs(&self) -> error::Result<Box<dyn std::io::BufRead>> {
+        match &self.inputs {
+            None => Ok(Box::new(std::io::stdin().lock())),
+            Some(paths) => {
+                let mut handle: Box<dyn std::io::Read> = Box::new(std::io::Cursor::new(vec![]));
+
+                for path in paths {
+                    let (file, _compression) =
+                        niffler::get_reader(Box::new(std::fs::File::open(path)?))?;
+                    handle = Box::new(handle.chain(file));
+                }
+
+                Ok(Box::new(std::io::BufReader::new(handle)))
+            }
+        }
+    }
+
+    /// Get format inputs
+    pub fn format(&self) -> Format {
+        self.format.unwrap_or(Format::Fasta)
+    }
+
+    /// Get output
+    pub fn outputs(
+        &self,
+    ) -> Vec<(
+        DumpType,
+        error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+    )> {
+        let mut outputs: Vec<(
+            DumpType,
+            error::Result<Box<dyn std::io::Write + std::marker::Send>>,
+        )> = vec![];
+
+        match &self.csv {
+            None => outputs.push((
+                DumpType::Csv,
+                Ok(Box::new(std::io::BufWriter::new(std::io::stdout()))),
+            )),
+            Some(paths) => {
+                for path in paths {
+                    outputs.push((DumpType::Csv, create(path)));
+                }
+            }
+        }
+
+        outputs
+    }
+
+    /// Get abundance
+    pub fn abundance(&self) -> crate::CountTypeNoAtomic {
+        self.abundance.unwrap_or(0)
+    }
+
+    /// Get abundance
+    pub fn mini_abundance(&self) -> crate::CountTypeNoAtomic {
+        self.mini_abundance.unwrap_or(2)
     }
 
     /// Get record_buffer

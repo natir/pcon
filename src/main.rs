@@ -14,6 +14,7 @@ use pcon::cli;
 use pcon::count;
 use pcon::dump;
 use pcon::error;
+use pcon::minicount;
 
 fn main() -> error::Result<()> {
     // parse cli
@@ -35,6 +36,7 @@ fn main() -> error::Result<()> {
 
     match params.subcommand {
         cli::SubCommand::Count(params) => count::count(params),
+        cli::SubCommand::MiniCount(params) => minicount::minicount(params),
         cli::SubCommand::Dump(params) => dump::dump(params),
     }
 }

@@ -14,6 +14,8 @@ pub mod count;
 pub mod counter;
 pub mod dump;
 pub mod error;
+pub mod minicount;
+pub mod minicounter;
 pub mod serialize;
 pub mod solid;
 pub mod spectrum;

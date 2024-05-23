@@ -124,6 +124,95 @@ mod tests {
         }
     }
 
+    mod minicount {
+        use super::*;
+
+        #[cfg(feature = "count_u8")]
+        #[test]
+        fn from_stdin_to_stdout() -> std::io::Result<()> {
+            let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
+            cmd.args(["mini-count", "-k", "5", "-m", "3", "-a", "20"])
+                .write_stdin(fasta_buffer(100, 150));
+
+            let assert = cmd.assert();
+
+            assert
+                .success()
+                .stderr(b"" as &[u8])
+                .stdout(constant::TRUTH_CSV_MINI);
+            Ok(())
+        }
+
+        #[cfg(feature = "count_u8")]
+        #[test]
+        fn from_file_to_stdout() -> std::io::Result<()> {
+            let input_temp = tempfile::NamedTempFile::new()?;
+            let input_path = input_temp.path();
+
+            write_fasta(input_path)?;
+
+            let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
+            cmd.args([
+                "mini-count",
+                "-k",
+                "5",
+                "-m",
+                "3",
+                "-a",
+                "20",
+                "-i",
+                &format!("{}", input_path.display()),
+            ])
+            .write_stdin(fasta_buffer(100, 150));
+
+            let assert = cmd.assert();
+
+            assert
+                .success()
+                .stderr(b"" as &[u8])
+                .stdout(constant::TRUTH_CSV_MINI);
+
+            Ok(())
+        }
+
+        #[cfg(feature = "count_u8")]
+        #[test]
+        fn from_file_to_file() -> std::io::Result<()> {
+            let input_temp = tempfile::NamedTempFile::new()?;
+            let input_path = input_temp.path();
+
+            write_fasta(input_path)?;
+
+            let mut output_temp = tempfile::NamedTempFile::new()?;
+            let output_path = output_temp.path();
+
+            let mut cmd = assert_cmd::Command::cargo_bin("pcon").unwrap();
+            cmd.args([
+                "mini-count",
+                "-k",
+                "5",
+                "-m",
+                "3",
+                "-a",
+                "20",
+                "-i",
+                &format!("{}", input_path.display()),
+                "-c",
+                &format!("{}", output_path.display()),
+            ]);
+
+            let assert = cmd.assert();
+
+            assert.success().stderr(b"" as &[u8]).stdout(b"" as &[u8]);
+
+            let mut output = vec![];
+            output_temp.read_to_end(&mut output)?;
+            assert_eq!(output, constant::TRUTH_CSV_MINI);
+
+            Ok(())
+        }
+    }
+
     mod dump {
         use super::*;
 

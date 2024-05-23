@@ -15,9 +15,10 @@ license-file = "LICENSE"
 
 
 [dependencies]
-cfg-if         = "1"
+cfg-if         = { version = "1" }
 cocktail       = { git = "https://github.com/natir/cocktail.git" }
 bitvec         = { version = "1" }
+rustc-hash     = { version = "1" }
 
 # multi-threading management
 rayon          = { version = "1", optional = true }
