@@ -19,7 +19,7 @@ pub fn count(params: cli::Count) -> error::Result<()> {
     match params.format() {
         cli::Format::Fasta => counter.count_fasta(params.inputs()?, params.record_buffer()),
         #[cfg(feature = "fastq")]
-        cli::Format::Fastq => todo!(),
+        cli::Format::Fastq => counter.count_fastq(params.inputs()?, params.record_buffer()),
     }
     log::info!("End count kmer");
 
