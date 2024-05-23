@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cli","count","counter","dump","error","serialize","solid","spectrum"],"type":["CountType","CountTypeNoAtomic"]};
+window.SIDEBAR_ITEMS = {"mod":["cli","count","counter","dump","error","minicount","minicounter","serialize","solid","spectrum"],"type":["CountType","CountTypeNoAtomic"]};
