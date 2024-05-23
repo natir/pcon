@@ -673,6 +673,7 @@
 <a href="#671" id="671">671</a>
 <a href="#672" id="672">672</a>
 <a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Generic struct of counter and implementation for many type
 
 </span><span class="comment">/* std use */
@@ -780,7 +781,8 @@
 		}
 	    }
 
-	    <span class="doccomment">/// Perform count on fastq input
+	    <span class="attr">#[cfg(feature = <span class="string">"fastq"</span>)]
+	    </span><span class="doccomment">/// Perform count on fastq input
 	    </span><span class="kw">pub fn </span>count_fastq(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fastq: Box&lt;<span class="kw">dyn </span>std::io::BufRead&gt;, _record_buffer: u64) {
 		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fastq::Reader::new(fastq);
 		<span class="kw">let </span><span class="kw-2">mut </span>records = reader.records();
