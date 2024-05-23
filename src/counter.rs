@@ -38,6 +38,7 @@ impl<T> Counter<T> {
         &self.count
     }
 
+    #[allow(dead_code)]
     /// Get raw data mut
     pub(crate) fn raw_mut(&mut self) -> &mut [T] {
         &mut self.count

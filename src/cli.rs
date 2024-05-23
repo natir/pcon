@@ -68,6 +68,7 @@ pub enum SubCommand {
     /// Perform count of kmer
     Count(Count),
 
+    #[cfg(not(feature = "parallel"))]
     /// Perform count of large kmer if associate minimizer is present more than abundance
     MiniCount(MiniCount),
 

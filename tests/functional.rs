@@ -124,6 +124,7 @@ mod tests {
         }
     }
 
+    #[cfg(not(feature = "parallel"))]
     mod minicount {
         use super::*;
 
