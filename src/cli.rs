@@ -91,6 +91,7 @@ pub enum Format {
     /// Input in format fasta
     Fasta,
 
+    #[cfg(feature = "fastq")]
     /// Input in format fastq
     Fastq,
 }

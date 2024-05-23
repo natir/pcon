@@ -35,10 +35,11 @@ stderrlog      = { version = "0.6" }
 
 # IO management
 niffler        = { version = "2" }
-noodles        = { version = "0.73", features = ["fasta", "fastq"] }
+noodles        = { version = "0.73", features = ["fasta"] }
 flate2         = { version = "1" }
 byteorder      = { version = "1" }
 kff            = { version = "0.9", optional = true }
+
 
 [dev-dependencies]
 criterion      = { version = "0.5" }
@@ -51,6 +52,8 @@ assert_cmd     = { version = "2" }
 default   = ["count_u8"]
 parallel  = ["dep:rayon"]
 kff       = ["dep:kff"]
+fastq     = ["noodles/fastq"]
+
 count_u8  = []
 count_u16 = []
 count_u32 = []

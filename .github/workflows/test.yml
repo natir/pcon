@@ -62,7 +62,7 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --no-fail-fast --features=parallel
+          args: --no-fail-fast --features count_u8,parallel,fastq,kff
 
 
   coverage:
@@ -75,7 +75,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Generate code coverage
-        run: cargo tarpaulin --features count_u8,parallel,kff --workspace --engine llvm --timeout 120 --out xml
+        run: cargo tarpaulin --features count_u8,parallel,fastq,kff --engine llvm --timeout 120 --out xml
 
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v2

@@ -105,6 +105,7 @@ macro_rules! impl_sequential (
 		}
 	    }
 
+	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, _record_buffer: u64) {
 		let mut reader = noodles::fastq::Reader::new(fastq);
