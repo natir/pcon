@@ -75,3 +75,49 @@ pub fn populate_bufferq(
 
     true
 }
+
+/// Reverse complement a kmer
+pub fn revcomp(kmer: &[u8]) -> Vec<u8> {
+    kmer.iter()
+        .rev()
+        .map(u8::to_ascii_uppercase)
+        .map(|c| if c & 2 != 0 { c ^ 4 } else { c ^ 21 })
+        .collect()
+}
+
+/// Get canonical form of kmer
+pub fn canonical(kmer: &[u8]) -> Vec<u8> {
+    let reverse = revcomp(kmer);
+
+    if *reverse < *kmer {
+        reverse
+    } else {
+        kmer.to_ascii_uppercase()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    /* local use */
+    use super::*;
+
+    #[test]
+    fn revcomp_() {
+        assert_eq!(revcomp(b"CAGT"), b"ACTG".to_vec());
+
+        assert_eq!(revcomp(b"cagt"), b"ACTG".to_vec());
+
+        assert_eq!(revcomp(b"AttACAGTGC"), b"GCACTGTAAT".to_vec());
+    }
+
+    #[test]
+    fn canonical_() {
+        assert_eq!(canonical(b"CAGT"), b"ACTG".to_vec());
+
+        assert_eq!(canonical(b"cagt"), b"ACTG".to_vec());
+
+        assert_eq!(canonical(b"AGAGGA"), b"AGAGGA".to_vec());
+
+        assert_eq!(canonical(b"AttACAGTGC"), b"ATTACAGTGC".to_vec());
+    }
+}

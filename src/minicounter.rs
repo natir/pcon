@@ -10,7 +10,6 @@ use rayon::prelude::*;
 /* project use */
 use crate::counter;
 use crate::error;
-#[cfg(feature = "parallel")]
 use crate::utils;
 
 /// A counter of kmer, count only if minimizer is present more than a threshold.
@@ -111,7 +110,7 @@ macro_rules! impl_sequential (
 				&mut self.mini_count,
 				&mut self.kmer_count,
 				minimizer as usize,
-				kmer.to_ascii_uppercase(),
+				utils::canonical(kmer),
 				self.threshold,
 			    );
 
@@ -145,7 +144,7 @@ macro_rules! impl_sequential (
 				&mut self.mini_count,
 				&mut self.kmer_count,
 				minimizer as usize,
-				kmer.to_ascii_uppercase(),
+				utils::canonical(kmer),
 				self.threshold,
 			    );
 
@@ -174,7 +173,7 @@ macro_rules! impl_sequential (
 
 	    /// Get count of a kmer
 	    pub fn get(&self, kmer: &[u8]) -> &$type {
-		self.kmer_count.get(kmer).unwrap_or(&0)
+		self.kmer_count.get(&utils::canonical(kmer)).unwrap_or(&0)
 	    }
 	}
     }
@@ -228,7 +227,7 @@ macro_rules! impl_atomic(
 				    Self::mini_inc(&self.mini_count.count, (mini >> 1) as usize);
 				}
 
-				let normalize = kmer.to_ascii_uppercase();
+				let normalize = utils::canonical(kmer);
 				if self.mini_count.get(mini as u64) > self.threshold {
 
 				    values.entry(normalize).and_modify(|c: &mut $out_type| *c = c.saturating_add(1)).or_insert(1);
@@ -281,7 +280,7 @@ macro_rules! impl_atomic(
 				    Self::mini_inc(&self.mini_count.count, (mini >> 1) as usize);
 				}
 
-				let normalize = kmer.to_ascii_uppercase();
+				let normalize = utils::canonical(kmer);
 				if self.mini_count.get(mini as u64) > self.threshold {
 				    values.entry(normalize).and_modify(|c: &mut $out_type| *c = c.saturating_add(1)).or_insert(1);
 				}
@@ -313,7 +312,7 @@ macro_rules! impl_atomic(
 
 	    /// Get count of a kmer
 	    pub fn get(&self, kmer: &[u8]) -> $out_type {
-		*self.kmer_count.get(kmer).unwrap_or(&0)
+		*self.kmer_count.get(&utils::canonical(kmer)).unwrap_or(&0)
 	    }
 	}
     }
@@ -401,11 +400,6 @@ AAGATAATTC
 
                 let mut result = vec![];
                 for (kmer, count) in mini_count.kmer_raw().iter() {
-                    println!(
-                        "b\"{}\".to_vec(), {}",
-                        String::from_utf8(kmer.to_vec()).unwrap(),
-                        count
-                    );
                     result.push((kmer.to_vec(), *count));
                 }
                 result.sort();
@@ -414,16 +408,16 @@ AAGATAATTC
                     result,
                     vec![
                         (b"AAGATAATTC".to_vec(), 2),
+                        (b"ACTGTAATAC".to_vec(), 1),
                         (b"AGATAATTCC".to_vec(), 1),
                         (b"ATAATTCCCA".to_vec(), 1),
+                        (b"ATGGGAATTA".to_vec(), 1),
                         (b"ATTACAGTGC".to_vec(), 1),
+                        (b"CACTGTAATA".to_vec(), 1),
+                        (b"CTGTAATACC".to_vec(), 1),
                         (b"GATAATTCCC".to_vec(), 1),
-                        (b"GGTATTACAG".to_vec(), 1),
-                        (b"GTATTACAGT".to_vec(), 1),
-                        (b"TAATTCCCAT".to_vec(), 1),
-                        (b"TATTACAGTG".to_vec(), 1),
+                        (b"GGCACTGTAA".to_vec(), 1),
                         (b"TGGTATTACA".to_vec(), 1),
-                        (b"TTACAGTGCC".to_vec(), 1),
                     ]
                 )
             }
@@ -449,11 +443,6 @@ AAGATAATTC
 
                 let mut result = vec![];
                 for (kmer, count) in mini_count.kmer_raw().iter() {
-                    println!(
-                        "b\"{}\".to_vec(), {}",
-                        String::from_utf8(kmer.to_vec()).unwrap(),
-                        count
-                    );
                     result.push((kmer.to_vec(), *count));
                 }
                 result.sort();
@@ -462,16 +451,16 @@ AAGATAATTC
                     result,
                     vec![
                         (b"AAGATAATTC".to_vec(), 2),
+                        (b"ACTGTAATAC".to_vec(), 1),
                         (b"AGATAATTCC".to_vec(), 1),
                         (b"ATAATTCCCA".to_vec(), 1),
+                        (b"ATGGGAATTA".to_vec(), 1),
                         (b"ATTACAGTGC".to_vec(), 1),
+                        (b"CACTGTAATA".to_vec(), 1),
+                        (b"CTGTAATACC".to_vec(), 1),
                         (b"GATAATTCCC".to_vec(), 1),
-                        (b"GGTATTACAG".to_vec(), 1),
-                        (b"GTATTACAGT".to_vec(), 1),
-                        (b"TAATTCCCAT".to_vec(), 1),
-                        (b"TATTACAGTG".to_vec(), 1),
+                        (b"GGCACTGTAA".to_vec(), 1),
                         (b"TGGTATTACA".to_vec(), 1),
-                        (b"TTACAGTGCC".to_vec(), 1),
                     ]
                 )
             }
@@ -513,16 +502,16 @@ AAGATAATTC
                     result,
                     vec![
                         (b"AAGATAATTC".to_vec(), 2),
+                        (b"ACTGTAATAC".to_vec(), 1),
                         (b"AGATAATTCC".to_vec(), 1),
                         (b"ATAATTCCCA".to_vec(), 1),
+                        (b"ATGGGAATTA".to_vec(), 1),
                         (b"ATTACAGTGC".to_vec(), 1),
+                        (b"CACTGTAATA".to_vec(), 1),
+                        (b"CTGTAATACC".to_vec(), 1),
                         (b"GATAATTCCC".to_vec(), 1),
-                        (b"GGTATTACAG".to_vec(), 1),
-                        (b"GTATTACAGT".to_vec(), 1),
-                        (b"TAATTCCCAT".to_vec(), 1),
-                        (b"TATTACAGTG".to_vec(), 1),
+                        (b"GGCACTGTAA".to_vec(), 1),
                         (b"TGGTATTACA".to_vec(), 1),
-                        (b"TTACAGTGCC".to_vec(), 1),
                     ]
                 )
             }
@@ -582,16 +571,16 @@ AAGATAATTC
                     result,
                     vec![
                         (b"AAGATAATTC".to_vec(), 2),
+                        (b"ACTGTAATAC".to_vec(), 1),
                         (b"AGATAATTCC".to_vec(), 1),
                         (b"ATAATTCCCA".to_vec(), 1),
+                        (b"ATGGGAATTA".to_vec(), 1),
                         (b"ATTACAGTGC".to_vec(), 1),
+                        (b"CACTGTAATA".to_vec(), 1),
+                        (b"CTGTAATACC".to_vec(), 1),
                         (b"GATAATTCCC".to_vec(), 1),
-                        (b"GGTATTACAG".to_vec(), 1),
-                        (b"GTATTACAGT".to_vec(), 1),
-                        (b"TAATTCCCAT".to_vec(), 1),
-                        (b"TATTACAGTG".to_vec(), 1),
+                        (b"GGCACTGTAA".to_vec(), 1),
                         (b"TGGTATTACA".to_vec(), 1),
-                        (b"TTACAGTGCC".to_vec(), 1),
                     ]
                 )
             }
