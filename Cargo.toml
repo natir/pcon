@@ -47,6 +47,7 @@ criterion      = { version = "0.5" }
 tempfile       = { version = "3" }
 rand           = { version = "0.8" }
 assert_cmd     = { version = "2" }
+biotest        = { version = "0.1", features = ["fasta"] }
 
 
 [features]

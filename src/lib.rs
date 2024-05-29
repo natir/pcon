@@ -14,13 +14,12 @@ pub mod count;
 pub mod counter;
 pub mod dump;
 pub mod error;
-#[cfg(not(feature = "parallel"))]
 pub mod minicount;
-#[cfg(not(feature = "parallel"))]
 pub mod minicounter;
 pub mod serialize;
 pub mod solid;
 pub mod spectrum;
+mod utils;
 
 /// Define a const
 type ByteOrder = byteorder::LittleEndian; // WARNING IF YOU CHANGE THIS CHECK AND CHANGE SERIALIZE.RS

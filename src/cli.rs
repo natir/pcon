@@ -68,7 +68,6 @@ pub enum SubCommand {
     /// Perform count of kmer
     Count(Count),
 
-    #[cfg(not(feature = "parallel"))]
     /// Perform count of large kmer if associate minimizer is present more than abundance
     MiniCount(MiniCount),
 
@@ -532,6 +531,57 @@ mod tests {
         assert_eq!(count.abundance(), 2);
         assert_eq!(count.outputs()[0].0, DumpType::Solid);
         assert_eq!(count.record_buffer(), 512);
+
+        let count = Count {
+            inputs: Some(vec![
+                input1.path().to_path_buf(),
+                input2.path().to_path_buf(),
+            ]),
+            format: None,
+            pcon: None,
+            csv: None,
+            solid: None,
+            kmer_size: 32,
+            abundance: Some(2),
+            record_buffer: Some(512),
+        };
+
+        assert_eq!(count.outputs()[0].0, DumpType::Pcon);
+
+        Ok(())
+    }
+
+    #[test]
+    fn minicount() -> error::Result<()> {
+        let mut input1 = tempfile::NamedTempFile::new()?;
+        input1.write_all(b">test\n")?;
+        let mut input2 = tempfile::NamedTempFile::new()?;
+        input2.write_all(b"TACG\n")?;
+
+        let minicount = MiniCount {
+            inputs: Some(vec![
+                input1.path().to_path_buf(),
+                input2.path().to_path_buf(),
+            ]),
+            format: None,
+            csv: None,
+            kmer_size: 32,
+            minimizer_size: 8,
+            mini_abundance: Some(1),
+            abundance: Some(2),
+            record_buffer: Some(512),
+        };
+
+        let mut content = Vec::new();
+        minicount.inputs()?.read_to_end(&mut content)?;
+        assert_eq!(content, b">test\nTACG\n");
+
+        assert_eq!(minicount.kmer_size(), 32);
+        assert_eq!(minicount.minimizer_size(), 7);
+        assert_eq!(minicount.mini_abundance(), 1);
+        assert_eq!(minicount.abundance(), 2);
+        assert_eq!(minicount.outputs()[0].0, DumpType::Csv);
+        assert_eq!(minicount.record_buffer(), 512);
 
         let count = Count {
             inputs: Some(vec![

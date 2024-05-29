@@ -14,7 +14,6 @@ use pcon::cli;
 use pcon::count;
 use pcon::dump;
 use pcon::error;
-#[cfg(not(feature = "parallel"))]
 use pcon::minicount;
 
 fn main() -> error::Result<()> {
@@ -37,7 +36,6 @@ fn main() -> error::Result<()> {
 
     match params.subcommand {
         cli::SubCommand::Count(params) => count::count(params),
-        #[cfg(not(feature = "parallel"))]
         cli::SubCommand::MiniCount(params) => minicount::minicount(params),
         cli::SubCommand::Dump(params) => dump::dump(params),
     }

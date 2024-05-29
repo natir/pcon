@@ -10,13 +10,14 @@ use rayon::prelude::*;
 /* project use */
 use crate::error;
 use crate::serialize;
+use crate::utils;
 
 /// A counter of kmer based on cocktail crate 2bit conversion, canonicalisation and hashing.
 /// Implement only for u8, std::sync::atomic::AtomicU8
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Counter<T> {
     k: u8,
-    count: Box<[T]>,
+    pub(crate) count: Box<[T]>,
 }
 
 /**************************/
@@ -142,25 +143,25 @@ macro_rules! impl_sequential (
     }
 );
 
-impl_sequential!(u8, init_data, std::io::Read::read_exact);
+impl_sequential!(u8, utils::init_data, std::io::Read::read_exact);
 impl_sequential!(
     u16,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u32,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u64,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
 );
 impl_sequential!(
     u128,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u128_into::<crate::ByteOrder>
 );
 
@@ -175,7 +176,7 @@ macro_rules! impl_atomic (
 	    pub fn new(k: u8) -> Self {
 		Self {
 		    k,
-		    count: transmute_box($init(k, 0 as $out_type)),
+		    count: utils::transmute_box($init(k, 0 as $out_type)),
 		}
 	    }
 
@@ -198,7 +199,7 @@ macro_rules! impl_atomic (
 
 		Ok(Self {
 		    k,
-		    count: transmute_box(data),
+		    count: utils::transmute_box(data),
 		})
 	    }
 
@@ -211,7 +212,7 @@ macro_rules! impl_atomic (
 		let mut end = true;
 		while end {
 		    log::info!("Start populate buffer");
-		    end = populate_buffer(&mut iter, &mut records, record_buffer);
+		    end = utils::populate_buffer(&mut iter, &mut records, record_buffer);
 		    log::info!("End populate buffer {}", records.len());
 
 		    records.par_iter().for_each(|record| {
@@ -227,7 +228,7 @@ macro_rules! impl_atomic (
 		}
 	    }
 
-
+	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, record_buffer: u64) {
 		let mut reader = noodles::fastq::Reader::new(fastq);
@@ -237,7 +238,7 @@ macro_rules! impl_atomic (
 		let mut end = true;
 		while end {
 		    log::info!("Start populate buffer");
-		    end = populate_bufferq(&mut iter, &mut records, record_buffer);
+		    end = utils::populate_bufferq(&mut iter, &mut records, record_buffer);
 		    log::info!("End populate buffer {}", records.len());
 
 		    records.par_iter().for_each(|record| {
@@ -272,7 +273,7 @@ macro_rules! impl_atomic (
 
 	    /// Get raw data in no atomic type
 	    pub fn raw_noatomic(&self) -> &[$out_type] {
-		transmute(&self.count)
+		utils::transmute(&self.count)
 	    }
 	}
 
@@ -284,7 +285,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU8,
     u8,
     u8::MAX,
-    init_data,
+    utils::init_data,
     std::io::Read::read_exact
 );
 #[cfg(feature = "parallel")]
@@ -292,7 +293,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU16,
     u16,
     u16::MAX,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u16_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
@@ -300,7 +301,7 @@ impl_atomic!(
     std::sync::atomic::AtomicU32,
     u32,
     u32::MAX,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u32_into::<crate::ByteOrder>
 );
 #[cfg(feature = "parallel")]
@@ -308,96 +309,13 @@ impl_atomic!(
     std::sync::atomic::AtomicU64,
     u64,
     u64::MAX,
-    init_data,
+    utils::init_data,
     byteorder::ReadBytesExt::read_u64_into::<crate::ByteOrder>
 );
-
-/*******************/
-/* utils function */
-/******************/
-/// Initialize counter
-fn init_data<T>(k: u8, value: T) -> Box<[T]>
-where
-    T: std::marker::Sized + std::clone::Clone,
-{
-    vec![value; cocktail::kmer::get_hash_space_size(k) as usize].into_boxed_slice()
-}
-
-#[cfg(feature = "parallel")]
-/// Perform transmutation on box
-fn transmute<I, O>(data: &[I]) -> &[O]
-where
-    I: std::marker::Sized,
-    O: std::marker::Sized,
-{
-    unsafe { std::mem::transmute::<&[I], &[O]>(data) }
-}
-
-#[cfg(feature = "parallel")]
-/// Perform transmutation on box
-fn transmute_box<I, O>(data: Box<[I]>) -> Box<[O]>
-where
-    I: std::marker::Sized,
-    O: std::marker::Sized,
-{
-    unsafe { std::mem::transmute::<Box<[I]>, Box<[O]>>(data) }
-}
-
-#[cfg(feature = "parallel")]
-/// Populate record buffer with content of iterator
-fn populate_buffer(
-    iter: &mut noodles::fasta::reader::Records<'_, Box<dyn std::io::BufRead>>,
-    records: &mut Vec<noodles::fasta::Record>,
-    record_buffer: u64,
-) -> bool {
-    records.clear();
-
-    for i in 0..record_buffer {
-        if let Some(Ok(record)) = iter.next() {
-            records.push(record);
-        } else {
-            records.truncate(i as usize);
-            return false;
-        }
-    }
-
-    true
-}
-
-#[cfg(feature = "parallel")]
-/// Populate record buffer with content of iterator
-fn populate_bufferq(
-    iter: &mut noodles::fastq::reader::Records<'_, Box<dyn std::io::BufRead>>,
-    records: &mut Vec<noodles::fastq::Record>,
-    record_buffer: u64,
-) -> bool {
-    records.clear();
-
-    for i in 0..record_buffer {
-        if let Some(Ok(record)) = iter.next() {
-            records.push(record);
-        } else {
-            records.truncate(i as usize);
-            return false;
-        }
-    }
-
-    true
-}
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[cfg(feature = "parallel")]
-    /// Perform transmutation on box
-    fn transmute<I, O>(data: &[I]) -> &[O]
-    where
-        I: std::marker::Sized,
-        O: std::marker::Sized,
-    {
-        unsafe { std::mem::transmute::<&[I], &[O]>(data) }
-    }
 
     const FASTA_FILE: &[u8] = b">random_seq 0
 GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
@@ -405,7 +323,18 @@ GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAG
 AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
 ";
 
-    macro_rules! fasta_count {
+    #[cfg(feature = "fastq")]
+    const FASTQ_FILE: &[u8] = b"@random_seq 0
+GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCttCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
++
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@random_seq 1
+AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTAttACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
++
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+";
+
+    macro_rules! truth_count {
         ($type:ty, $name:ident) => {
             const $name: &[$type] = &[
                 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 2, 0, 0, 0, 2, 2, 1, 0, 1, 1, 1, 2,
@@ -431,13 +360,13 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         };
     }
 
-    fasta_count!(u8, FASTA_COUNT_U8);
-    fasta_count!(u16, FASTA_COUNT_U16);
-    fasta_count!(u32, FASTA_COUNT_U32);
-    fasta_count!(u64, FASTA_COUNT_U64);
-    fasta_count!(u128, FASTA_COUNT_U128);
+    truth_count!(u8, TRUTH_COUNT_U8);
+    truth_count!(u16, TRUTH_COUNT_U16);
+    truth_count!(u32, TRUTH_COUNT_U32);
+    truth_count!(u64, TRUTH_COUNT_U64);
+    truth_count!(u128, TRUTH_COUNT_U128);
 
-    macro_rules! sequential {
+    macro_rules! sequential_fasta {
         ($type:ty, $name:ident, $truth:ident) => {
             #[test]
             fn $name() {
@@ -462,11 +391,48 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
         };
     }
 
-    sequential!(u8, sequential_u8, FASTA_COUNT_U8);
-    sequential!(u16, sequential_u16, FASTA_COUNT_U16);
-    sequential!(u32, sequential_u32, FASTA_COUNT_U32);
-    sequential!(u64, sequential_u64, FASTA_COUNT_U64);
-    sequential!(u128, sequential_u128, FASTA_COUNT_U128);
+    sequential_fasta!(u8, sequential_fasta_u8, TRUTH_COUNT_U8);
+    sequential_fasta!(u16, sequential_fasta_u16, TRUTH_COUNT_U16);
+    sequential_fasta!(u32, sequential_fasta_u32, TRUTH_COUNT_U32);
+    sequential_fasta!(u64, sequential_fasta_u64, TRUTH_COUNT_U64);
+    sequential_fasta!(u128, sequential_fasta_u128, TRUTH_COUNT_U128);
+
+    #[cfg(feature = "fastq")]
+    macro_rules! sequential_fastq {
+        ($type:ty, $name:ident, $truth:ident) => {
+            #[test]
+            fn $name() {
+                let mut counter = Counter::<$type>::new(5);
+
+                counter.count_fastq(Box::new(FASTQ_FILE), 1);
+
+                assert_eq!(*counter.get_raw(14), 2);
+
+                assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
+
+                assert_eq!(
+                    counter.get(cocktail::kmer::canonical(
+                        cocktail::kmer::seq2bit(b"GTTCT"),
+                        5
+                    )),
+                    2
+                );
+
+                assert_eq!(&counter.raw()[..], &$truth[..]);
+            }
+        };
+    }
+
+    #[cfg(feature = "fastq")]
+    sequential_fastq!(u8, sequential_fastq_u8, TRUTH_COUNT_U8);
+    #[cfg(feature = "fastq")]
+    sequential_fastq!(u16, sequential_fastq_u16, TRUTH_COUNT_U16);
+    #[cfg(feature = "fastq")]
+    sequential_fastq!(u32, sequential_fastq_u32, TRUTH_COUNT_U32);
+    #[cfg(feature = "fastq")]
+    sequential_fastq!(u64, sequential_fastq_u64, TRUTH_COUNT_U64);
+    #[cfg(feature = "fastq")]
+    sequential_fastq!(u128, sequential_fastq_u128, TRUTH_COUNT_U128);
 
     macro_rules! sequential_serialize {
         ($type:ty, $failled_type:ty, $name:ident, $failled_name:ident) => {
@@ -538,7 +504,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     );
 
     #[cfg(feature = "parallel")]
-    macro_rules! parallel {
+    macro_rules! parallel_fasta {
         ($type:ty, $out_type:ty, $name:ident, $truth:ident) => {
             #[test]
             fn $name() {
@@ -569,27 +535,92 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
     }
 
     #[cfg(feature = "parallel")]
-    parallel!(std::sync::atomic::AtomicU8, u8, parallel_u8, FASTA_COUNT_U8);
+    parallel_fasta!(
+        std::sync::atomic::AtomicU8,
+        u8,
+        parallel_fasta_u8,
+        TRUTH_COUNT_U8
+    );
     #[cfg(feature = "parallel")]
-    parallel!(
+    parallel_fasta!(
         std::sync::atomic::AtomicU16,
         u16,
-        parallel_u16,
-        FASTA_COUNT_U16
+        parallel_fasta_u16,
+        TRUTH_COUNT_U16
     );
     #[cfg(feature = "parallel")]
-    parallel!(
+    parallel_fasta!(
         std::sync::atomic::AtomicU32,
         u32,
-        parallel_u32,
-        FASTA_COUNT_U32
+        parallel_fasta_u32,
+        TRUTH_COUNT_U32
     );
     #[cfg(feature = "parallel")]
-    parallel!(
+    parallel_fasta!(
         std::sync::atomic::AtomicU64,
         u64,
-        parallel_u64,
-        FASTA_COUNT_U64
+        parallel_fasta_u64,
+        TRUTH_COUNT_U64
+    );
+
+    #[cfg(feature = "parallel")]
+    macro_rules! parallel_fastq {
+        ($type:ty, $out_type:ty, $name:ident, $truth:ident) => {
+            #[test]
+            fn $name() {
+                let mut counter = Counter::<$type>::new(5);
+
+                counter.count_fastq(Box::new(FASTQ_FILE), 1);
+
+                assert_eq!(
+                    counter
+                        .get_raw(14)
+                        .load(std::sync::atomic::Ordering::Relaxed),
+                    2
+                );
+
+                assert_eq!(counter.get(cocktail::kmer::seq2bit(b"GTTCT")), 2);
+
+                assert_eq!(
+                    counter.get(cocktail::kmer::canonical(
+                        cocktail::kmer::seq2bit(b"GTTCT"),
+                        5
+                    )),
+                    2
+                );
+
+                assert_eq!(counter.raw_noatomic(), &$truth[..]);
+            }
+        };
+    }
+
+    #[cfg(feature = "parallel")]
+    parallel_fastq!(
+        std::sync::atomic::AtomicU8,
+        u8,
+        parallel_fastq_u8,
+        TRUTH_COUNT_U8
+    );
+    #[cfg(feature = "parallel")]
+    parallel_fastq!(
+        std::sync::atomic::AtomicU16,
+        u16,
+        parallel_fastq_u16,
+        TRUTH_COUNT_U16
+    );
+    #[cfg(feature = "parallel")]
+    parallel_fastq!(
+        std::sync::atomic::AtomicU32,
+        u32,
+        parallel_fastq_u32,
+        TRUTH_COUNT_U32
+    );
+    #[cfg(feature = "parallel")]
+    parallel_fastq!(
+        std::sync::atomic::AtomicU64,
+        u64,
+        parallel_fastq_u64,
+        TRUTH_COUNT_U64
     );
 
     #[cfg(feature = "parallel")]
@@ -613,8 +644,8 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTATTACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                 let second_counter = Counter::<$type>::from_stream(&file[..])?;
 
                 assert_eq!(
-                    &transmute::<$type, $out_type>(counter.raw())[..],
-                    &transmute::<$type, $out_type>(second_counter.raw())[..],
+                    &utils::transmute::<$type, $out_type>(counter.raw())[..],
+                    &utils::transmute::<$type, $out_type>(second_counter.raw())[..],
                 );
 
                 Ok(())

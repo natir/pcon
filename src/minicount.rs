@@ -9,11 +9,10 @@ use crate::cli;
 use crate::error;
 use crate::minicounter;
 
-#[cfg(not(feature = "parallel"))]
 /// Run count
 pub fn minicount(params: cli::MiniCount) -> error::Result<()> {
     log::info!("Start init counter");
-    let mut counter = minicounter::MiniCounter::<crate::CountType>::new(
+    let mut counter = minicounter::MiniCounter::<crate::CountType, crate::CountTypeNoAtomic>::new(
         params.kmer_size(),
         params.minimizer_size(),
         params.abundance(),
