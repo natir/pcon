@@ -486,22 +486,6 @@
 <a href="#484" id="484">484</a>
 <a href="#485" id="485">485</a>
 <a href="#486" id="486">486</a>
-<a href="#487" id="487">487</a>
-<a href="#488" id="488">488</a>
-<a href="#489" id="489">489</a>
-<a href="#490" id="490">490</a>
-<a href="#491" id="491">491</a>
-<a href="#492" id="492">492</a>
-<a href="#493" id="493">493</a>
-<a href="#494" id="494">494</a>
-<a href="#495" id="495">495</a>
-<a href="#496" id="496">496</a>
-<a href="#497" id="497">497</a>
-<a href="#498" id="498">498</a>
-<a href="#499" id="499">499</a>
-<a href="#500" id="500">500</a>
-<a href="#501" id="501">501</a>
-<a href="#502" id="502">502</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Generic struct of minicounter and implementation for many type
 
 </span><span class="comment">/* std use */
@@ -523,13 +507,16 @@
     k: u64,
     threshold: U,
     mini_count: counter::Counter&lt;T&gt;,
-    kmer_count: rustc_hash::FxHashMap&lt;Vec&lt;u8&gt;, T&gt;,
+    kmer_count: rustc_hash::FxHashMap&lt;Vec&lt;u8&gt;, U&gt;,
 }
 
 <span class="comment">/**************************/
 /* generic implementation */
 /**************************/
-</span><span class="kw">impl</span>&lt;T, U&gt; MiniCounter&lt;T, U&gt; {
+</span><span class="kw">impl</span>&lt;T, U&gt; MiniCounter&lt;T, U&gt;
+<span class="kw">where
+    </span>U: std::fmt::Display + std::cmp::PartialOrd,
+{
     <span class="doccomment">/// Get value of k
     </span><span class="kw">pub fn </span>k(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u64 {
         <span class="self">self</span>.k
@@ -551,8 +538,26 @@
     }
 
     <span class="doccomment">/// Get kmer count data
-    </span><span class="kw">pub fn </span>kmer_raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>rustc_hash::FxHashMap&lt;Vec&lt;u8&gt;, T&gt; {
+    </span><span class="kw">pub fn </span>kmer_raw(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>rustc_hash::FxHashMap&lt;Vec&lt;u8&gt;, U&gt; {
         <span class="kw-2">&amp;</span><span class="self">self</span>.kmer_count
+    }
+
+    <span class="doccomment">/// Write minicounter result in csv
+    </span><span class="kw">pub fn </span>serialize&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: U, <span class="kw-2">mut </span>output: W) -&gt; error::Result&lt;()&gt;
+    <span class="kw">where
+        </span>W: std::io::Write,
+    {
+        <span class="kw">for </span>(kmer, count) <span class="kw">in </span><span class="self">self</span>.kmer_count.iter() {
+            <span class="kw">if </span>count &gt; <span class="kw-2">&amp;</span>abundance {
+                <span class="macro">writeln!</span>(
+                    output,
+                    <span class="string">"{},{}"</span>,
+                    <span class="kw">unsafe </span>{ String::from_utf8_unchecked(kmer.to_vec()) },
+                    count
+                )<span class="question-mark">?</span>;
+            }
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 }
 
@@ -578,7 +583,7 @@
 		<span class="kw">let </span><span class="kw-2">mut </span>records = reader.records();
 
 		<span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(record)) = records.next() {
-		    <span class="kw">if </span>record.sequence().len() &gt; <span class="self">self</span>.k() <span class="kw">as </span>usize {
+		    <span class="kw">if </span>record.sequence().len() &gt;= <span class="self">self</span>.k() <span class="kw">as </span>usize {
 			<span class="kw">let </span>minimizer = cocktail::tokenizer::MiniBstr::new(
 			    record.sequence().as_ref(),
 			    <span class="self">self</span>.k(),
@@ -650,7 +655,7 @@
 		<span class="kw">if </span><span class="macro-nonterminal">mini_count</span>.get(minimizer <span class="kw">as </span>u64) &gt; threshold {
 		    kmer_count
 			.entry(kmer)
-			.and_modify(|c| <span class="kw-2">*</span>c += <span class="number">1</span>)
+			.and_modify(|c| <span class="kw-2">*</span>c = c.saturating_add(<span class="number">1</span>))
 			.or_insert(<span class="number">1</span>);
 		}
 	    }
@@ -658,24 +663,6 @@
 	    <span class="doccomment">/// Get count of a kmer
 	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="kw">type </span>{
 		<span class="macro-nonterminal">self</span>.kmer_count.get(kmer).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
-	    }
-
-	    <span class="doccomment">/// Write minicounter result in csv
-	    </span><span class="kw">pub fn </span>serialize&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: <span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="kw-2">mut </span><span class="macro-nonterminal">output</span>: W) -&gt; error::Result&lt;()&gt;
-	    <span class="kw">where
-		</span>W: std::io::Write,
-	    {
-		<span class="kw">for </span>(kmer, count) <span class="kw">in </span><span class="self">self</span>.kmer_count.iter() {
-		    <span class="kw">if </span>count &gt; <span class="kw-2">&amp;</span>abundance {
-			<span class="macro">writeln!</span>(
-			    output,
-			    <span class="string">"{},{}"</span>,
-			    <span class="kw">unsafe </span>{ String::from_utf8_unchecked(kmer.to_vec()) },
-			count
-			)<span class="question-mark">?</span>;
-		    }
-		}
-		<span class="prelude-val">Ok</span>(())
 	    }
 	}
     }
@@ -713,44 +700,43 @@
 		    end = utils::populate_buffer(<span class="kw-2">&amp;mut </span>iter, <span class="kw-2">&amp;mut </span>records, record_buffer);
 		    <span class="macro">log::info!</span>(<span class="string">"End populate buffer {}"</span>, records.len());
 
-		    <span class="self">self</span>.kmer_count.extend(
-			records.par_iter().map(|record| {
-			    <span class="kw">let </span><span class="kw-2">mut </span>init_value = Vec::new();
+		    <span class="kw">let </span>local = records.par_iter().map(|record| {
+			<span class="kw">let </span><span class="kw-2">mut </span>values = std::collections::HashMap::new();
 
-			    <span class="kw">if </span>record.sequence().len() &gt;= <span class="self">self</span>.k <span class="kw">as </span>usize {
-				<span class="kw">let </span>minimizer = cocktail::tokenizer::MiniBstr::new(
-				    record.sequence().as_ref(),
-				    <span class="self">self</span>.k(),
-				    <span class="self">self</span>.m(),
-				);
+			<span class="kw">if </span>record.sequence().len() &gt;= <span class="self">self</span>.k <span class="kw">as </span>usize {
+			    <span class="kw">let </span>minimizer = cocktail::tokenizer::MiniBstr::new(
+				record.sequence().as_ref(),
+				<span class="self">self</span>.k(),
+				<span class="self">self</span>.m(),
+			    );
 
-				<span class="kw">let </span><span class="kw-2">mut </span>prev_mini = <span class="prelude-val">None</span>;
-				<span class="kw">for </span>(kmer, mini) <span class="kw">in </span>minimizer {
-				    <span class="kw">if </span>prev_mini != <span class="prelude-val">Some</span>(mini) {
-					<span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
-				    }
-
-				    <span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
-				    <span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
-					<span class="kw">if let </span><span class="prelude-val">Some</span>(count) = <span class="self">self</span>.kmer_count.get(<span class="kw-2">&amp;</span>normalize) {
-					    <span class="kw">if </span>count.load(std::sync::atomic::Ordering::SeqCst) != <span class="macro-nonterminal">$max </span>{
-						count.fetch_add(<span class="number">1</span>, std::sync::atomic::Ordering::SeqCst);
-					    }
-					}
-					<span class="kw">else </span>{
-					    init_value.push(normalize);
-					}
-				    }
-				    prev_mini = <span class="prelude-val">Some</span>(mini);
+			    <span class="kw">let </span><span class="kw-2">mut </span>prev_mini = <span class="prelude-val">None</span>;
+			    <span class="kw">for </span>(kmer, mini) <span class="kw">in </span>minimizer {
+				<span class="kw">if </span>prev_mini != <span class="prelude-val">Some</span>(mini) {
+				    <span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
 				}
-			    }
 
-			    init_value
-			}).collect::&lt;Vec&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;()
-			    .into_iter()
-			    .flatten()
-			    .zip(std::iter::repeat(|| { &lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">1</span>) }).map(|x| x()))
-		    );
+				<span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
+				<span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
+
+				    values.entry(normalize).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(<span class="number">1</span>)).or_insert(<span class="number">1</span>);
+				}
+				prev_mini = <span class="prelude-val">Some</span>(mini);
+			    }
+			}
+
+			values
+		    }).reduce(|| std::collections::HashMap::new(), |<span class="kw-2">mut </span>a, b| {
+			<span class="kw">for </span>(k, v) <span class="kw">in </span>b.into_iter() {
+			    a.entry(k.to_vec()).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(v)).or_insert(v);
+			}
+
+			a
+		    });
+
+		    <span class="kw">for </span>(k, v) <span class="kw">in </span>local.into_iter() {
+			<span class="self">self</span>.kmer_count.entry(k.to_vec()).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(v)).or_insert(v);
+		    }
 		}
 	    }
 
@@ -765,46 +751,44 @@
 		<span class="kw">while </span>end {
 		    <span class="macro">log::info!</span>(<span class="string">"Start populate buffer"</span>);
 		    end = utils::populate_bufferq(<span class="kw-2">&amp;mut </span>iter, <span class="kw-2">&amp;mut </span>records, record_buffer);
-		    <span class="macro">log::info!</span>(<span class="string">"End populate buffer {}"</span>, records.len());
+			    <span class="macro">log::info!</span>(<span class="string">"End populate buffer {}"</span>, records.len());
 
-		    <span class="self">self</span>.kmer_count.extend(
-			records.par_iter().map(|record| {
-			    <span class="kw">let </span><span class="kw-2">mut </span>init_value = Vec::new();
+		    <span class="kw">let </span>local = records.par_iter().map(|record| {
+			<span class="kw">let </span><span class="kw-2">mut </span>values = std::collections::HashMap::new();
 
-			    <span class="kw">if </span>record.sequence().len() &gt;= <span class="self">self</span>.k <span class="kw">as </span>usize {
-				<span class="kw">let </span>minimizer = cocktail::tokenizer::MiniBstr::new(
-				    record.sequence().as_ref(),
-				    <span class="self">self</span>.k(),
-				    <span class="self">self</span>.m(),
-				);
+			<span class="kw">if </span>record.sequence().len() &gt;= <span class="self">self</span>.k <span class="kw">as </span>usize {
+			    <span class="kw">let </span>minimizer = cocktail::tokenizer::MiniBstr::new(
+				record.sequence().as_ref(),
+				<span class="self">self</span>.k(),
+				<span class="self">self</span>.m(),
+			    );
 
-				<span class="kw">let </span><span class="kw-2">mut </span>prev_mini = <span class="prelude-val">None</span>;
-				<span class="kw">for </span>(kmer, mini) <span class="kw">in </span>minimizer {
-				    <span class="kw">if </span>prev_mini != <span class="prelude-val">Some</span>(mini) {
-					<span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
-				    }
-
-				    <span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
-				    <span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
-					<span class="kw">if let </span><span class="prelude-val">Some</span>(count) = <span class="self">self</span>.kmer_count.get(<span class="kw-2">&amp;</span>normalize) {
-					    <span class="kw">if </span>count.load(std::sync::atomic::Ordering::SeqCst) != <span class="macro-nonterminal">$max </span>{
-						count.fetch_add(<span class="number">1</span>, std::sync::atomic::Ordering::SeqCst);
-					    }
-					}
-					<span class="kw">else </span>{
-					    init_value.push(normalize);
-					}
-				    }
-				    prev_mini = <span class="prelude-val">Some</span>(mini);
+			    <span class="kw">let </span><span class="kw-2">mut </span>prev_mini = <span class="prelude-val">None</span>;
+			    <span class="kw">for </span>(kmer, mini) <span class="kw">in </span>minimizer {
+				<span class="kw">if </span>prev_mini != <span class="prelude-val">Some</span>(mini) {
+				    <span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
 				}
-			    }
 
-			    init_value
-			}).collect::&lt;Vec&lt;Vec&lt;Vec&lt;u8&gt;&gt;&gt;&gt;()
-			    .into_iter()
-			    .flatten()
-			    .zip(std::iter::repeat(|| { &lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">1</span>) }).map(|x| x()))
-		    );
+				<span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
+				<span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
+				    values.entry(normalize).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(<span class="number">1</span>)).or_insert(<span class="number">1</span>);
+				}
+				prev_mini = <span class="prelude-val">Some</span>(mini);
+			    }
+			}
+
+			values
+		    }).reduce(|| std::collections::HashMap::new(), |<span class="kw-2">mut </span>a, b| {
+			<span class="kw">for </span>(k, v) <span class="kw">in </span>b.into_iter() {
+			    a.entry(k).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(v)).or_insert(v);
+			}
+
+			a
+		    });
+
+		    <span class="kw">for </span>(k, v) <span class="kw">in </span>local.into_iter() {
+			<span class="self">self</span>.kmer_count.entry(k).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(v)).or_insert(v);
+		    }
 		}
 	    }
 
@@ -817,26 +801,7 @@
 
 	    <span class="doccomment">/// Get count of a kmer
 	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="macro-nonterminal">$out_type </span>{
-		<span class="self">self</span>.kmer_count.get(kmer).map(|x| x.load(std::sync::atomic::Ordering::SeqCst)).unwrap_or(<span class="number">0</span>)
-	    }
-
-
-	    <span class="doccomment">/// Write minicounter result in csv
-	    </span><span class="kw">pub fn </span>serialize&lt;W&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, abundance: <span class="macro-nonterminal">$out_type</span>, <span class="kw-2">mut </span>output: W) -&gt; error::Result&lt;()&gt;
-	    <span class="kw">where
-		</span>W: std::io::Write,
-	    {
-		<span class="kw">for </span>(kmer, count) <span class="kw">in </span><span class="self">self</span>.kmer_count.iter() {
-		    <span class="kw">if </span>count.load(std::sync::atomic::Ordering::SeqCst) &gt; abundance {
-			<span class="macro">writeln!</span>(
-			    output,
-			    <span class="string">"{},{}"</span>,
-			    <span class="kw">unsafe </span>{ String::from_utf8_unchecked(kmer.to_vec()) },
-			count.load(std::sync::atomic::Ordering::SeqCst)
-			)<span class="question-mark">?</span>;
-		    }
-		}
-		<span class="prelude-val">Ok</span>(())
+		<span class="kw-2">*</span><span class="self">self</span>.kmer_count.get(kmer).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
 	    }
 	}
     }
@@ -861,12 +826,13 @@
 GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCttCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
 &gt;random_seq 1
 AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTAttACAGTGCCGCCTGTTGAAAGCCCCAATCCCGCTTCAATTGTTGAGCTCAG
-"</span>;
+&gt;random_seq 2
+AAGATAATTC"</span>;
 
     <span class="macro">macro_rules!</span> fasta_count {
         (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$name</span>:ident) =&gt; {
             <span class="kw">const </span><span class="macro-nonterminal">$name</span>: <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$</span><span class="kw">type</span>] = <span class="kw-2">&amp;</span>[
-                <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>,
+                <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>,
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
                 <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>,
@@ -907,6 +873,11 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTAttACAGTGCCGCCTGTTGAAAGCCCCAATCCC
 
                 <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[];
                 <span class="kw">for </span>(kmer, count) <span class="kw">in </span>mini_count.kmer_raw().iter() {
+                    <span class="macro">println!</span>(
+                        <span class="string">"b\"{}\".to_vec(), {}"</span>,
+                        String::from_utf8(kmer.to_vec()).unwrap(),
+                        count
+                    );
                     result.push((kmer.to_vec(), <span class="kw-2">*</span>count));
                 }
                 result.sort();
@@ -914,7 +885,7 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTAttACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                 <span class="macro">assert_eq!</span>(
                     result,
                     <span class="macro">vec!</span>[
-                        (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
@@ -951,19 +922,16 @@ AGGATAGAAGCTTAAGTACAAGATAATTCCCATAGAGGAAGGGTGGTAttACAGTGCCGCCTGTTGAAAGCCCCAATCCC
                     <span class="macro-nonterminal">$truth
                 </span>);
 
-                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[];
+                <span class="kw">let </span><span class="kw-2">mut </span>result: Vec&lt;(Vec&lt;u8&gt;, <span class="macro-nonterminal">$out_type</span>)&gt; = <span class="macro">vec!</span>[];
                 <span class="kw">for </span>(kmer, count) <span class="kw">in </span>mini_count.kmer_raw().iter() {
-                    result.push((
-                        kmer.to_vec(),
-                        count.load(std::sync::atomic::Ordering::SeqCst),
-                    ));
+                    result.push((kmer.to_vec(), <span class="kw-2">*</span>count));
                 }
                 result.sort();
 
                 <span class="macro">assert_eq!</span>(
                     result,
                     <span class="macro">vec!</span>[
-                        (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
