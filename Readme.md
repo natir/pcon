@@ -10,7 +10,7 @@
 
 Prompt COuNter, a short kmer counter.
 
-- only fasta file
+- only fasta file (or fastq file if feature is activate)
 - if k is even k is reduced to the nearest lower odd number
 - pcon allocate 2^(k * 2 - 1) times number bytes used by counter value (for k 19 pcon and one bytes counts required 69 go)
 
@@ -36,6 +36,14 @@ If you set multiple count\_\* feature priority of feature follow previous list o
 #### Parallel
 
 If you set feature parallel you activate pcon parallel feature, based on [rayon](https://docs.rs/rayon/latest/rayon/) and [rust atomic](https://doc.rust-lang.org/core/sync/atomic/index.html) type.
+
+#### Kff
+
+Activate Kmer File Format output.
+
+#### Fastq
+
+Pcon can read fastq file format.
 
 #### Default
 
@@ -74,6 +82,26 @@ By default `pcon count` read input fasta file from stdin and write count in stdo
 Count 7-mer in `example.fasta` file and write result in pcon format in `example.pcon` file:
 ```bash
 pcon count -k 7 -i example.fasta -p example.pcon
+```
+
+### MiniCount
+
+By default `pcon mini-count` read input fasta file from stdin and write count in stdout in pcon internal format. About memory usage, `pcon mini-count` has a minimum ram usage of 2^(m * 2 - 1) times number of bytes used by counter value, m are the size of the minimizer,
+
+```
+-k, --kmer-size <KMER_SIZE>            Size of kmer
+-m, --minimizer-size <MINIMIZER_SIZE>  Size of minimizer
+-i, --inputs <INPUTS>                  Path to inputs, default read stdin
+-f, --formats <FORMAT>                 Format of input, default fasta [possible values: fasta]
+-c, --csv <CSV>                        Path where count are store
+-a, --abundance <ABUNDANCE>            Minimal abundance, default value 0
+-A, --mini-abundance <MINI_ABUNDANCE>  Minimal minimizer abundance, default value 2
+-b, --record_buffer <RECORD_BUFFER>    Number of sequence record load in buffer, default 8192
+```
+
+Count 31-mer in `example.fasta` file if 15-mer is present more than 2 and write result in pcon format in `example.csv` file:
+```bash
+pcon count -k 31 -m 15 -A 2 -i example.fasta -c example.csv
 ```
 
 ### Dump
