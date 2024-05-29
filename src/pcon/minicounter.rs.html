@@ -618,17 +618,6 @@
 <a href="#616" id="616">616</a>
 <a href="#617" id="617">617</a>
 <a href="#618" id="618">618</a>
-<a href="#619" id="619">619</a>
-<a href="#620" id="620">620</a>
-<a href="#621" id="621">621</a>
-<a href="#622" id="622">622</a>
-<a href="#623" id="623">623</a>
-<a href="#624" id="624">624</a>
-<a href="#625" id="625">625</a>
-<a href="#626" id="626">626</a>
-<a href="#627" id="627">627</a>
-<a href="#628" id="628">628</a>
-<a href="#629" id="629">629</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Generic struct of minicounter and implementation for many type
 
 </span><span class="comment">/* std use */
@@ -641,8 +630,7 @@
 <span class="comment">/* project use */
 </span><span class="kw">use </span><span class="kw">crate</span>::counter;
 <span class="kw">use </span><span class="kw">crate</span>::error;
-<span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
-</span><span class="kw">use </span><span class="kw">crate</span>::utils;
+<span class="kw">use </span><span class="kw">crate</span>::utils;
 
 <span class="doccomment">/// A counter of kmer, count only if minimizer is present more than a threshold.
 </span><span class="attr">#[derive(Clone, Eq, PartialEq, Debug, Default)]
@@ -742,7 +730,7 @@
 				<span class="kw-2">&amp;mut </span><span class="self">self</span>.mini_count,
 				<span class="kw-2">&amp;mut </span><span class="self">self</span>.kmer_count,
 				minimizer <span class="kw">as </span>usize,
-				kmer.to_ascii_uppercase(),
+				utils::canonical(kmer),
 				<span class="self">self</span>.threshold,
 			    );
 
@@ -776,7 +764,7 @@
 				<span class="kw-2">&amp;mut </span><span class="self">self</span>.mini_count,
 				<span class="kw-2">&amp;mut </span><span class="self">self</span>.kmer_count,
 				minimizer <span class="kw">as </span>usize,
-				kmer.to_ascii_uppercase(),
+				utils::canonical(kmer),
 				<span class="self">self</span>.threshold,
 			    );
 
@@ -805,7 +793,7 @@
 
 	    <span class="doccomment">/// Get count of a kmer
 	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="kw-2">&amp;</span><span class="macro-nonterminal">$</span><span class="kw">type </span>{
-		<span class="macro-nonterminal">self</span>.kmer_count.get(kmer).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
+		<span class="macro-nonterminal">self</span>.kmer_count.get(<span class="kw-2">&amp;</span>utils::canonical(kmer)).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
 	    }
 	}
     }
@@ -859,7 +847,7 @@
 				    <span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
 				}
 
-				<span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
+				<span class="kw">let </span>normalize = utils::canonical(kmer);
 				<span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
 
 				    values.entry(normalize).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(<span class="number">1</span>)).or_insert(<span class="number">1</span>);
@@ -912,7 +900,7 @@
 				    <span class="self">Self</span>::mini_inc(<span class="kw-2">&amp;</span><span class="self">self</span>.mini_count.count, (mini &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize);
 				}
 
-				<span class="kw">let </span>normalize = kmer.to_ascii_uppercase();
+				<span class="kw">let </span>normalize = utils::canonical(kmer);
 				<span class="kw">if </span><span class="self">self</span>.mini_count.get(mini <span class="kw">as </span>u64) &gt; <span class="self">self</span>.threshold {
 				    values.entry(normalize).and_modify(|c: <span class="kw-2">&amp;mut </span><span class="macro-nonterminal">$out_type</span>| <span class="kw-2">*</span>c = c.saturating_add(<span class="number">1</span>)).or_insert(<span class="number">1</span>);
 				}
@@ -944,7 +932,7 @@
 
 	    <span class="doccomment">/// Get count of a kmer
 	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: <span class="kw-2">&amp;</span>[u8]) -&gt; <span class="macro-nonterminal">$out_type </span>{
-		<span class="kw-2">*</span><span class="self">self</span>.kmer_count.get(kmer).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
+		<span class="kw-2">*</span><span class="self">self</span>.kmer_count.get(<span class="kw-2">&amp;</span>utils::canonical(kmer)).unwrap_or(<span class="kw-2">&amp;</span><span class="number">0</span>)
 	    }
 	}
     }
@@ -1032,11 +1020,6 @@ AAGATAATTC
 
                 <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[];
                 <span class="kw">for </span>(kmer, count) <span class="kw">in </span>mini_count.kmer_raw().iter() {
-                    <span class="macro">println!</span>(
-                        <span class="string">"b\"{}\".to_vec(), {}"</span>,
-                        String::from_utf8(kmer.to_vec()).unwrap(),
-                        count
-                    );
                     result.push((kmer.to_vec(), <span class="kw-2">*</span>count));
                 }
                 result.sort();
@@ -1045,16 +1028,16 @@ AAGATAATTC
                     result,
                     <span class="macro">vec!</span>[
                         (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
+                        (<span class="string">b"ACTGTAATAC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"ATGGGAATTA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CACTGTAATA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CTGTAATACC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"GATAATTCCC"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GGTATTACAG"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GTATTACAGT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TAATTCCCAT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TATTACAGTG"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"GGCACTGTAA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"TGGTATTACA"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TTACAGTGCC"</span>.to_vec(), <span class="number">1</span>),
                     ]
                 )
             }
@@ -1080,11 +1063,6 @@ AAGATAATTC
 
                 <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="macro">vec!</span>[];
                 <span class="kw">for </span>(kmer, count) <span class="kw">in </span>mini_count.kmer_raw().iter() {
-                    <span class="macro">println!</span>(
-                        <span class="string">"b\"{}\".to_vec(), {}"</span>,
-                        String::from_utf8(kmer.to_vec()).unwrap(),
-                        count
-                    );
                     result.push((kmer.to_vec(), <span class="kw-2">*</span>count));
                 }
                 result.sort();
@@ -1093,16 +1071,16 @@ AAGATAATTC
                     result,
                     <span class="macro">vec!</span>[
                         (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
+                        (<span class="string">b"ACTGTAATAC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"ATGGGAATTA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CACTGTAATA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CTGTAATACC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"GATAATTCCC"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GGTATTACAG"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GTATTACAGT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TAATTCCCAT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TATTACAGTG"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"GGCACTGTAA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"TGGTATTACA"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TTACAGTGCC"</span>.to_vec(), <span class="number">1</span>),
                     ]
                 )
             }
@@ -1144,16 +1122,16 @@ AAGATAATTC
                     result,
                     <span class="macro">vec!</span>[
                         (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
+                        (<span class="string">b"ACTGTAATAC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"ATGGGAATTA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CACTGTAATA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CTGTAATACC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"GATAATTCCC"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GGTATTACAG"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GTATTACAGT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TAATTCCCAT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TATTACAGTG"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"GGCACTGTAA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"TGGTATTACA"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TTACAGTGCC"</span>.to_vec(), <span class="number">1</span>),
                     ]
                 )
             }
@@ -1213,16 +1191,16 @@ AAGATAATTC
                     result,
                     <span class="macro">vec!</span>[
                         (<span class="string">b"AAGATAATTC"</span>.to_vec(), <span class="number">2</span>),
+                        (<span class="string">b"ACTGTAATAC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"AGATAATTCC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATAATTCCCA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"ATGGGAATTA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"ATTACAGTGC"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CACTGTAATA"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"CTGTAATACC"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"GATAATTCCC"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GGTATTACAG"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"GTATTACAGT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TAATTCCCAT"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TATTACAGTG"</span>.to_vec(), <span class="number">1</span>),
+                        (<span class="string">b"GGCACTGTAA"</span>.to_vec(), <span class="number">1</span>),
                         (<span class="string">b"TGGTATTACA"</span>.to_vec(), <span class="number">1</span>),
-                        (<span class="string">b"TTACAGTGCC"</span>.to_vec(), <span class="number">1</span>),
                     ]
                 )
             }
