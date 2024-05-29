@@ -5,7 +5,7 @@
 ![MSRV](https://github.com/natir/pcon/workflows/MSRV/badge.svg)
 [![CodeCov](https://codecov.io/gh/natir/pcon/branch/main/graph/badge.svg)](https://codecov.io/gh/natir/pcon)
 [![Documentation](https://github.com/natir/pcon/workflows/Documentation/badge.svg)](https://natir.github.io/pcon/pcon)
-[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/natir/pcon/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-green)](https://github.com/natir/pcon/blob/main/LICENSE)
 
 
 Prompt COuNter, a short kmer counter.
