@@ -45,7 +45,7 @@ kff            = { version = "0.9", optional = true }
 [dev-dependencies]
 criterion      = { version = "0.5" }
 tempfile       = { version = "3" }
-rand           = { version = "0.8" }
+rand           = { version = "0.9" }
 assert_cmd     = { version = "2" }
 biotest        = { version = "0.1", features = ["fasta"] }
 
