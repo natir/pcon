@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/counter.rs`."><title>counter.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-6c3ea77c.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pcon" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0 (05f9846f8 2025-03-31)" data-channel="1.86.0" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../static.files/storage-3a5871a4.js"></script><script defer src="../../static.files/src-script-b8d3f215.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">pcon/</div>counter.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Generic struct of counter and implementation for many type
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/counter.rs`."><title>counter.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-b7b9f40b.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="pcon" data-themes="" data-resource-suffix="" data-rustdoc-version="1.95.0 (59807616e 2026-04-14)" data-channel="1.95.0" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">pcon/</div>counter.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Generic struct of counter and implementation for many type
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a></span><span class="comment">/* std use */
 <a href=#4 id=4 data-nosnippet>4</a>
@@ -55,12 +55,12 @@
 <a href=#55 id=55 data-nosnippet>55</a>/* sequential implementation */
 <a href=#56 id=56 data-nosnippet>56</a>/*****************************/
 <a href=#57 id=57 data-nosnippet>57</a></span><span class="macro">macro_rules!</span> impl_sequential (
-<a href=#58 id=58 data-nosnippet>58</a>    (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$init</span>:expr, <span class="macro-nonterminal">$read</span>:expr) =&gt; {
-<a href=#59 id=59 data-nosnippet>59</a>	<span class="kw">impl </span>Counter&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt; {
+<a href=#58 id=58 data-nosnippet>58</a>    (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$init</span>:expr, <span class="macro-nonterminal">$read</span>:expr) =&gt; {
+<a href=#59 id=59 data-nosnippet>59</a>	<span class="kw">impl </span>Counter&lt;<span class="macro-nonterminal">$type</span>&gt; {
 <a href=#60 id=60 data-nosnippet>60</a>	    <span class="doccomment">/// Create a new kmer Counter with kmer size equal to k
-<a href=#61 id=61 data-nosnippet>61</a>	    </span><span class="kw">pub fn </span><span class="macro-nonterminal">new</span>(k: u8) -&gt; <span class="self">Self </span>{
-<a href=#62 id=62 data-nosnippet>62</a>		<span class="kw">let </span>data: Box&lt;[<span class="macro-nonterminal">$</span><span class="kw">type</span>]&gt; = <span class="macro-nonterminal">$init</span>(k, <span class="number">0 </span><span class="kw">as </span><span class="macro-nonterminal">$</span><span class="kw">type</span>);
-<a href=#63 id=63 data-nosnippet>63</a>		<span class="macro-nonterminal">Self </span>{
+<a href=#61 id=61 data-nosnippet>61</a>	    </span><span class="kw">pub fn </span>new(k: u8) -&gt; <span class="self">Self </span>{
+<a href=#62 id=62 data-nosnippet>62</a>		<span class="kw">let </span>data: Box&lt;[<span class="macro-nonterminal">$type</span>]&gt; = <span class="macro-nonterminal">$init</span>(k, <span class="number">0 </span><span class="kw">as </span><span class="macro-nonterminal">$type</span>);
+<a href=#63 id=63 data-nosnippet>63</a>		<span class="self">Self </span>{
 <a href=#64 id=64 data-nosnippet>64</a>		    k,
 <a href=#65 id=65 data-nosnippet>65</a>		    count: data,
 <a href=#66 id=66 data-nosnippet>66</a>		}
@@ -74,12 +74,12 @@
 <a href=#74 id=74 data-nosnippet>74</a>		input.read_exact(<span class="kw-2">&amp;mut </span>read_buffer)<span class="question-mark">?</span>;
 <a href=#75 id=75 data-nosnippet>75</a>		<span class="kw">let </span>k = read_buffer[<span class="number">0</span>];
 <a href=#76 id=76 data-nosnippet>76</a>
-<a href=#77 id=77 data-nosnippet>77</a>		<span class="kw">if </span>std::mem::size_of::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;() != <span class="macro-nonterminal">read_buffer</span>[<span class="number">1</span>] <span class="kw">as </span>usize {
+<a href=#77 id=77 data-nosnippet>77</a>		<span class="kw">if </span>std::mem::size_of::&lt;<span class="macro-nonterminal">$type</span>&gt;() != read_buffer[<span class="number">1</span>] <span class="kw">as </span>usize {
 <a href=#78 id=78 data-nosnippet>78</a>		    <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::TypeNotMatch.into());
 <a href=#79 id=79 data-nosnippet>79</a>		}
 <a href=#80 id=80 data-nosnippet>80</a>
 <a href=#81 id=81 data-nosnippet>81</a>		<span class="kw">let </span><span class="kw-2">mut </span>deflate = flate2::read::MultiGzDecoder::new(input);
-<a href=#82 id=82 data-nosnippet>82</a>		<span class="kw">let </span><span class="kw-2">mut </span>data = <span class="macro-nonterminal">$init</span>(k, <span class="number">0 </span><span class="kw">as </span><span class="macro-nonterminal">$</span><span class="kw">type</span>);
+<a href=#82 id=82 data-nosnippet>82</a>		<span class="kw">let </span><span class="kw-2">mut </span>data = <span class="macro-nonterminal">$init</span>(k, <span class="number">0 </span><span class="kw">as </span><span class="macro-nonterminal">$type</span>);
 <a href=#83 id=83 data-nosnippet>83</a>
 <a href=#84 id=84 data-nosnippet>84</a>		<span class="macro-nonterminal">$read</span>(<span class="kw-2">&amp;mut </span>deflate, <span class="kw-2">&amp;mut </span>data)<span class="question-mark">?</span>;
 <a href=#85 id=85 data-nosnippet>85</a>
@@ -91,7 +91,7 @@
 <a href=#91 id=91 data-nosnippet>91</a>
 <a href=#92 id=92 data-nosnippet>92</a>	    <span class="doccomment">/// Perform count on fasta input
 <a href=#93 id=93 data-nosnippet>93</a>	    </span><span class="kw">pub fn </span>count_fasta(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fasta: Box&lt;<span class="kw">dyn </span>std::io::BufRead&gt;, _record_buffer: u64) {
-<a href=#94 id=94 data-nosnippet>94</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fasta::Reader::new(fasta);
+<a href=#94 id=94 data-nosnippet>94</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fasta::io::Reader::new(fasta);
 <a href=#95 id=95 data-nosnippet>95</a>		<span class="kw">let </span><span class="kw-2">mut </span>records = reader.records();
 <a href=#96 id=96 data-nosnippet>96</a>
 <a href=#97 id=97 data-nosnippet>97</a>		<span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(record)) = records.next() {
@@ -109,7 +109,7 @@
 <a href=#109 id=109 data-nosnippet>109</a>	    <span class="attr">#[cfg(feature = <span class="string">"fastq"</span>)]
 <a href=#110 id=110 data-nosnippet>110</a>	    </span><span class="doccomment">/// Perform count on fastq input
 <a href=#111 id=111 data-nosnippet>111</a>	    </span><span class="kw">pub fn </span>count_fastq(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fastq: Box&lt;<span class="kw">dyn </span>std::io::BufRead&gt;, _record_buffer: u64) {
-<a href=#112 id=112 data-nosnippet>112</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fastq::Reader::new(fastq);
+<a href=#112 id=112 data-nosnippet>112</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fastq::io::Reader::new(fastq);
 <a href=#113 id=113 data-nosnippet>113</a>		<span class="kw">let </span><span class="kw-2">mut </span>records = reader.records();
 <a href=#114 id=114 data-nosnippet>114</a>
 <a href=#115 id=115 data-nosnippet>115</a>		<span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(record)) = records.next() {
@@ -125,18 +125,18 @@
 <a href=#125 id=125 data-nosnippet>125</a>	    }
 <a href=#126 id=126 data-nosnippet>126</a>
 <a href=#127 id=127 data-nosnippet>127</a>	    <span class="doccomment">/// Increment value at index
-<a href=#128 id=128 data-nosnippet>128</a>	    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>inc(count: <span class="kw-2">&amp;mut </span>[<span class="macro-nonterminal">$</span><span class="kw">type</span>], <span class="macro-nonterminal">index</span>: usize) {
+<a href=#128 id=128 data-nosnippet>128</a>	    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>inc(count: <span class="kw-2">&amp;mut </span>[<span class="macro-nonterminal">$type</span>], index: usize) {
 <a href=#129 id=129 data-nosnippet>129</a>		count[index] = count[index].saturating_add(<span class="number">1</span>);
 <a href=#130 id=130 data-nosnippet>130</a>	    }
 <a href=#131 id=131 data-nosnippet>131</a>
 <a href=#132 id=132 data-nosnippet>132</a>	    <span class="doccomment">/// Get count of a kmer
-<a href=#133 id=133 data-nosnippet>133</a>	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: u64) -&gt; <span class="macro-nonterminal">$</span><span class="kw">type </span>{
-<a href=#134 id=134 data-nosnippet>134</a>		<span class="macro-nonterminal">self</span>.get_canonic(cocktail::kmer::canonical(kmer, <span class="self">self</span>.k))
+<a href=#133 id=133 data-nosnippet>133</a>	    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, kmer: u64) -&gt; <span class="macro-nonterminal">$type </span>{
+<a href=#134 id=134 data-nosnippet>134</a>		<span class="self">self</span>.get_canonic(cocktail::kmer::canonical(kmer, <span class="self">self</span>.k))
 <a href=#135 id=135 data-nosnippet>135</a>	    }
 <a href=#136 id=136 data-nosnippet>136</a>
 <a href=#137 id=137 data-nosnippet>137</a>	    <span class="doccomment">/// Get the counter of a canonical kmer
-<a href=#138 id=138 data-nosnippet>138</a>	    </span><span class="kw">fn </span>get_canonic(<span class="kw-2">&amp;</span><span class="self">self</span>, canonical: u64) -&gt; <span class="macro-nonterminal">$</span><span class="kw">type </span>{
-<a href=#139 id=139 data-nosnippet>139</a>		<span class="macro-nonterminal">self</span>.count[(canonical &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize]
+<a href=#138 id=138 data-nosnippet>138</a>	    </span><span class="kw">fn </span>get_canonic(<span class="kw-2">&amp;</span><span class="self">self</span>, canonical: u64) -&gt; <span class="macro-nonterminal">$type </span>{
+<a href=#139 id=139 data-nosnippet>139</a>		<span class="self">self</span>.count[(canonical &gt;&gt; <span class="number">1</span>) <span class="kw">as </span>usize]
 <a href=#140 id=140 data-nosnippet>140</a>	    }
 <a href=#141 id=141 data-nosnippet>141</a>
 <a href=#142 id=142 data-nosnippet>142</a>	}
@@ -170,10 +170,10 @@
 <a href=#170 id=170 data-nosnippet>170</a>/***************************/
 <a href=#171 id=171 data-nosnippet>171</a></span><span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 <a href=#172 id=172 data-nosnippet>172</a></span><span class="macro">macro_rules!</span> impl_atomic (
-<a href=#173 id=173 data-nosnippet>173</a>    (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$max</span>:expr, <span class="macro-nonterminal">$init</span>:expr, <span class="macro-nonterminal">$read</span>:expr) =&gt; {
-<a href=#174 id=174 data-nosnippet>174</a>	<span class="kw">impl </span>Counter&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt; {
+<a href=#173 id=173 data-nosnippet>173</a>    (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$max</span>:expr, <span class="macro-nonterminal">$init</span>:expr, <span class="macro-nonterminal">$read</span>:expr) =&gt; {
+<a href=#174 id=174 data-nosnippet>174</a>	<span class="kw">impl </span>Counter&lt;<span class="macro-nonterminal">$type</span>&gt; {
 <a href=#175 id=175 data-nosnippet>175</a>	    <span class="doccomment">/// Create a new kmer Counter with kmer size equal to k
-<a href=#176 id=176 data-nosnippet>176</a>	    </span><span class="kw">pub fn </span><span class="macro-nonterminal">new</span>(k: u8) -&gt; <span class="self">Self </span>{
+<a href=#176 id=176 data-nosnippet>176</a>	    </span><span class="kw">pub fn </span>new(k: u8) -&gt; <span class="self">Self </span>{
 <a href=#177 id=177 data-nosnippet>177</a>		<span class="self">Self </span>{
 <a href=#178 id=178 data-nosnippet>178</a>		    k,
 <a href=#179 id=179 data-nosnippet>179</a>		    count: utils::transmute_box(<span class="macro-nonterminal">$init</span>(k, <span class="number">0 </span><span class="kw">as </span><span class="macro-nonterminal">$out_type</span>)),
@@ -188,7 +188,7 @@
 <a href=#188 id=188 data-nosnippet>188</a>		input.read_exact(<span class="kw-2">&amp;mut </span>read_buffer)<span class="question-mark">?</span>;
 <a href=#189 id=189 data-nosnippet>189</a>		<span class="kw">let </span>k = read_buffer[<span class="number">0</span>];
 <a href=#190 id=190 data-nosnippet>190</a>
-<a href=#191 id=191 data-nosnippet>191</a>		<span class="kw">if </span>std::mem::size_of::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;() != <span class="macro-nonterminal">read_buffer</span>[<span class="number">1</span>] <span class="kw">as </span>usize {
+<a href=#191 id=191 data-nosnippet>191</a>		<span class="kw">if </span>std::mem::size_of::&lt;<span class="macro-nonterminal">$type</span>&gt;() != read_buffer[<span class="number">1</span>] <span class="kw">as </span>usize {
 <a href=#192 id=192 data-nosnippet>192</a>		    <span class="kw">return </span><span class="prelude-val">Err</span>(error::Error::TypeNotMatch.into());
 <a href=#193 id=193 data-nosnippet>193</a>		}
 <a href=#194 id=194 data-nosnippet>194</a>
@@ -205,7 +205,7 @@
 <a href=#205 id=205 data-nosnippet>205</a>
 <a href=#206 id=206 data-nosnippet>206</a>	    <span class="doccomment">/// Perform count on fasta input
 <a href=#207 id=207 data-nosnippet>207</a>	    </span><span class="kw">pub fn </span>count_fasta(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fasta: Box&lt;<span class="kw">dyn </span>std::io::BufRead&gt;, record_buffer: u64) {
-<a href=#208 id=208 data-nosnippet>208</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fasta::Reader::new(fasta);
+<a href=#208 id=208 data-nosnippet>208</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fasta::io::Reader::new(fasta);
 <a href=#209 id=209 data-nosnippet>209</a>		<span class="kw">let </span><span class="kw-2">mut </span>iter = reader.records();
 <a href=#210 id=210 data-nosnippet>210</a>		<span class="kw">let </span><span class="kw-2">mut </span>records = Vec::with_capacity(record_buffer <span class="kw">as </span>usize);
 <a href=#211 id=211 data-nosnippet>211</a>
@@ -231,7 +231,7 @@
 <a href=#231 id=231 data-nosnippet>231</a>	    <span class="attr">#[cfg(feature = <span class="string">"fastq"</span>)]
 <a href=#232 id=232 data-nosnippet>232</a>	    </span><span class="doccomment">/// Perform count on fastq input
 <a href=#233 id=233 data-nosnippet>233</a>	    </span><span class="kw">pub fn </span>count_fastq(<span class="kw-2">&amp;mut </span><span class="self">self</span>, fastq: Box&lt;<span class="kw">dyn </span>std::io::BufRead&gt;, record_buffer: u64) {
-<a href=#234 id=234 data-nosnippet>234</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fastq::Reader::new(fastq);
+<a href=#234 id=234 data-nosnippet>234</a>		<span class="kw">let </span><span class="kw-2">mut </span>reader = noodles::fastq::io::Reader::new(fastq);
 <a href=#235 id=235 data-nosnippet>235</a>		<span class="kw">let </span><span class="kw-2">mut </span>iter = reader.records();
 <a href=#236 id=236 data-nosnippet>236</a>		<span class="kw">let </span><span class="kw-2">mut </span>records = Vec::with_capacity(record_buffer <span class="kw">as </span>usize);
 <a href=#237 id=237 data-nosnippet>237</a>
@@ -255,7 +255,7 @@
 <a href=#255 id=255 data-nosnippet>255</a>	    }
 <a href=#256 id=256 data-nosnippet>256</a>
 <a href=#257 id=257 data-nosnippet>257</a>	    <span class="doccomment">/// Increment value at index
-<a href=#258 id=258 data-nosnippet>258</a>	    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>inc(count: <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$</span><span class="kw">type</span>], <span class="macro-nonterminal">index</span>: usize) {
+<a href=#258 id=258 data-nosnippet>258</a>	    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>inc(count: <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$type</span>], index: usize) {
 <a href=#259 id=259 data-nosnippet>259</a>		<span class="kw">if </span>count[index].load(std::sync::atomic::Ordering::SeqCst) != <span class="macro-nonterminal">$max </span>{
 <a href=#260 id=260 data-nosnippet>260</a>		    count[index].fetch_add(<span class="number">1</span>, std::sync::atomic::Ordering::SeqCst);
 <a href=#261 id=261 data-nosnippet>261</a>		}
@@ -315,7 +315,7 @@
 <a href=#315 id=315 data-nosnippet>315</a>
 <a href=#316 id=316 data-nosnippet>316</a><span class="attr">#[cfg(test)]
 <a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">mod </span>tests {
-<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">use </span>super::<span class="kw-2">*</span>;
 <a href=#319 id=319 data-nosnippet>319</a>
 <a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">const </span>FASTA_FILE: <span class="kw-2">&amp;</span>[u8] = <span class="string">b"&gt;random_seq 0
 <a href=#321 id=321 data-nosnippet>321</a>GTTCTGCAAATTAGAACAGACAATACACTGGCAGGCGTTGCGTTGGGGGAGATCTTCCGTAACGAGCCGGCATTTGTAAGAAAGAGATTTCGAGTAAATG
@@ -335,8 +335,8 @@
 <a href=#335 id=335 data-nosnippet>335</a>"</span>;
 <a href=#336 id=336 data-nosnippet>336</a>
 <a href=#337 id=337 data-nosnippet>337</a>    <span class="macro">macro_rules!</span> truth_count {
-<a href=#338 id=338 data-nosnippet>338</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$name</span>:ident) =&gt; {
-<a href=#339 id=339 data-nosnippet>339</a>            <span class="kw">const </span><span class="macro-nonterminal">$name</span>: <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$</span><span class="kw">type</span>] = <span class="kw-2">&amp;</span>[
+<a href=#338 id=338 data-nosnippet>338</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$name</span>:ident) =&gt; {
+<a href=#339 id=339 data-nosnippet>339</a>            <span class="kw">const </span><span class="macro-nonterminal">$name</span>: <span class="kw-2">&amp;</span>[<span class="macro-nonterminal">$type</span>] = <span class="kw-2">&amp;</span>[
 <a href=#340 id=340 data-nosnippet>340</a>                <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>,
 <a href=#341 id=341 data-nosnippet>341</a>                <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>,
 <a href=#342 id=342 data-nosnippet>342</a>                <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>,
@@ -360,17 +360,17 @@
 <a href=#360 id=360 data-nosnippet>360</a>        };
 <a href=#361 id=361 data-nosnippet>361</a>    }
 <a href=#362 id=362 data-nosnippet>362</a>
-<a href=#363 id=363 data-nosnippet>363</a>    <span class="macro">truth_count!</span>(<span class="macro-nonterminal">u8</span>, TRUTH_COUNT_U8);
+<a href=#363 id=363 data-nosnippet>363</a>    <span class="macro">truth_count!</span>(u8, TRUTH_COUNT_U8);
 <a href=#364 id=364 data-nosnippet>364</a>    <span class="macro">truth_count!</span>(u16, TRUTH_COUNT_U16);
 <a href=#365 id=365 data-nosnippet>365</a>    <span class="macro">truth_count!</span>(u32, TRUTH_COUNT_U32);
 <a href=#366 id=366 data-nosnippet>366</a>    <span class="macro">truth_count!</span>(u64, TRUTH_COUNT_U64);
 <a href=#367 id=367 data-nosnippet>367</a>    <span class="macro">truth_count!</span>(u128, TRUTH_COUNT_U128);
 <a href=#368 id=368 data-nosnippet>368</a>
 <a href=#369 id=369 data-nosnippet>369</a>    <span class="macro">macro_rules!</span> sequential_fasta {
-<a href=#370 id=370 data-nosnippet>370</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
+<a href=#370 id=370 data-nosnippet>370</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
 <a href=#371 id=371 data-nosnippet>371</a>            <span class="attr">#[test]
 <a href=#372 id=372 data-nosnippet>372</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
-<a href=#373 id=373 data-nosnippet>373</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#373 id=373 data-nosnippet>373</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#374 id=374 data-nosnippet>374</a>
 <a href=#375 id=375 data-nosnippet>375</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#376 id=376 data-nosnippet>376</a>
@@ -399,10 +399,10 @@
 <a href=#399 id=399 data-nosnippet>399</a>
 <a href=#400 id=400 data-nosnippet>400</a>    <span class="attr">#[cfg(feature = <span class="string">"fastq"</span>)]
 <a href=#401 id=401 data-nosnippet>401</a>    </span><span class="macro">macro_rules!</span> sequential_fastq {
-<a href=#402 id=402 data-nosnippet>402</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
+<a href=#402 id=402 data-nosnippet>402</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
 <a href=#403 id=403 data-nosnippet>403</a>            <span class="attr">#[test]
 <a href=#404 id=404 data-nosnippet>404</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
-<a href=#405 id=405 data-nosnippet>405</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#405 id=405 data-nosnippet>405</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#406 id=406 data-nosnippet>406</a>
 <a href=#407 id=407 data-nosnippet>407</a>                counter.count_fastq(Box::new(FASTQ_FILE), <span class="number">1</span>);
 <a href=#408 id=408 data-nosnippet>408</a>
@@ -435,18 +435,18 @@
 <a href=#435 id=435 data-nosnippet>435</a>    </span><span class="macro">sequential_fastq!</span>(u128, sequential_fastq_u128, TRUTH_COUNT_U128);
 <a href=#436 id=436 data-nosnippet>436</a>
 <a href=#437 id=437 data-nosnippet>437</a>    <span class="macro">macro_rules!</span> sequential_serialize {
-<a href=#438 id=438 data-nosnippet>438</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$failled_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$failled_name</span>:ident) =&gt; {
+<a href=#438 id=438 data-nosnippet>438</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$failled_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$failled_name</span>:ident) =&gt; {
 <a href=#439 id=439 data-nosnippet>439</a>            <span class="attr">#[test]
 <a href=#440 id=440 data-nosnippet>440</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() -&gt; error::Result&lt;()&gt; {
 <a href=#441 id=441 data-nosnippet>441</a>                <span class="kw">let </span><span class="kw-2">mut </span>file = <span class="macro">vec!</span>[];
 <a href=#442 id=442 data-nosnippet>442</a>
-<a href=#443 id=443 data-nosnippet>443</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#443 id=443 data-nosnippet>443</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#444 id=444 data-nosnippet>444</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#445 id=445 data-nosnippet>445</a>
 <a href=#446 id=446 data-nosnippet>446</a>                <span class="kw">let </span>serialize = counter.clone().serialize();
 <a href=#447 id=447 data-nosnippet>447</a>                serialize.pcon(std::io::Cursor::new(<span class="kw-2">&amp;mut </span>file))<span class="question-mark">?</span>;
 <a href=#448 id=448 data-nosnippet>448</a>
-<a href=#449 id=449 data-nosnippet>449</a>                <span class="kw">let </span>second_counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::from_stream</span>(<span class="kw-2">&amp;</span>file[..])<span class="question-mark">?</span>;
+<a href=#449 id=449 data-nosnippet>449</a>                <span class="kw">let </span>second_counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::from_stream(<span class="kw-2">&amp;</span>file[..])<span class="question-mark">?</span>;
 <a href=#450 id=450 data-nosnippet>450</a>
 <a href=#451 id=451 data-nosnippet>451</a>                <span class="macro">assert_eq!</span>(counter.raw(), second_counter.raw());
 <a href=#452 id=452 data-nosnippet>452</a>
@@ -457,7 +457,7 @@
 <a href=#457 id=457 data-nosnippet>457</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$failled_name</span>() -&gt; error::Result&lt;()&gt; {
 <a href=#458 id=458 data-nosnippet>458</a>                <span class="kw">let </span><span class="kw-2">mut </span>file = <span class="macro">vec!</span>[];
 <a href=#459 id=459 data-nosnippet>459</a>
-<a href=#460 id=460 data-nosnippet>460</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#460 id=460 data-nosnippet>460</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#461 id=461 data-nosnippet>461</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#462 id=462 data-nosnippet>462</a>
 <a href=#463 id=463 data-nosnippet>463</a>                <span class="kw">let </span>serialize = counter.serialize();
@@ -505,10 +505,10 @@
 <a href=#505 id=505 data-nosnippet>505</a>
 <a href=#506 id=506 data-nosnippet>506</a>    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 <a href=#507 id=507 data-nosnippet>507</a>    </span><span class="macro">macro_rules!</span> parallel_fasta {
-<a href=#508 id=508 data-nosnippet>508</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
+<a href=#508 id=508 data-nosnippet>508</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
 <a href=#509 id=509 data-nosnippet>509</a>            <span class="attr">#[test]
 <a href=#510 id=510 data-nosnippet>510</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
-<a href=#511 id=511 data-nosnippet>511</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#511 id=511 data-nosnippet>511</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#512 id=512 data-nosnippet>512</a>
 <a href=#513 id=513 data-nosnippet>513</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#514 id=514 data-nosnippet>514</a>
@@ -565,10 +565,10 @@
 <a href=#565 id=565 data-nosnippet>565</a>
 <a href=#566 id=566 data-nosnippet>566</a>    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 <a href=#567 id=567 data-nosnippet>567</a>    </span><span class="macro">macro_rules!</span> parallel_fastq {
-<a href=#568 id=568 data-nosnippet>568</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
+<a href=#568 id=568 data-nosnippet>568</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$truth</span>:ident) =&gt; {
 <a href=#569 id=569 data-nosnippet>569</a>            <span class="attr">#[test]
 <a href=#570 id=570 data-nosnippet>570</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() {
-<a href=#571 id=571 data-nosnippet>571</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#571 id=571 data-nosnippet>571</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#572 id=572 data-nosnippet>572</a>
 <a href=#573 id=573 data-nosnippet>573</a>                counter.count_fastq(Box::new(FASTQ_FILE), <span class="number">1</span>);
 <a href=#574 id=574 data-nosnippet>574</a>
@@ -625,27 +625,27 @@
 <a href=#625 id=625 data-nosnippet>625</a>
 <a href=#626 id=626 data-nosnippet>626</a>    <span class="attr">#[cfg(feature = <span class="string">"parallel"</span>)]
 <a href=#627 id=627 data-nosnippet>627</a>    </span><span class="macro">macro_rules!</span> parallel_serialize {
-<a href=#628 id=628 data-nosnippet>628</a>        (<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$failled_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$failled_name</span>:ident) =&gt; {
+<a href=#628 id=628 data-nosnippet>628</a>        (<span class="macro-nonterminal">$type</span>:ty, <span class="macro-nonterminal">$out_type</span>:ty, <span class="macro-nonterminal">$failled_type</span>:ty, <span class="macro-nonterminal">$name</span>:ident, <span class="macro-nonterminal">$failled_name</span>:ident) =&gt; {
 <a href=#629 id=629 data-nosnippet>629</a>            <span class="attr">#[test]
 <a href=#630 id=630 data-nosnippet>630</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$name</span>() -&gt; error::Result&lt;()&gt; {
 <a href=#631 id=631 data-nosnippet>631</a>                <span class="kw">let </span><span class="kw-2">mut </span>file = <span class="macro">vec!</span>[];
 <a href=#632 id=632 data-nosnippet>632</a>
 <a href=#633 id=633 data-nosnippet>633</a>                {
-<a href=#634 id=634 data-nosnippet>634</a>                    <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#634 id=634 data-nosnippet>634</a>                    <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#635 id=635 data-nosnippet>635</a>                    counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#636 id=636 data-nosnippet>636</a>
 <a href=#637 id=637 data-nosnippet>637</a>                    <span class="kw">let </span>serialize = counter.serialize();
 <a href=#638 id=638 data-nosnippet>638</a>                    serialize.pcon(std::io::Cursor::new(<span class="kw-2">&amp;mut </span>file))<span class="question-mark">?</span>;
 <a href=#639 id=639 data-nosnippet>639</a>                }
 <a href=#640 id=640 data-nosnippet>640</a>
-<a href=#641 id=641 data-nosnippet>641</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#641 id=641 data-nosnippet>641</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#642 id=642 data-nosnippet>642</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#643 id=643 data-nosnippet>643</a>
-<a href=#644 id=644 data-nosnippet>644</a>                <span class="kw">let </span>second_counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::from_stream</span>(<span class="kw-2">&amp;</span>file[..])<span class="question-mark">?</span>;
+<a href=#644 id=644 data-nosnippet>644</a>                <span class="kw">let </span>second_counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::from_stream(<span class="kw-2">&amp;</span>file[..])<span class="question-mark">?</span>;
 <a href=#645 id=645 data-nosnippet>645</a>
 <a href=#646 id=646 data-nosnippet>646</a>                <span class="macro">assert_eq!</span>(
-<a href=#647 id=647 data-nosnippet>647</a>                    <span class="kw-2">&amp;</span>utils::transmute::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="macro-nonterminal">$out_type</span>&gt;(counter.raw())[..],
-<a href=#648 id=648 data-nosnippet>648</a>                    <span class="kw-2">&amp;</span>utils::transmute::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>, <span class="macro-nonterminal">$out_type</span>&gt;(second_counter.raw())[..],
+<a href=#647 id=647 data-nosnippet>647</a>                    <span class="kw-2">&amp;</span>utils::transmute::&lt;<span class="macro-nonterminal">$type</span>, <span class="macro-nonterminal">$out_type</span>&gt;(counter.raw())[..],
+<a href=#648 id=648 data-nosnippet>648</a>                    <span class="kw-2">&amp;</span>utils::transmute::&lt;<span class="macro-nonterminal">$type</span>, <span class="macro-nonterminal">$out_type</span>&gt;(second_counter.raw())[..],
 <a href=#649 id=649 data-nosnippet>649</a>                );
 <a href=#650 id=650 data-nosnippet>650</a>
 <a href=#651 id=651 data-nosnippet>651</a>                <span class="prelude-val">Ok</span>(())
@@ -655,7 +655,7 @@
 <a href=#655 id=655 data-nosnippet>655</a>            </span><span class="kw">fn </span><span class="macro-nonterminal">$failled_name</span>() -&gt; error::Result&lt;()&gt; {
 <a href=#656 id=656 data-nosnippet>656</a>                <span class="kw">let </span><span class="kw-2">mut </span>file = <span class="macro">vec!</span>[];
 <a href=#657 id=657 data-nosnippet>657</a>
-<a href=#658 id=658 data-nosnippet>658</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$</span><span class="kw">type</span>&gt;<span class="macro-nonterminal">::new</span>(<span class="number">5</span>);
+<a href=#658 id=658 data-nosnippet>658</a>                <span class="kw">let </span><span class="kw-2">mut </span>counter = Counter::&lt;<span class="macro-nonterminal">$type</span>&gt;::new(<span class="number">5</span>);
 <a href=#659 id=659 data-nosnippet>659</a>                counter.count_fasta(Box::new(FASTA_FILE), <span class="number">1</span>);
 <a href=#660 id=660 data-nosnippet>660</a>
 <a href=#661 id=661 data-nosnippet>661</a>                <span class="kw">let </span>serialize = counter.serialize();
@@ -702,4 +702,5 @@
 <a href=#702 id=702 data-nosnippet>702</a>        parallel_serialize_u64,
 <a href=#703 id=703 data-nosnippet>703</a>        failled_parallel_serialize_u64
 <a href=#704 id=704 data-nosnippet>704</a>    );
-<a href=#705 id=705 data-nosnippet>705</a>}</code></pre></div></section></main></body></html>
+<a href=#705 id=705 data-nosnippet>705</a>}
+</code></pre></div></section></main></body></html>

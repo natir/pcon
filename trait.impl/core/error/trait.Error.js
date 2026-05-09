@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["pcon",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.86.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"pcon/error/enum.Error.html\" title=\"enum pcon::error::Error\">Error</a>"]]]]);
+    const implementors = Object.fromEntries([["pcon",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.95.0/core/error/trait.Error.html\" title=\"trait core::error::Error\">Error</a> for <a class=\"enum\" href=\"pcon/error/enum.Error.html\" title=\"enum pcon::error::Error\">Error</a>",0]]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[255]}
+//{"start":59,"fragment_lengths":[257]}
