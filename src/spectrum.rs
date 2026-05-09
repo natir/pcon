@@ -25,7 +25,6 @@ pub enum ThresholdMethod {
 }
 
 /// A struct to represent kmer spectrum and usefull corresponding function
-
 pub struct Spectrum {
     data: Box<[u64]>,
 }

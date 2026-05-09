@@ -110,6 +110,7 @@ impl Solid {
 }
 
 #[cfg(test)]
+#[allow(clippy::bool_assert_comparison)] // false or true are more readable than !
 mod tests {
     use super::*;
 

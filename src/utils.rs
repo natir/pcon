@@ -37,7 +37,7 @@ where
 #[cfg(feature = "parallel")]
 /// Populate record buffer with content of iterator
 pub fn populate_buffer(
-    iter: &mut noodles::fasta::reader::Records<'_, Box<dyn std::io::BufRead>>,
+    iter: &mut noodles::fasta::io::reader::Records<'_, Box<dyn std::io::BufRead>>,
     records: &mut Vec<noodles::fasta::Record>,
     record_buffer: u64,
 ) -> bool {
@@ -58,7 +58,7 @@ pub fn populate_buffer(
 #[cfg(all(feature = "parallel", feature = "fastq"))]
 /// Populate record buffer with content of iterator
 pub fn populate_bufferq(
-    iter: &mut noodles::fastq::reader::Records<'_, Box<dyn std::io::BufRead>>,
+    iter: &mut noodles::fastq::io::reader::Records<'_, Box<dyn std::io::BufRead>>,
     records: &mut Vec<noodles::fastq::Record>,
     record_buffer: u64,
 ) -> bool {

@@ -90,14 +90,14 @@ macro_rules! impl_sequential (
 
 	    /// Perform count on fasta input
 	    pub fn count_fasta(&mut self, fasta: Box<dyn std::io::BufRead>, _record_buffer: u64) {
-		let mut reader = noodles::fasta::Reader::new(fasta);
+		let mut reader = noodles::fasta::io::Reader::new(fasta);
 		let mut records = reader.records();
 
 		while let Some(Ok(record)) = records.next() {
 		    if record.sequence().len() >= self.k() as usize {
-			let minimizer = cocktail::tokenizer::MiniBstr::new(
+			let minimizer: cocktail::tokenizer::minimizer::Canonical<cocktail::tokenizer::minimizer::method::Random, Vec<u8>> = cocktail::tokenizer::minimizer::Canonical::<cocktail::tokenizer::minimizer::method::Random, Vec<u8>>::new(
 			    record.sequence().as_ref(),
-			    self.k(),
+			    self.k() as u8,
 			    self.m(),
 			);
 
@@ -110,7 +110,7 @@ macro_rules! impl_sequential (
 				&mut self.mini_count,
 				&mut self.kmer_count,
 				minimizer as usize,
-				utils::canonical(kmer),
+				utils::canonical(&kmer),
 				self.threshold,
 			    );
 
@@ -123,14 +123,14 @@ macro_rules! impl_sequential (
 	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, _record_buffer: u64) {
-		let mut reader = noodles::fastq::Reader::new(fastq);
+		let mut reader = noodles::fastq::io::Reader::new(fastq);
 		let mut records = reader.records();
 
 		while let Some(Ok(record)) = records.next() {
 		    if record.sequence().len() >= self.k() as usize {
-			let minimizer = cocktail::tokenizer::MiniBstr::new(
+			let minimizer: cocktail::tokenizer::minimizer::Canonical<cocktail::tokenizer::minimizer::method::Random, Vec<u8>> = cocktail::tokenizer::minimizer::Canonical::<cocktail::tokenizer::minimizer::method::Random, Vec<u8>>::new(
 			    record.sequence().as_ref(),
-			    self.k(),
+			    self.k() as u8,
 			    self.m(),
 			);
 
@@ -144,7 +144,7 @@ macro_rules! impl_sequential (
 				&mut self.mini_count,
 				&mut self.kmer_count,
 				minimizer as usize,
-				utils::canonical(kmer),
+				utils::canonical(&kmer),
 				self.threshold,
 			    );
 
@@ -201,7 +201,7 @@ macro_rules! impl_atomic(
 
 	    /// Perform count on fasta input
 	    pub fn count_fasta(&mut self, fasta: Box<dyn std::io::BufRead>, record_buffer: u64) {
-		let mut reader = noodles::fasta::Reader::new(fasta);
+		let mut reader = noodles::fasta::io::Reader::new(fasta);
 		let mut iter = reader.records();
 		let mut records = Vec::with_capacity(record_buffer as usize);
 
@@ -215,9 +215,10 @@ macro_rules! impl_atomic(
 			let mut values = std::collections::HashMap::new();
 
 			if record.sequence().len() >= self.k as usize {
-			    let minimizer = cocktail::tokenizer::MiniBstr::new(
+			    let minimizer: cocktail::tokenizer::minimizer::Canonical<cocktail::tokenizer::minimizer::method::Random, Vec<u8>> = cocktail::tokenizer::minimizer::Canonical::<cocktail::tokenizer::minimizer::method::Random, Vec<u8>>::new(
+
 				record.sequence().as_ref(),
-				self.k(),
+				self.k() as u8,
 				self.m(),
 			    );
 
@@ -227,7 +228,7 @@ macro_rules! impl_atomic(
 				    Self::mini_inc(&self.mini_count.count, (mini >> 1) as usize);
 				}
 
-				let normalize = utils::canonical(kmer);
+				let normalize = utils::canonical(&kmer);
 				if self.mini_count.get(mini as u64) > self.threshold {
 
 				    values.entry(normalize).and_modify(|c: &mut $out_type| *c = c.saturating_add(1)).or_insert(1);
@@ -254,7 +255,7 @@ macro_rules! impl_atomic(
 	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, record_buffer: u64) {
-		let mut reader = noodles::fastq::Reader::new(fastq);
+		let mut reader = noodles::fastq::io::Reader::new(fastq);
 		let mut iter = reader.records();
 		let mut records = Vec::with_capacity(record_buffer as usize);
 
@@ -268,9 +269,10 @@ macro_rules! impl_atomic(
 			let mut values = std::collections::HashMap::new();
 
 			if record.sequence().len() >= self.k as usize {
-			    let minimizer = cocktail::tokenizer::MiniBstr::new(
+			let minimizer: cocktail::tokenizer::minimizer::Canonical<cocktail::tokenizer::minimizer::method::Random, Vec<u8>> = cocktail::tokenizer::minimizer::Canonical::<cocktail::tokenizer::minimizer::method::Random, Vec<u8>>::new(
+
 				record.sequence().as_ref(),
-				self.k(),
+				self.k() as u8,
 				self.m(),
 			    );
 
@@ -280,7 +282,7 @@ macro_rules! impl_atomic(
 				    Self::mini_inc(&self.mini_count.count, (mini >> 1) as usize);
 				}
 
-				let normalize = utils::canonical(kmer);
+				let normalize = utils::canonical(&kmer);
 				if self.mini_count.get(mini as u64) > self.threshold {
 				    values.entry(normalize).and_modify(|c: &mut $out_type| *c = c.saturating_add(1)).or_insert(1);
 				}

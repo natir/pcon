@@ -91,13 +91,13 @@ macro_rules! impl_sequential (
 
 	    /// Perform count on fasta input
 	    pub fn count_fasta(&mut self, fasta: Box<dyn std::io::BufRead>, _record_buffer: u64) {
-		let mut reader = noodles::fasta::Reader::new(fasta);
+		let mut reader = noodles::fasta::io::Reader::new(fasta);
 		let mut records = reader.records();
 
 		while let Some(Ok(record)) = records.next() {
 		    if record.sequence().len() >= self.k() as usize {
 			let kmerizer =
-			    cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k());
+			    cocktail::tokenizer::kmer::Canonical::new(record.sequence().as_ref(), self.k());
 
 			for canonical in kmerizer {
 			    Self::inc(&mut self.count, (canonical >> 1) as usize);
@@ -109,13 +109,13 @@ macro_rules! impl_sequential (
 	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, _record_buffer: u64) {
-		let mut reader = noodles::fastq::Reader::new(fastq);
+		let mut reader = noodles::fastq::io::Reader::new(fastq);
 		let mut records = reader.records();
 
 		while let Some(Ok(record)) = records.next() {
 		    if record.sequence().len() >= self.k() as usize {
 			let kmerizer =
-			    cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k());
+			    cocktail::tokenizer::kmer::Canonical::new(record.sequence().as_ref(), self.k());
 
 			for canonical in kmerizer {
 			    Self::inc(&mut self.count, (canonical >> 1) as usize);
@@ -205,7 +205,7 @@ macro_rules! impl_atomic (
 
 	    /// Perform count on fasta input
 	    pub fn count_fasta(&mut self, fasta: Box<dyn std::io::BufRead>, record_buffer: u64) {
-		let mut reader = noodles::fasta::Reader::new(fasta);
+		let mut reader = noodles::fasta::io::Reader::new(fasta);
 		let mut iter = reader.records();
 		let mut records = Vec::with_capacity(record_buffer as usize);
 
@@ -218,7 +218,7 @@ macro_rules! impl_atomic (
 		    records.par_iter().for_each(|record| {
 			if record.sequence().len() >= self.k as usize {
 			    let tokenizer =
-				cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k);
+				cocktail::tokenizer::kmer::Canonical::new(record.sequence().as_ref(), self.k);
 
 			    for canonical in tokenizer {
 				Self::inc(&self.count, (canonical >> 1) as usize);
@@ -231,7 +231,7 @@ macro_rules! impl_atomic (
 	    #[cfg(feature = "fastq")]
 	    /// Perform count on fastq input
 	    pub fn count_fastq(&mut self, fastq: Box<dyn std::io::BufRead>, record_buffer: u64) {
-		let mut reader = noodles::fastq::Reader::new(fastq);
+		let mut reader = noodles::fastq::io::Reader::new(fastq);
 		let mut iter = reader.records();
 		let mut records = Vec::with_capacity(record_buffer as usize);
 
@@ -244,7 +244,7 @@ macro_rules! impl_atomic (
 		    records.par_iter().for_each(|record| {
 			if record.sequence().len() >= self.k as usize {
 			    let tokenizer =
-				cocktail::tokenizer::Canonical::new(record.sequence().as_ref(), self.k);
+				cocktail::tokenizer::kmer::Canonical::new(record.sequence().as_ref(), self.k);
 
 			    for canonical in tokenizer {
 				Self::inc(&self.count, (canonical >> 1) as usize);

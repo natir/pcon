@@ -93,7 +93,12 @@ macro_rules! impl_sequential {
                     };
 
                     if value > &abundance {
-                        writeln!(output, "{},{}", kmer, value)?;
+                        writeln!(
+                            output,
+                            "{},{}",
+                            String::from_utf8(kmer).expect("Nucleotide are in utf-8"),
+                            value
+                        )?;
                     }
                 }
 
@@ -249,7 +254,12 @@ macro_rules! impl_atomic {
                     };
 
                     if value > &abundance {
-                        writeln!(output, "{},{}", kmer, value)?;
+                        writeln!(
+                            output,
+                            "{},{}",
+                            String::from_utf8(kmer).expect("Nucleotide are in utf-8"),
+                            value
+                        )?;
                     }
                 }
 
@@ -401,7 +411,7 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.pcon(&mut outfile)?;
-        assert_eq!(&outfile[..], &PCON_ABUNDANCE[..]);
+        assert_eq!(&outfile[..], PCON_ABUNDANCE);
 
         Ok(())
     }
@@ -414,7 +424,7 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.pcon(&mut outfile)?;
-        assert_eq!(&outfile[..], &PCON_ABUNDANCE[..]);
+        assert_eq!(&outfile[..], PCON_ABUNDANCE);
 
         Ok(())
     }
@@ -430,12 +440,12 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.csv(1, &mut outfile)?;
-        assert_eq!(&outfile[..], &CSV_ABUNDANCE_MIN_1[..]);
+        assert_eq!(&outfile[..], CSV_ABUNDANCE_MIN_1);
 
         outfile.clear();
 
         serialize.csv(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &CSV_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], CSV_ABUNDANCE_MIN_2);
 
         Ok(())
     }
@@ -448,12 +458,12 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.csv(1, &mut outfile)?;
-        assert_eq!(&outfile[..], &CSV_ABUNDANCE_MIN_1[..]);
+        assert_eq!(&outfile[..], CSV_ABUNDANCE_MIN_1);
 
         outfile.clear();
 
         serialize.csv(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &CSV_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], CSV_ABUNDANCE_MIN_2);
 
         Ok(())
     }
@@ -475,12 +485,12 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.solid(1, &mut outfile)?;
-        assert_eq!(&outfile[..], &SOLID_ABUNDANCE_MIN_1[..]);
+        assert_eq!(&outfile[..], SOLID_ABUNDANCE_MIN_1);
 
         outfile.clear();
 
         serialize.solid(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &SOLID_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], SOLID_ABUNDANCE_MIN_2);
 
         Ok(())
     }
@@ -493,12 +503,12 @@ mod tests {
         let serialize = counter.serialize();
 
         serialize.solid(1, &mut outfile)?;
-        assert_eq!(&outfile[..], &SOLID_ABUNDANCE_MIN_1[..]);
+        assert_eq!(&outfile[..], SOLID_ABUNDANCE_MIN_1);
 
         outfile.clear();
 
         serialize.solid(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &SOLID_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], SOLID_ABUNDANCE_MIN_2);
 
         Ok(())
     }
@@ -718,7 +728,7 @@ mod tests {
         outfile.clear();
 
         serialize.kff(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &KFF_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], KFF_ABUNDANCE_MIN_2);
 
         Ok(())
     }
@@ -736,7 +746,7 @@ mod tests {
         outfile.clear();
 
         serialize.kff(2, &mut outfile)?;
-        assert_eq!(&outfile[..], &KFF_ABUNDANCE_MIN_2[..]);
+        assert_eq!(&outfile[..], KFF_ABUNDANCE_MIN_2);
 
         Ok(())
     }
